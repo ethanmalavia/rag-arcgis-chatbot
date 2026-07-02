@@ -13,6 +13,12 @@ faiss_index/
 data/*.csv
 !data/data.csv
 
+# Pipeline caches (Lee County API responses, pytest)
+.cache/
+.pytest_cache/
+.test_tmp/
+.tmp/
+
 # OS
 .DS_Store
 Thumbs.db

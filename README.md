@@ -112,8 +112,36 @@ rag-arcgis-chatbot/
 │   ├── styles.css
 │   ├── app.js
 │   └── assets/
+├── pipeline/               # EagleGIS PDF-extraction pipeline (see pipeline/README.md)
+│   ├── build.py            # main orchestrator
+│   ├── verify.py           # Lee County parcel cross-check
+│   ├── eaglegis/           # extractors, classifiers, location resolver
+│   ├── requirements.txt
+│   └── tests/
+├── pdfs/                   # source meeting-minute PDFs + legacy Estero_Meetings_Final.csv
+├── normalized_csv/         # pipeline deliverables (core/, v2/, arcgis/, review/)
+├── data/
+│   └── estero_minutes_urls.txt   # filename → estero-fl.gov document URL lookup
 └── README.md
 ```
+
+## Data pipeline
+
+The `pipeline/` directory contains the EagleGIS extraction pipeline that
+produces the Estero meeting data. It parses meeting-minute PDFs from
+`pdfs/` into normalized CSVs under `normalized_csv/` (relational tables,
+ArcGIS map exports split by category, and human-QA triage files), resolving
+each agenda item to a verified (lat, lon) via Lee County parcel data.
+
+```bash
+pip install -r pipeline/requirements.txt
+python pipeline/build.py --pdf-dir pdfs --source-csv pdfs/Estero_Meetings_Final.csv --out-dir normalized_csv
+python pipeline/verify.py          # Lee County parcel cross-check
+python -m pytest pipeline/tests -q
+```
+
+See [`pipeline/README.md`](pipeline/README.md) for CLI flags, module
+internals, deliverable schemas, and the review workflow.
 
 ## Production frontend
 
