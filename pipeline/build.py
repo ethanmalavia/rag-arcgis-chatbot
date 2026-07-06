@@ -1216,6 +1216,7 @@ class NormalizedBuilder:
             filename = re.sub(r"[^a-z0-9]+", "_", category.lower()).strip("_") + ".csv"
             write_csv(layers_dir / filename, rows, fields)
 
+    def _build_agenda_arcgis_rows(self) -> tuple[list[dict], list[dict]]:
         meetings = {str(row["meeting_id"]): row for row in self.meetings}
         boards = {str(row["board_id"]): row for row in self.boards}
         formats = {str(row["format_id"]): row for row in self.meeting_formats}
