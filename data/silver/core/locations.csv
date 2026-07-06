@@ -121,7 +121,7 @@ location_id,location_name,location_type,address,description,latitude,longitude
 120,"Commons Club at The Brooks, Estero, FL",Project Site,"Commons Club at The Brooks, Estero, FL",,26.3974648,-81.7889557
 121,"Coconut Road & Oakwilde Boulevard, Estero, FL",Project Site,"Coconut Road & Oakwilde Boulevard, Estero, FL",,26.398580002784,-81.798864007834
 122,"Miromar Outlets, Estero, FL",Project Site,"Miromar Outlets, Estero, FL",,26.438084,-81.772808
-123,21530 STRADA NUOVA CIR,PARCEL_ADDRESS,21530 STRADA NUOVA CIR,,26.429822613028506,-81.8043248748102
+123,21530 STRADA NUOVA CIR,PARCEL_ADDRESS,21530 STRADA NUOVA CIR,,26.42982261302848,-81.80432487481026
 124,WILLIAMS RD & THREE OAKS PKWY,INTERSECTION,WILLIAMS RD & THREE OAKS PKWY,,26.4203700396588,-81.7883783801721
 125,"8801 Corkscrew Road, Estero, FL",Project Site,"8801 Corkscrew Road, Estero, FL",,26.434598214195,-81.807374237947
 126,"Williams Road from US 41 to Via Coconut Point, Estero, FL",Project Site,"Williams Road from US 41 to Via Coconut Point, Estero, FL",,26.420397237605,-81.80904475125
@@ -167,7 +167,7 @@ location_id,location_name,location_type,address,description,latitude,longitude
 166,"8400 Murano Del Lago Drive, Estero, FL",Project Site,"8400 Murano Del Lago Drive, Estero, FL",,26.3916729,-81.8086935
 167,"Tidewater by Del Webb, Estero, FL",Project Site,"Tidewater by Del Webb, Estero, FL",,26.4462,-81.7765
 168,00023 Via Coconut Ordinance No,General Area,"00023 Via Coconut Ordinance No, Estero, FL",,,
-169,10801 CORKSCREW RD,PARCEL_ADDRESS,10801 CORKSCREW RD,,26.436264784102917,-81.77458415265197
+169,10801 CORKSCREW RD,PARCEL_ADDRESS,10801 CORKSCREW RD,,26.436264784102917,-81.77458415265198
 170,Tides at Pelican Landing Subdivision,NEIGHBORHOOD,Tides at Pelican Landing Subdivision,,26.395281758063803,-81.81280564789286
 171,1962 Federal Aid Highway,General Area,"1962 Federal Aid Highway, Estero, FL",,,
 172,"9401 Corkscrew Palms Circle, Estero, FL",Project Site,"9401 Corkscrew Palms Circle, Estero, FL",,26.430490662544,-81.799280001688
@@ -214,7 +214,7 @@ location_id,location_name,location_type,address,description,latitude,longitude
 213,"Williams Road at Estero High School, Estero, FL",Project Site,"Williams Road at Estero High School, Estero, FL",,26.422301,-81.798178
 214,TRAILSIDE DR & POINCIANA AV,INTERSECTION,TRAILSIDE DR & POINCIANA AV,,26.4437985295955,-81.8130436513598
 215,20511 PORT DR,PARCEL_ADDRESS,20511 PORT DR,,26.441805895225407,-81.82436864425183
-216,3548 CHERRY BLOSSOM CT 101,PARCEL_ADDRESS,3548 CHERRY BLOSSOM CT 101,,26.423090922086303,-81.8151692312548
+216,3548 CHERRY BLOSSOM CT 101,PARCEL_ADDRESS,3548 CHERRY BLOSSOM CT 101,,26.423090922086306,-81.8151692312548
 217,8401 MOCKINGBIRD LN,PARCEL_ADDRESS,8401 MOCKINGBIRD LN,,26.440986791396274,-81.8085330982752
 218,4406 And 4410 Coconut Road,General Area,"4406 And 4410 Coconut Road, Estero, FL",,,
 219,20170 S TAMIAMI TRL,PARCEL_ADDRESS,20170 S TAMIAMI TRL,,26.446129441340606,-81.81579980052186
