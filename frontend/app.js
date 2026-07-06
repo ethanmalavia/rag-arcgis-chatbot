@@ -252,12 +252,69 @@ function showTyping() {
 }
 function removeTyping() { const t=document.getElementById("typing-row"); if(t)t.remove(); }
 
+async function tryStreamChat(question) {
+  const res = await fetch(`${API_BASE}/chat/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  if (!res.ok || !res.body) return false;
+
+  removeTyping();
+  const row = document.createElement("div");
+  row.className = "msg-row";
+  row.innerHTML = `<div class="msg-bot"><div class="bot-avatar">🏛</div><div class="bubble" id="stream-bubble"></div></div>`;
+  messagesEl.appendChild(row);
+  const bubble = document.getElementById("stream-bubble");
+  const proseEl = document.createElement("div");
+  bubble.appendChild(proseEl);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let donePayload = null;
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() || "";
+    for (const part of parts) {
+      if (!part.startsWith("data: ")) continue;
+      const payload = JSON.parse(part.slice(6));
+      if (payload.type === "token" && payload.text) {
+        proseEl.textContent += payload.text;
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      } else if (payload.type === "done") {
+        donePayload = payload;
+      } else if (payload.type === "error") {
+        proseEl.textContent = "⚠️ " + (payload.detail || "Stream error");
+      }
+    }
+  }
+
+  if (donePayload) {
+    const projects = (donePayload.projects || []).map(normalizeProject);
+    const summary = (donePayload.summary || "").trim();
+    if (summary && !proseEl.textContent.trim()) {
+      proseEl.innerHTML = summary.replace(/\n/g, "<br>");
+    }
+    projects.forEach((p) => bubble.appendChild(renderProjectCard(p)));
+  }
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return true;
+}
+
 async function sendMessage(overrideText) {
   const q = (overrideText || questionEl.value).trim();
   if (!q) return;
   startChat(); questionEl.value=""; autoResize(questionEl);
   appendMsg("user", q); showTyping();
   try {
+    const streamed = await tryStreamChat(q);
+    if (streamed) return;
     const res = await fetch(`${API_BASE}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

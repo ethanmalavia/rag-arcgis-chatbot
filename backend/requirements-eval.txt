@@ -1,0 +1,5 @@
+# Optional: RAGAS evaluation and OpenTelemetry tracing
+ragas>=0.1.9
+datasets>=2.19.0
+opentelemetry-api>=1.25.0
+opentelemetry-sdk>=1.25.0

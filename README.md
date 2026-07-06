@@ -1,141 +1,103 @@
 # RAG ArcGIS Chatbot
 
-This app combines a FastAPI backend with a simple frontend so you can ask questions about your CSV data and view the results alongside an ArcGIS map.
+Router-first Q&A for Estero planning & zoning records: structured filters, keyword lookup, and corrective RAG with hybrid retrieval.
 
 ## What you need
 
-- Python 3.10 or 3.11
-- A Groq API key for the LLM backend
-- Optional: an ArcGIS API key if you want to replace the default map layer
+- Python 3.11
+- Groq API key (`GROQ_API_KEY`)
+- Optional: GCP credentials for Cloud Run deploy
 
 ## Quick start
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/krocks9903/rag-arcgis-chatbot.git
-cd rag-arcgis-chatbot
-```
-
-### 2. Create and activate a virtual environment
-
-On macOS/Linux:
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-```
-
-On Windows PowerShell:
 
 ```powershell
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-```
-
-### 3. Install dependencies
-
-```bash
 pip install -r requirements.txt
-```
-
-This installs FastAPI, Uvicorn, LangChain, FAISS, sentence-transformers, and the Groq/Hugging Face integrations needed by the app.
-
-### 4. Create your environment file
-
-```bash
-copy .env.example .env
-```
-
-Then edit the new file and add your Groq key:
-
-```env
-GROQ_API_KEY=your_groq_api_key_here
-```
-
-You can also leave the ArcGIS key blank unless you want to swap in your own map layer.
-
-### 5. Add or use your data
-
-The app looks for a CSV at:
-
-```text
-backend/data/data.csv
-```
-
-You can either:
-
-- replace that file with your own CSV, or
-- upload a CSV through the app UI if the endpoint is available
-
-### 6. Run the backend
-
-```bash
+copy .env.example .env   # add GROQ_API_KEY
 uvicorn app:app --reload --port 8000
 ```
 
-Once it starts, open:
+Open http://localhost:8000 — the API serves the frontend when `SERVE_FRONTEND=true` (default).
 
-- API docs: http://localhost:8000/docs
-- Frontend: open frontend/index.html in your browser, or serve the folder with a simple server
+Or serve the frontend separately on port 3000 (`python -m http.server 3000` in `frontend/`).
 
-### 7. Open the frontend
+## Pipeline architecture
 
-From the repo root:
-
-```bash
-cd frontend
-python -m http.server 3000
+```text
+Question → Router
+  ├─ structured  → pandas filters (counts, year, status, location)
+  ├─ keyword     → ApplicationID / minutes / token search
+  ├─ mixed       → keyword first, else RAG
+  └─ rag         → BM25 + FAISS (RRF) → reranker → CRAG → Groq JSON
 ```
 
-Then open http://localhost:3000 in your browser.
+| Component | Default |
+|-----------|---------|
+| Embeddings | `BAAI/bge-small-en-v1.5` (`EMBEDDING_MODEL`) |
+| Reranker | `BAAI/bge-reranker-base` (`RERANKER_MODEL`) |
+| Score threshold | `0.35` |
+| CRAG max iterations | `2` |
+
+Production Docker/Cloud Run can set `EMBEDDING_MODEL=BAAI/bge-m3` for higher quality.
+
+## API
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /health` | Liveness + index stats |
+| `GET /ready` | Readiness (index loaded) |
+| `POST /chat` | Structured JSON answer |
+| `POST /chat/stream` | SSE stream (`meta` → `token` → `done`) |
+| `POST /load` | Upload replacement CSV |
 
 ## Project structure
 
 ```text
 rag-arcgis-chatbot/
 ├── .github/workflows/
-│   ├── ci.yml              # lint + pytest on push/PR
-│   └── deploy.yml          # Cloud Run deploy (opt-in)
+│   ├── ci.yml           # lint + pytest + optional RAGAS
+│   ├── deploy.yml       # Cloud Run (opt-in)
+│   └── sync-data.yml    # weekly EagleGIS gold CSV sync
 ├── backend/
-│   ├── app.py
-│   ├── requirements.txt
-│   ├── Dockerfile          # bakes FAISS index + embedding model at build time
-│   ├── .env.example
-│   ├── data/
-│   │   └── data.csv
-│   └── tests/
+│   ├── app.py           # FastAPI + static frontend
+│   ├── config.py
+│   ├── store.py         # FAISS + BM25 index
+│   ├── retrieval.py     # hybrid RRF + rerank
+│   ├── router.py
+│   ├── structured_path.py
+│   ├── keyword_path.py
+│   ├── rag_path.py      # CRAG + Groq
+│   ├── orchestrator.py
+│   └── tests/golden_qa.json
 ├── frontend/
-│   ├── index.html
-│   ├── styles.css
-│   ├── app.js
-│   └── assets/
 ├── pipeline/               # EagleGIS PDF-extraction pipeline (see pipeline/README.md)
 │   ├── build.py            # main orchestrator
 │   ├── verify.py           # Lee County parcel cross-check
+│   ├── export_gold.py      # regenerate gold CSV from silver tables
 │   ├── eaglegis/           # extractors, classifiers, location resolver
-│   ├── requirements.txt
 │   └── tests/
 ├── pdfs/                   # source meeting-minute PDFs + legacy Estero_Meetings_Final.csv
-├── normalized_csv/         # pipeline deliverables (core/, v2/, arcgis/, review/)
-├── data/
-│   └── estero_minutes_urls.txt   # filename → estero-fl.gov document URL lookup
-└── README.md
+├── data/                   # pipeline deliverables, medallion tiers
+│   ├── bronze/             # hand-curated inputs (geocode overrides, URL lookup)
+│   ├── silver/             # relational tables (core/, v2/) + QA triage (review/)
+│   └── gold/               # meetings_ai_public.csv + arcgis/ map exports
+└── scripts/eval_ragas.py
 ```
 
 ## Data pipeline
 
 The `pipeline/` directory contains the EagleGIS extraction pipeline that
-produces the Estero meeting data. It parses meeting-minute PDFs from
-`pdfs/` into normalized CSVs under `normalized_csv/` (relational tables,
-ArcGIS map exports split by category, and human-QA triage files), resolving
-each agenda item to a verified (lat, lon) via Lee County parcel data.
+produces the Estero meeting data in this repo. It parses meeting-minute
+PDFs from `pdfs/` into the medallion CSVs under `data/`, resolving each
+agenda item to a verified (lat, lon) via Lee County parcel data, and
+exports `data/gold/meetings_ai_public.csv` — the corpus the chatbot
+backend consumes.
 
 ```bash
 pip install -r pipeline/requirements.txt
-python pipeline/build.py --pdf-dir pdfs --source-csv pdfs/Estero_Meetings_Final.csv --out-dir normalized_csv
+python pipeline/build.py --pdf-dir pdfs --source-csv pdfs/Estero_Meetings_Final.csv --out-dir data
 python pipeline/verify.py          # Lee County parcel cross-check
 python -m pytest pipeline/tests -q
 ```
@@ -143,20 +105,25 @@ python -m pytest pipeline/tests -q
 See [`pipeline/README.md`](pipeline/README.md) for CLI flags, module
 internals, deliverable schemas, and the review workflow.
 
+## CI / data sync
+
+- **CI** runs router + golden Q&A tests without a Groq key.
+- **sync-data.yml** pulls `meetings_ai_public.csv` from EagleGIS every Monday.
+- **RAGAS eval** (`workflow_dispatch` + `GROQ_API_KEY`): `python scripts/eval_ragas.py`
+- **Pipeline workflows** (`pipeline-ci`, `pipeline-refresh`, `pipeline-drift-watch`)
+  test the extraction pipeline, rebuild `data/` on new PDFs, and re-verify
+  committed coordinates against live Lee County parcels.
+
 ## Production frontend
 
-The frontend reads the API from `API_BASE` in `app.js`:
-
-- **Local dev** (frontend on port 3000, backend on 8000): defaults to `http://localhost:8000`
-- **Same-origin deploy**: defaults to `window.location.origin`
-- **Split hosting** (e.g. GitHub Pages + Cloud Run): uncomment and set in `index.html`:
+Set before `app.js` when API is on a different host:
 
 ```html
-<script>window.API_BASE = "https://your-service-abc.run.app";</script>
+<script>window.API_BASE = "https://your-service.run.app";</script>
 ```
 
 ## Notes
 
-- The app uses a local FAISS index and local embeddings, so it can run without a hosted vector database.
-- The first run may take a little longer while the embedding model downloads.
-- If you want to use a different map layer, update the ArcGIS configuration in the frontend HTML.
+- Index is rebuilt when `data.csv` changes (hash in `faiss_index/manifest.json`).
+- Set `SERVE_FRONTEND=false` in Cloud Run when frontend is hosted elsewhere.
+- Optional tracing: `OTEL_ENABLED=true` + `pip install -r requirements-eval.txt`

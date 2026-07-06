@@ -26,14 +26,19 @@ jobs:
         run: python -m compileall backend
 
   test:
-    name: Pytest (backend smoke)
+    name: Pytest (router + golden + smoke)
     runs-on: ubuntu-latest
+    env:
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+      RERANKER_MODEL: cross-encoder/ms-marco-MiniLM-L-6-v2
+      SERVE_FRONTEND: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: backend/requirements.txt
       - name: Install dependencies
         run: |
           pip install -r backend/requirements.txt
@@ -41,3 +46,22 @@ jobs:
       - name: Run tests
         working-directory: backend
         run: pytest -q
+
+  eval:
+    name: RAGAS eval (optional)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install eval dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install -r backend/requirements-eval.txt
+      - name: Run RAGAS golden eval
+        working-directory: backend
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python ../scripts/eval_ragas.py || echo "Eval skipped if GROQ_API_KEY unset"

@@ -1,0 +1,33 @@
+name: Sync data from EagleGIS
+
+on:
+  schedule:
+    - cron: "0 11 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Pull gold CSV and open commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download latest EagleGIS gold CSV
+        run: |
+          curl -fsSL "${{ vars.EAGLEGIS_CSV_URL || 'https://raw.githubusercontent.com/EagleGIS-FGCU/EagleGIS/main/app/data/gold/meetings_ai_public.csv' }}" \
+            -o backend/data/data.csv
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- backend/data/data.csv; then
+            echo "No data changes."
+            exit 0
+          fi
+          git add backend/data/data.csv
+          git commit -m "chore(data): sync gold CSV from EagleGIS"
+          git push

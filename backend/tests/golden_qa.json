@@ -1,0 +1,24 @@
+[
+  {
+    "question": "DOS2023-E005",
+    "route": "keyword",
+    "expect_ids": ["DOS2023-E005"]
+  },
+  {
+    "question": "How many records were approved in 2023?",
+    "route": "structured",
+    "min_rows": 1
+  },
+  {
+    "question": "What happened with Goodwill?",
+    "route": "rag"
+  },
+  {
+    "question": "Show minutes for 2023",
+    "route": "keyword"
+  },
+  {
+    "question": "Corkscrew Road projects",
+    "route": "mixed"
+  }
+]
