@@ -1,0 +1,67 @@
+name: Pipeline Drift Watch
+
+# Adapted from the legacy EagleGIS repo's drift-watch.yml. Read-only:
+# re-verifies the committed map deliverable
+# (data/gold/arcgis/arcgis_agenda_map_data.csv) against LIVE Lee County
+# parcel data and fails on any MISMATCH. Catches:
+#
+#   - Upstream reparceling / address changes at Lee County that silently
+#     invalidate committed coordinates
+#   - Manual edits to the committed CSVs that no longer match reality
+#
+# Deliberately does NOT restore the .cache/ from previous runs — with a warm
+# cache verify.py would replay stored responses and never see upstream
+# changes. Every run queries Lee County fresh.
+#
+# The legacy version ran every 6 hours because its serving copy (Supabase)
+# could be hand-edited at any time. Parcels change slowly, so daily is
+# plenty here. Never commits or publishes anything.
+
+on:
+  schedule:
+    # 06:00 UTC = 02:00 EDT / 01:00 EST — before the working day starts.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: pipeline-drift-watch
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: verify (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      # verify.py is stdlib-only: no pip install, no tesseract needed.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify committed map data against Lee County parcels
+        run: python pipeline/verify.py
+
+      - name: Gate on MISMATCH rows
+        run: |
+          python - <<'EOF'
+          import csv, sys
+          path = "data/silver/review/location_verification.csv"
+          with open(path, encoding="utf-8") as fh:
+              rows = list(csv.DictReader(fh))
+          bad = [r for r in rows if r["Status"] == "MISMATCH"]
+          for r in bad:
+              print(f"::error::MISMATCH {r['AgendaItemID']} — {r['Location']}: {r['Notes']}")
+          print(f"{len(bad)} MISMATCH row(s) out of {len(rows)} verified")
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Upload verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-verification-${{ github.run_id }}
+          path: data/silver/review/location_verification.csv
+          retention-days: 30
+          if-no-files-found: warn

@@ -2,7 +2,7 @@
 
 This directory contains the EagleGIS data pipeline, which extracts Estero
 municipal meeting minutes (Village Council + Planning Zoning & Design Board
-PDFs in `pdfs/`) into the normalized CSVs under `normalized_csv/`. What
+PDFs in `pdfs/`) into the normalized CSVs under `data/`. What
 follows is the operational reference: CLI flags, internal modules, the
 meeting-type model, OCR fallback, the location resolver internals,
 deliverable schemas, and the review workflow.
@@ -16,7 +16,7 @@ deliverable schemas, and the review workflow.
 python pipeline/build.py `
     --pdf-dir pdfs `
     --source-csv pdfs/Estero_Meetings_Final.csv `
-    --out-dir normalized_csv
+    --out-dir data
 
 # Verifier
 python pipeline/verify.py
@@ -31,7 +31,7 @@ python pipeline/verify.py
 | `--source-csv` | none | Legacy `Estero_Meetings_Final.csv` path |
 | `--source-git-ref` | `origin/script` | Git ref the legacy CSV lives on if `--source-csv` is absent |
 | `--source-git-path` | `pdfs/Estero_Meetings_Final.csv` | Path to the legacy CSV inside that ref |
-| `--out-dir` | `normalized_csv` | Where to write all output CSVs |
+| `--out-dir` | `data` | Where to write all output CSVs |
 | `--max-pages` | none | Cap pages per PDF for fast debugging |
 
 If `--pdf-dir` doesn't exist locally, the loader falls back to reading
@@ -41,8 +41,8 @@ PDFs from `origin/script` automatically.
 
 | Flag | Default | What it does |
 |---|---|---|
-| `--input` | `normalized_csv/arcgis/arcgis_agenda_map_data.csv` | Input map data to verify |
-| `--output` | `normalized_csv/review/location_verification.csv` | Where to write the triage report |
+| `--input` | `data/gold/arcgis/arcgis_agenda_map_data.csv` | Input map data to verify |
+| `--output` | `data/silver/review/location_verification.csv` | Where to write the triage report |
 | `--cache-dir` | `.cache/leepa` | Where to persist Lee County API responses between runs |
 | `--limit` | `0` (all) | Verify only the first N rows (useful for smoke tests) |
 | `--no-network` | off | Skip rows whose API responses aren't already cached |
@@ -80,7 +80,7 @@ pipeline/
 6. **Classify** each item — action type, category, projects, locations
 7. **Resolve locations** via `location_resolver.py` — produces one typed
    point per agenda item
-8. **Apply geocode cache** from `normalized_csv/review/geocoded_locations.csv`
+8. **Apply geocode cache** from `data/bronze/geocoded_locations.csv`
    for any item the resolver couldn't pin
 9. **Write CSVs** — see ["Pipeline deliverables"](#pipeline-deliverables) below
 
@@ -234,9 +234,9 @@ so the parcel cross-check doesn't apply.
 ## Review workflow
 
 1. Run the pipeline: `python pipeline/build.py ...`
-2. Confirm `normalized_csv/arcgis/arcgis_missing_coordinates.csv` has no data rows
+2. Confirm `data/gold/arcgis/arcgis_missing_coordinates.csv` has no data rows
 3. Run the verifier: `python pipeline/verify.py`
-4. Open `normalized_csv/review/location_verification.csv` in Excel / a viewer:
+4. Open `data/silver/review/location_verification.csv` in Excel / a viewer:
    - Filter `Status` to `MISMATCH` / `POINT_OUTSIDE_PARCEL` first — these
      are real placement errors and need either a coordinate fix in
      `review/geocoded_locations.csv` or a manual override in `config.py`
@@ -244,7 +244,7 @@ so the parcel cross-check doesn't apply.
      exist in the Lee County roll; usually a typo or a new lot
    - `VENUE_ONLY` / `VENUE_NO_PARCEL` rows aren't errors, but spot-check a
      few to make sure the resolver picked the right venue
-5. Open `normalized_csv/review/extraction_review.csv` for items the extractor wasn't confident on
+5. Open `data/silver/review/extraction_review.csv` for items the extractor wasn't confident on
 6. Apply fixes (override in `config.py`, geocode in `review/geocoded_locations.csv`)
    and re-run
 
@@ -272,10 +272,16 @@ python -m pytest pipeline/tests/test_pipeline_parsers.py::PipelineParserTests::t
 
 ## Pipeline deliverables
 
-`pipeline/build.py` writes everything under `normalized_csv/`, grouped into
-four subfolders.
+`pipeline/build.py` writes everything under `data/`, grouped into
+medallion tiers (matching the legacy EagleGIS repo and the chatbot's
+`sync-data.yml` consumer contract):
 
-### `core/` — relational schema
+- `bronze/` — hand-curated inputs the build reads but never regenerates
+- `silver/` — validated relational tables (`core/`, `v2/`) and QA triage (`review/`)
+- `gold/` — publication-ready deliverables: `meetings_ai_public.csv` (the
+  chatbot corpus) and `arcgis/` (map exports + per-category layers)
+
+### `silver/core/` — relational schema
 
 | File | What it holds |
 |---|---|
@@ -292,14 +298,20 @@ four subfolders.
 | `motions.csv` | Extracted motion lines with proposer, seconder, outcome |
 | `boards.csv`, `meeting_formats.csv` | Reference dimensions for the relational model |
 
-### `v2/` — wider resolver-detail variants
+### `silver/v2/` — wider resolver-detail variants
 
 | File | What it holds |
 |---|---|
 | `locations_v2.csv` | One row per (item, location) with **typed resolver output** — `location_type`, `resolution_notes`, `geocode_confidence`, raw and normalized address, lat/lon |
 | `meetings_v2.csv`, `documents_v2.csv` | Wider variants of `core/meetings.csv` / `core/documents.csv` |
 
-### `arcgis/` — map exports + per-category layers
+### `gold/` — publication-ready deliverables
+
+| File | What it holds |
+|---|---|
+| `meetings_ai_public.csv` | Flat AI-ready corpus, one row per agenda item (52 columns incl. `CitationText`, `AiReady`, primary location). This is the file the rag-arcgis-chatbot backend syncs to `backend/data/data.csv`. Regenerate standalone with `python pipeline/export_gold.py` |
+
+### `gold/arcgis/` — map exports + per-category layers
 
 | File | What it holds |
 |---|---|
@@ -308,11 +320,16 @@ four subfolders.
 | `layers/<category>.csv` | The same agenda rows split by category into one file per ArcGIS layer (Residential, Commercial & Mixed-Use, Industry/Mining/Agriculture, Transportation, Utilities/Stormwater/Environment, Public Facilities, Budget/Contracts, Meetings/Records) |
 | `arcgis_missing_coordinates.csv` | Agenda rows that need a geocode added before they can be mapped |
 
-### `review/` — human QA triage + geocode override cache
+### `bronze/` — hand-curated inputs
 
 | File | What it holds |
 |---|---|
 | `geocoded_locations.csv` | **Hand-curated geocode overrides** — read (never regenerated) by every build; do not delete |
+
+### `silver/review/` — human QA triage
+
+| File | What it holds |
+|---|---|
 | `location_candidates.csv` | Address candidates discovered during extraction that still need geocoding |
 | `unmapped_agenda_items.csv` | Items the pipeline classified but couldn't place on the map |
 | `extraction_review.csv` | Items flagged for human QA (OCR fallback, missing date, weak match) |

@@ -36,6 +36,7 @@ from eaglegis.extractors import (
     raw_pdf_url,
     split_csv_actions,
 )
+from eaglegis.gold import AI_PUBLIC_FIELDS, build_ai_public_rows
 from eaglegis.sources import PdfAsset, iter_git_pdfs, iter_local_pdfs, read_git_text
 from eaglegis.text import extract_pdf_text
 from eaglegis.writer import write_csv
@@ -81,7 +82,7 @@ MEETING_TYPE_SEEDS = [
 
 
 def _load_estero_url_lookup(data_dir: Path) -> dict[str, str]:
-    lookup_file = data_dir / "estero_minutes_urls.txt"
+    lookup_file = data_dir / "bronze" / "estero_minutes_urls.txt"
     if not lookup_file.exists():
         return {}
     lookup: dict[str, str] = {}
@@ -156,7 +157,7 @@ def parse_args() -> argparse.Namespace:
         default="pdfs/Estero_Meetings_Final.csv",
         help="Path to legacy CSV inside --source-git-ref.",
     )
-    parser.add_argument("--out-dir", default="normalized_csv", help="Output directory.")
+    parser.add_argument("--out-dir", default="data", help="Output directory.")
     parser.add_argument(
         "--max-pages",
         type=int,
@@ -1073,17 +1074,24 @@ class NormalizedBuilder:
         })
 
     def write(self, out_dir: Path) -> None:
-        # Output is grouped into subfolders so normalized_csv/ isn't one flat
-        # pile of ~25 files: core/ (frontend + relational schema), v2/ (wider
-        # resolver-detail variants), arcgis/ (map exports + per-category
-        # layers), review/ (human QA triage + the geocode override cache).
-        core_dir = out_dir / "core"
-        v2_dir = out_dir / "v2"
-        arcgis_dir = out_dir / "arcgis"
+        # Medallion layout, matching the legacy EagleGIS repo's bronze/silver/
+        # gold tiers (and the consumer contract in rag-arcgis-chatbot's
+        # sync-data.yml, which pulls gold/meetings_ai_public.csv):
+        #   bronze/ — hand-curated inputs (geocode overrides; never regenerated)
+        #   silver/ — validated relational tables (core/ + v2/) and QA triage
+        #             outputs (review/)
+        #   gold/   — publication-ready deliverables: the AI-ready flat CSV and
+        #             the ArcGIS map exports + per-category layers
+        bronze_dir = out_dir / "bronze"
+        silver_dir = out_dir / "silver"
+        core_dir = silver_dir / "core"
+        v2_dir = silver_dir / "v2"
+        review_dir = silver_dir / "review"
+        gold_dir = out_dir / "gold"
+        arcgis_dir = gold_dir / "arcgis"
         layers_dir = arcgis_dir / "layers"
-        review_dir = out_dir / "review"
 
-        self._apply_geocode_cache(review_dir / "geocoded_locations.csv")
+        self._apply_geocode_cache(bronze_dir / "geocoded_locations.csv")
 
         write_csv(core_dir / "boards.csv", self.boards, [
             "board_id", "code", "name", "active_from", "active_to",
@@ -1177,6 +1185,25 @@ class NormalizedBuilder:
         write_csv(review_dir / "extraction_review.csv", self.review_rows, [
             "filename", "meeting_id", "needs_ocr", "reason",
         ])
+        write_csv(
+            gold_dir / "meetings_ai_public.csv",
+            build_ai_public_rows(self._gold_tables()),
+            AI_PUBLIC_FIELDS,
+        )
+
+    def _gold_tables(self) -> dict[str, list[dict]]:
+        return {
+            "boards": self.boards,
+            "meeting_formats": self.meeting_formats,
+            "meeting_types": self.meeting_types,
+            "meetings": self.meetings,
+            "agenda_categories": self.agenda_categories,
+            "agenda_items": self.agenda_items,
+            "agenda_item_projects": self.agenda_item_projects,
+            "projects": self.projects,
+            "motions": self.motions,
+            "locations_v2": self.locations_v2,
+        }
 
     def _write_category_csvs(
         self,

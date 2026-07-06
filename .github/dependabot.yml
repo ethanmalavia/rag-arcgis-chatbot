@@ -1,0 +1,29 @@
+# Adapted from the legacy EagleGIS repo's dependabot.yml, scoped to the
+# pipeline component and the workflows. Backend deps are left to the
+# backend maintainers.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/pipeline"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    groups:
+      patches:
+        update-types: ["patch"]
+      minors:
+        update-types: ["minor"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ci"

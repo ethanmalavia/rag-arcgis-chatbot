@@ -1,0 +1,15 @@
+format_id,name,description
+1,Regular Meeting,Standard board meeting
+2,Special Meeting,Specially called meeting
+3,Workshop,Workshop or discussion meeting
+4,Joint Workshop,Joint workshop meeting
+5,Zoning Hearing,Zoning or development order hearing
+6,Organizational Meeting,Organizational business meeting
+7,Emergency Meeting,Special emergency meeting
+8,Budget Hearing,Budget or millage hearing
+9,Combined Hearing / Workshop,Combined hearing and workshop
+10,Comprehensive Plan Workshop,Comprehensive plan workshop
+11,Cancelled,Cancelled meeting notice
+12,Public Information Meeting,Public information meeting or open house
+13,Public Hearing,Public hearing
+14,Council Workshop,

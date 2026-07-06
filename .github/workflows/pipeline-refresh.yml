@@ -1,0 +1,121 @@
+name: Refresh pipeline deliverables
+
+# Adapted from the legacy EagleGIS repo's refresh-data.yml + pzdb_pilot.yml.
+# Runs the full pipeline and commits the regenerated data/ back to
+# the repo:
+#
+#   - On push of new/changed PDFs (or the hand-curated geocode overrides /
+#     URL lookup): "upload a PDF and the pipeline re-runs" — the legacy
+#     pzdb_pilot trigger.
+#   - Weekly Monday 07:00 UTC: same flow without input changes; picks up
+#     upstream Lee County parcel changes in resolved coordinates.
+#   - Manual dispatch from the Actions tab.
+#
+# Differences from legacy: refresh-data.yml also scraped estero-fl.gov for
+# new minutes and published silver to Supabase. This pipeline has no scraper
+# module and no Supabase — new PDFs arrive by committing them into pdfs/
+# (plus a matching line in data/bronze/estero_minutes_urls.txt), and the serving
+# copy (the ArcGIS webmap) is still imported manually from
+# data/gold/arcgis/layers/.
+#
+# The verify gate runs BEFORE the commit: if the rebuilt map data has any
+# MISMATCH rows against Lee County parcels, nothing is committed.
+#
+# The `pipeline` branch is listed for fork testing; drop it once this merges
+# upstream.
+
+on:
+  push:
+    branches: [main, pipeline]
+    paths:
+      - "pdfs/**"
+      - "data/bronze/geocoded_locations.csv"
+      - "data/bronze/estero_minutes_urls.txt"
+      - ".github/workflows/pipeline-refresh.yml"
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: pipeline-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: build, verify, commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+
+      - name: Install system OCR dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      # Warm resolver cache: only genuinely new locations (new PDFs) hit the
+      # live API. pipeline-drift-watch.yml covers the cold live re-check.
+      - name: Restore Lee County API cache
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: leepa-cache-refresh-${{ github.run_id }}
+          restore-keys: |
+            leepa-cache-
+
+      - name: Rebuild data
+        run: >
+          python pipeline/build.py
+          --pdf-dir pdfs
+          --source-csv pdfs/Estero_Meetings_Final.csv
+          --out-dir data
+
+      - name: Verify against Lee County parcels
+        run: python pipeline/verify.py
+
+      - name: Gate on MISMATCH rows
+        run: |
+          python - <<'EOF'
+          import csv, sys
+          path = "data/silver/review/location_verification.csv"
+          with open(path, encoding="utf-8") as fh:
+              rows = list(csv.DictReader(fh))
+          bad = [r for r in rows if r["Status"] == "MISMATCH"]
+          for r in bad:
+              print(f"::error::MISMATCH {r['AgendaItemID']} — {r['Location']}: {r['Notes']}")
+          print(f"{len(bad)} MISMATCH row(s) out of {len(rows)} verified")
+          sys.exit(1 if bad else 0)
+          EOF
+
+      - name: Commit refreshed deliverables
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "No deliverable changes to commit."
+          else
+            git commit -m "chore(data): refresh data deliverables [skip ci]"
+            git push
+          fi
+
+      - name: Upload verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: location-verification-${{ github.run_id }}
+          path: data/silver/review/location_verification.csv
+          retention-days: 90
+          if-no-files-found: warn
