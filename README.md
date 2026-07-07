@@ -106,8 +106,14 @@ internals, deliverable schemas, and the review workflow.
 
 ### How the pipeline works
 
-`pipeline/build.py` orchestrates six stages, each backed by a module in
-`pipeline/eaglegis/`:
+New minutes are discovered automatically: `pipeline/discover.py` scrapes the
+village's Council and PZDB minutes index pages, downloads any newly posted
+PDF into `pdfs/`, and records its URL in the bronze lookup. The weekly
+refresh workflow runs it before every rebuild, so the corpus tracks
+estero-fl.gov without manual steps (committing a PDF by hand still works).
+
+From there, `pipeline/build.py` orchestrates six stages, each backed by a
+module in `pipeline/eaglegis/`:
 
 1. **Text extraction** (`text.py`) — pulls embedded text from each PDF with
    PyMuPDF. Scanned documents with too little embedded text fall back to
@@ -158,11 +164,12 @@ chatbot and the webmap only ever read gold. Silver is for anyone who needs to
 query or re-derive; bronze is the part a human maintains by hand.
 
 **Who owns the data:** the committed CSVs are canonical to the CI environment.
-`pipeline-refresh` rebuilds and commits them on the runners whenever a PDF is
-added, and `pipeline-ci`'s rebuild guard fails any PR whose data doesn't match
-a fresh rebuild. To update data, commit the new PDF (plus its URL line in
-`bronze/estero_minutes_urls.txt`) and let the workflow do the rest — don't
-commit locally built CSVs.
+Every week `pipeline-refresh` scrapes estero-fl.gov for new minutes, downloads
+them, rebuilds, verifies against Lee County parcels, and commits the result —
+no manual step required. `pipeline-ci`'s rebuild guard fails any PR whose data
+doesn't match a fresh rebuild. If you do need to add a PDF by hand, commit it
+to `pdfs/` (plus its URL line in `bronze/estero_minutes_urls.txt`) and the same
+flow runs — but never commit locally built CSVs.
 
 ## CI / data sync
 
@@ -170,8 +177,9 @@ commit locally built CSVs.
 - **sync-data.yml** pulls `meetings_ai_public.csv` from EagleGIS every Monday.
 - **RAGAS eval** (`workflow_dispatch` + `GROQ_API_KEY`): `python scripts/eval_ragas.py`
 - **Pipeline workflows** (`pipeline-ci`, `pipeline-refresh`, `pipeline-drift-watch`)
-  test the extraction pipeline, rebuild `backend/data/` on new PDFs, and re-verify
-  committed coordinates against live Lee County parcels.
+  test the extraction pipeline, scrape estero-fl.gov weekly for new minutes and
+  rebuild `backend/data/`, and re-verify committed coordinates against live Lee
+  County parcels daily.
 
 ## Production frontend
 
