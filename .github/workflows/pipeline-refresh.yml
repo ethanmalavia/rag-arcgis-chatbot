@@ -43,12 +43,15 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   refresh:
     name: build, verify, commit
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    outputs:
+      data_changed: ${{ steps.commit.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
 
@@ -104,17 +107,22 @@ jobs:
           EOF
 
       - name: Commit refreshed deliverables
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add pdfs/ backend/data/
           if git diff --staged --quiet; then
             echo "No deliverable changes to commit."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
           else
+            # [skip ci] avoids a flaky pipeline-ci rebuild loop; deploy is
+            # triggered explicitly below so Cloud Run still gets the new CSV.
             git commit -m "chore(data): refresh data deliverables [skip ci]"
             # The branch may have moved while the build ran; replay on top.
             git pull --rebase origin "${{ github.ref_name }}"
             git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Upload verification report
@@ -125,3 +133,11 @@ jobs:
           path: backend/data/silver/review/location_verification.csv
           retention-days: 90
           if-no-files-found: warn
+
+      - name: Redeploy Cloud Run with refreshed CSV
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run deploy.yml --ref "${{ github.ref_name }}"
+          echo "Triggered Deploy to Cloud Run so the frontend picks up the new gold CSV."
