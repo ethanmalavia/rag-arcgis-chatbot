@@ -1,0 +1,14 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+**/.venv
+**/.env
+**/.env.*
+!**/.env.example
+backend/faiss_index/
+backend/tests/
+**/.pytest_cache
+**/.ruff_cache
+docs/
+

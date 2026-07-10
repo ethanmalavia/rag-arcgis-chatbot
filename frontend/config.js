@@ -1,4 +1,10 @@
-// API base URL — override per environment (local Docker, Cloud Run, etc.)
-// Docker Compose: http://localhost:8080
-// Cloud Run: set in config.production.js or inline in index.html
-window.API_BASE = window.API_BASE || "http://localhost:8080";
+// Same-origin when the UI is served with the API (Cloud Run, single-container local).
+// Split docker-compose stack: nginx on :3000 talks to API on :8080.
+if (
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") &&
+  window.location.port === "3000"
+) {
+  window.API_BASE = "http://localhost:8080";
+}
+

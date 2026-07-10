@@ -1,10 +1,11 @@
-name: Deploy backend to Cloud Run
+name: Deploy to Cloud Run
 
 on:
   push:
     branches: [main]
     paths:
       - "backend/**"
+      - "frontend/**"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
@@ -33,7 +34,7 @@ jobs:
         run: |
           gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
           IMAGE="${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.AR_REPO }}/rag-arcgis-chatbot:${{ github.sha }}"
-          docker build -t "$IMAGE" backend
+          docker build -f backend/Dockerfile -t "$IMAGE" .
           docker push "$IMAGE"
           echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
 
@@ -52,4 +53,4 @@ jobs:
             --timeout 300 \
             --cpu-boost \
             --startup-probe=initialDelaySeconds=0,timeoutSeconds=10,periodSeconds=10,failureThreshold=30,httpGet.port=8080,httpGet.path=/ready \
-            --set-env-vars "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }},SERVE_FRONTEND=false,EMBEDDING_MODEL=BAAI/bge-small-en-v1.5,RERANKER_MODEL=BAAI/bge-reranker-base"
+            --set-env-vars "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }},SERVE_FRONTEND=true,EMBEDDING_MODEL=BAAI/bge-small-en-v1.5,RERANKER_MODEL=BAAI/bge-reranker-base"
