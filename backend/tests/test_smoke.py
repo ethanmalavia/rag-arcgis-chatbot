@@ -38,7 +38,7 @@ def test_parse_structured_answer_json():
         '"date":"8/22/2023","document_url":"https://example.com/doc.pdf"}]}'
     )
     result = parse_structured_answer(raw)
-    assert result.summary == "Found one project."
+    assert result.summary == "- Found one project."
     assert len(result.projects) == 1
     assert result.projects[0].id == "DOS2022-E016"
 
@@ -46,7 +46,7 @@ def test_parse_structured_answer_json():
 def test_parse_structured_answer_strips_markdown_fence():
     raw = '```json\n{"summary":"No match.","projects":[]}\n```'
     result = parse_structured_answer(raw)
-    assert result.summary == "No match."
+    assert result.summary == "- No match."
     assert result.projects == []
     assert result.meta.get("parse_ok") is True
 
