@@ -370,9 +370,9 @@ function appendMsg(role, content) {
     const bubble = document.createElement("div"); bubble.className = "bubble";
     if (prose) {
       const proseEl = document.createElement("div");
-      proseEl.innerHTML = prose.replace(/\n/g, "<br>");
+      proseEl.className = "bot-prose";
+      formatProse(proseEl, prose);
       bubble.appendChild(proseEl);
-      ensureMarked().then(() => formatProse(proseEl, prose));
     }
     // Project cards
     projects.forEach(p => bubble.appendChild(renderProjectCard(p)));
