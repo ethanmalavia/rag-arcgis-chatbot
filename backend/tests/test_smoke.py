@@ -61,6 +61,15 @@ def test_choose_llm_tier_collaborate_when_both_keys(monkeypatch):
     assert choose_llm_tier("Corkscrew Road") == "gemini"
 
 
+def test_finalize_prose_trims_incomplete_tail():
+    from rag_path import finalize_prose
+
+    assert finalize_prose('  "Hello there."  ') == "Hello there."
+    cut = finalize_prose("Approved the contract. Pending more review of th")
+    assert cut.endswith(".")
+    assert "Pending more review of th" not in cut
+
+
 def test_keyword_shortcut_for_app_id():
     from keyword_path import is_strong_keyword_hit
     from models import ChatResponse, ProjectOut

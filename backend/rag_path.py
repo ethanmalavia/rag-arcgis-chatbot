@@ -34,20 +34,22 @@ You help residents understand Planning, Zoning & Design Board decisions using of
 RULES — follow exactly:
 1. Only use facts from the Context. Never invent any detail.
 2. If no relevant info exists, set summary to exactly: "I don't have records on that." and projects to [].
-3. Write plain English in summary and project summaries. No markdown, no asterisks.
-4. For each matching project, fill every field from the Context only.
-5. document_url must be copied exactly from Document_Link in the context — never invent URLs.
-6. status must be one of: Approved, Denied, Continued, or No decision recorded.
+3. Write plain English. No markdown, no asterisks.
+4. The top-level "summary" must fully answer the resident's question in 2–4 complete sentences (end each with a period). Do not stop mid-thought.
+5. For each matching project, fill every field from the Context only. Each project "summary" must be 1–2 complete sentences.
+6. document_url must be copied exactly from Document_Link in the context — never invent URLs.
+7. status must be one of: Approved, Denied, Continued, or No decision recorded.
+8. Prefer the most relevant projects (up to 5).
 
 Return ONLY valid JSON (no markdown fences) with this exact shape:
 {{
-  "summary": "one closing sentence",
+  "summary": "2-4 complete sentences that answer the question",
   "projects": [
     {{
       "title": "short project name from ProjectName",
       "id": "ApplicationID",
       "location": "Location or LocationName",
-      "summary": "1-2 sentences",
+      "summary": "1-2 complete sentences",
       "status": "Approved | Denied | Continued | No decision recorded",
       "date": "MeetingDate",
       "document_url": "Document_Link"
@@ -70,7 +72,8 @@ RULES:
 2. If nothing relevant, return {{"projects": []}}.
 3. document_url must be copied exactly from Document_Link.
 4. status must be one of: Approved, Denied, Continued, or No decision recorded.
-5. Keep each project summary to 1-2 plain sentences (no markdown).
+5. Each project summary must be 1–2 COMPLETE sentences that end with a period — never cut off mid-sentence.
+6. Return at most 5 of the most relevant projects for the question.
 
 Return ONLY valid JSON (no markdown fences):
 {{
@@ -79,7 +82,7 @@ Return ONLY valid JSON (no markdown fences):
       "title": "short project name",
       "id": "ApplicationID",
       "location": "Location",
-      "summary": "1-2 sentences",
+      "summary": "1-2 complete sentences",
       "status": "Approved | Denied | Continued | No decision recorded",
       "date": "MeetingDate",
       "document_url": "Document_Link"
@@ -94,14 +97,16 @@ Question: {question}
 
 JSON:"""
 
-# Groq role: citizen-facing closing summary from Gemini's extracted projects.
-SUMMARY_TEMPLATE = """You write short answers for Estero residents about Planning & Zoning decisions.
+# Groq role: citizen-facing answer from Gemini's extracted projects.
+SUMMARY_TEMPLATE = """You write clear answers for Estero residents about Planning & Zoning decisions.
 
-Given the resident question and the verified project list, write ONE plain closing sentence.
+Given the resident question and the verified project list, write a complete answer in 2–4 sentences.
 Rules:
-- Use only these projects. Do not invent records.
+- Directly answer the question using only these projects. Do not invent records.
 - If projects is empty, reply exactly: I don't have records on that.
-- No markdown, no JSON, no bullet lists — just the sentence.
+- Cover the main outcomes (what was approved, denied, continued, or discussed) and name key projects or locations when helpful.
+- Use complete sentences that end with a period. Never stop mid-word or mid-sentence.
+- No markdown, no JSON, no bullet lists — plain prose only.
 
 Question: {question}
 
@@ -135,7 +140,7 @@ def get_llm(provider: Provider):
                 model=GEMINI_MODEL,
                 google_api_key=os.environ["GEMINI_API_KEY"],
                 temperature=0,
-                max_output_tokens=600,
+                max_output_tokens=1600,
             )
             logger.info("Initialized Gemini LLM model=%s", GEMINI_MODEL)
         return _llms[cache_key]
@@ -150,8 +155,8 @@ def get_llm(provider: Provider):
             model=GROQ_MODEL,
             groq_api_key=os.environ["GROQ_API_KEY"],
             temperature=0.0,
-            max_tokens=400,
-            timeout=60,
+            max_tokens=900,
+            timeout=90,
             max_retries=1,
         )
         logger.info("Initialized Groq LLM model=%s", GROQ_MODEL)
@@ -181,14 +186,34 @@ def _extract_json(text: str) -> dict[str, Any]:
         raise
 
 
+def finalize_prose(text: str) -> str:
+    """Trim quotes/whitespace and drop a trailing incomplete fragment."""
+    text = (text or "").strip().strip('"').strip("'").strip()
+    if not text:
+        return text
+    if text[-1] in ".!?":
+        return text
+    # Prefer ending on the last completed sentence when a fragment trails after it.
+    sentence_ends = [m.end() - 1 for m in re.finditer(r"[.!?](?=\s|$)", text)]
+    if sentence_ends and sentence_ends[-1] >= 20:
+        # Keep through that punctuation (drop the unfinished tail).
+        return text[: sentence_ends[-1] + 1].strip()
+    if len(text.split()) >= 6:
+        return text.rstrip(",;:- ") + "."
+    return text
+
+
 def parse_structured_answer(raw: str, route: str = RouteKind.RAG.value) -> ChatResponse:
     try:
         payload = _extract_json(raw)
         projects = [ProjectOut.model_validate(p) for p in payload.get("projects", [])]
-        summary = str(payload.get("summary", "")).strip()
+        for p in projects:
+            p.summary = finalize_prose(p.summary)
+            p.title = (p.title or "").strip()
+        summary = finalize_prose(str(payload.get("summary", "")).strip())
         if not summary and not projects:
             summary = "I don't have records on that."
-        result = ChatResponse(summary=summary, projects=projects, answer=summary, route=route)
+        result = ChatResponse(summary=summary, projects=projects[:5], answer=summary, route=route)
         result.meta["parse_ok"] = True
         return result
     except Exception:
@@ -200,7 +225,10 @@ def parse_structured_answer(raw: str, route: str = RouteKind.RAG.value) -> ChatR
 def parse_projects_only(raw: str) -> list[ProjectOut]:
     try:
         payload = _extract_json(raw)
-        return [ProjectOut.model_validate(p) for p in payload.get("projects", [])]
+        projects = [ProjectOut.model_validate(p) for p in payload.get("projects", [])]
+        for p in projects:
+            p.summary = finalize_prose(p.summary)
+        return projects[:5]
     except Exception:
         logger.warning("Gemini extract JSON parse failed")
         return []
@@ -269,20 +297,25 @@ def gemini_extract_projects(question: str, context: str) -> list[ProjectOut]:
 
 
 def groq_write_summary(question: str, projects: list[ProjectOut]) -> str:
-    projects_json = json.dumps([p.model_dump() for p in projects], ensure_ascii=False)
+    projects_json = json.dumps([p.model_dump() for p in projects[:5]], ensure_ascii=False)
     prompt = PromptTemplate(template=SUMMARY_TEMPLATE, input_variables=["question", "projects_json"])
     chain = prompt | get_llm("groq") | StrOutputParser()
-    text = chain.invoke({"question": question, "projects_json": projects_json}).strip()
-    text = text.strip().strip('"').strip()
+    text = chain.invoke({"question": question, "projects_json": projects_json})
+    text = finalize_prose(text)
     if not text:
         if projects:
-            return f"Found {len(projects)} matching record{'s' if len(projects) != 1 else ''}."
+            titles = ", ".join(p.title for p in projects[:3] if p.title)
+            return finalize_prose(
+                f"Records show {len(projects)} related item{'s' if len(projects) != 1 else ''}"
+                + (f", including {titles}" if titles else "")
+                + "."
+            )
         return "I don't have records on that."
     return text
 
 
 def stream_groq_summary(question: str, projects: list[ProjectOut]) -> Iterator[str]:
-    projects_json = json.dumps([p.model_dump() for p in projects], ensure_ascii=False)
+    projects_json = json.dumps([p.model_dump() for p in projects[:5]], ensure_ascii=False)
     prompt = PromptTemplate(template=SUMMARY_TEMPLATE, input_variables=["question", "projects_json"])
     chain = prompt | get_llm("groq") | StrOutputParser()
     for chunk in chain.stream({"question": question, "projects_json": projects_json}):

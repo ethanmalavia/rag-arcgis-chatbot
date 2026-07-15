@@ -17,6 +17,21 @@ STATUS_MAP = {
 }
 
 
+def _clip_at_sentence(text: str, max_len: int = 480) -> str:
+    """Hard-cap display length without mid-word/mid-sentence cuts when possible."""
+    text = (text or "").strip()
+    if len(text) <= max_len:
+        return text
+    chunk = text[:max_len]
+    last = max(chunk.rfind(". "), chunk.rfind("! "), chunk.rfind("? "))
+    if last >= max_len // 3:
+        return chunk[: last + 1].strip()
+    space = chunk.rfind(" ")
+    if space >= max_len // 2:
+        return chunk[:space].rstrip(",;: ") + "…"
+    return chunk.rstrip() + "…"
+
+
 def _row_to_project(row: dict) -> ProjectOut:
     outcome = row_value(row, "outcome", "action_taken", "status")
     status = "No decision recorded"
@@ -27,12 +42,12 @@ def _row_to_project(row: dict) -> ProjectOut:
         status = "Denied"
     elif "continued" in low:
         status = "Continued"
-    title = row_value(row, "project_name")[:120]
+    title = _clip_at_sentence(row_value(row, "project_name"), 140)
     return ProjectOut(
         title=title,
         id=row_value(row, "application_id"),
         location=row_value(row, "location"),
-        summary=row_value(row, "summary", "outcome", "action_taken")[:300],
+        summary=_clip_at_sentence(row_value(row, "summary", "outcome", "action_taken"), 480),
         status=status,
         date=row_value(row, "meeting_date"),
         document_url=row_value(row, "document_url"),
