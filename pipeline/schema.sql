@@ -24,6 +24,16 @@
 --   * meetings raw_text (full PDF text bloats the DB; rag_chunks carries
 --     what retrieval needs, pdf_url points at the source PDF)
 --   * legacy_locations.csv (dead duplicate of locations.csv)
+--
+-- Delete policy: rows are UPSERT-ONLY. Nothing is hard-deleted on republish;
+-- a meeting that didn't happen is status='Cancelled', not a removed row. That
+-- is why only rag_chunks carries ON DELETE CASCADE — it is a rebuildable index,
+-- and per-item chunk churn is handled by delete-then-insert in the publisher
+-- (see the rag_chunks note below), never by touching the fact tables.
+--
+-- published_at: the six pipeline-owned data tables carry a published_at
+-- timestamptz the publisher sets to now() in each DO UPDATE, so a half-failed
+-- publish can be diagnosed by which rows are fresh.
 -- ============================================================
 
 create extension if not exists vector;
@@ -51,7 +61,8 @@ create table public.meeting_types (
   description  text
 );
 
--- The approved 6+2 taxonomy. map_role encodes the plotting rule:
+-- The approved taxonomy: 6 primary map layers + 2 conditional/search-only
+-- buckets (8 total). map_role encodes the plotting rule:
 --   primary_layer -> one of the 6 public map layers
 --   conditional   -> Budget, Contracts & Purchasing (plotted only when
 --                    tied to a specific place)
@@ -76,17 +87,26 @@ create table public.projects (
 create table public.locations (
   location_id         integer primary key,
   location_name       varchar not null,
+  -- Canonical UPPER_SNAKE vocabulary. The pipeline normalizes location_type to
+  -- this set at write time (build.py -> config.normalize_location_type), so the
+  -- two historical conventions (geometry vs. descriptive) collapse into one
+  -- controlled vocabulary. Keep this CHECK in sync with CANONICAL_LOCATION_TYPES.
   location_type       varchar check (location_type in
-                        ('PARCEL','MULTI_PARCEL','INTERSECTION','CORRIDOR',
-                         'WHOLE_STREET','NAMED_VENUE','NEIGHBORHOOD',
-                         'ANCHORED_OFFSET','VENUE')),
+                        -- geometry — how the place is geolocated:
+                        ('PARCEL','PARCEL_ADDRESS','MULTI_PARCEL','INTERSECTION',
+                         'CORRIDOR','WHOLE_STREET','NAMED_VENUE','NEIGHBORHOOD',
+                         'ANCHORED_OFFSET',
+                        -- descriptive — what the place is:
+                         'PROJECT_SITE','GENERAL_AREA','DEVELOPMENT',
+                         'INFRASTRUCTURE','ROAD','TRAIL','PARK')),
   address             text,
   description         text,
   latitude            numeric(9,6),
   longitude           numeric(9,6),
   parcel_id           text,                      -- Lee County STRAP when resolved to a parcel
   geocode_source      varchar,                   -- 'resolver', 'manual_override', ...
-  geocode_confidence  numeric(3,2)
+  geocode_confidence  numeric(3,2),
+  published_at        timestamptz                -- publisher sets now() in DO UPDATE
   -- With postgis, uncomment for spatial queries ("items within 1 mi of X"):
   -- , geom geography(point,4326) generated always as
   --     (st_setsrid(st_makepoint(longitude::float8, latitude::float8),4326)::geography) stored
@@ -113,7 +133,8 @@ create table public.meetings (
   summary            text,
   status             varchar,                     -- 'Held', 'Cancelled', ...
   filename           varchar,                     -- source PDF name (provenance)
-  notes              text
+  notes              text,
+  published_at       timestamptz                  -- publisher sets now() in DO UPDATE
 );
 create index meetings_date_idx  on public.meetings (meeting_date);
 create index meetings_board_idx on public.meetings (board_id, meeting_date);
@@ -129,7 +150,8 @@ create table public.documents (
   file_url       text,
   doc_date       date,
   upload_date    date,
-  notes          text
+  notes          text,
+  published_at   timestamptz                       -- publisher sets now() in DO UPDATE
 );
 create index documents_meeting_idx on public.documents (meeting_id);
 
@@ -159,11 +181,12 @@ create table public.agenda_items (
   staff_code             varchar,
   needs_review           boolean default false,
   extraction_confidence  numeric(3,2),
-  extraction_notes       text
-  -- Optional (recommended once the pipeline can emit it): a normalized
-  -- decision so the chatbot's "status" field is data, not LLM inference:
-  -- , decision_status varchar check (decision_status in
-  --     ('Approved','Denied','Continued','No decision recorded'))
+  extraction_notes       text,
+  -- Normalized decision so the chatbot's "status" field is data, not LLM
+  -- inference. Nullable until the pipeline's extraction step can emit it.
+  decision_status        varchar check (decision_status in
+                           ('Approved','Denied','Continued','No decision recorded')),
+  published_at           timestamptz              -- publisher sets now() in DO UPDATE
 );
 create index agenda_items_meeting_idx  on public.agenda_items (meeting_id);
 create index agenda_items_category_idx on public.agenda_items (category_id);
@@ -191,7 +214,8 @@ create table public.motions (
   outcome       text,
   vote_yes      smallint,
   vote_no       smallint,
-  vote_abstain  smallint
+  vote_abstain  smallint,
+  published_at  timestamptz                        -- publisher sets now() in DO UPDATE
 );
 
 -- ---------- RAG layer (replaces agenda_embeddings) ----------
@@ -234,7 +258,8 @@ create table public.rag_chunks (
   is_mapped      boolean default false,
   latitude       numeric(9,6),
   longitude      numeric(9,6),
-  document_link  text
+  document_link  text,
+  published_at   timestamptz                       -- publisher sets now() in DO UPDATE
 );
 create index rag_chunks_embedding_idx on public.rag_chunks
   using hnsw (embedding vector_cosine_ops);
