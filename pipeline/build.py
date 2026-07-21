@@ -22,6 +22,7 @@ from eaglegis.config import (
     PROJECT_ALIASES,
     SITE_LOCATION_OVERRIDES,
     SITE_TEXT_LOCATION_OVERRIDES,
+    normalize_location_type,
 )
 from eaglegis.location_resolver import LocationReference, LocationResolver
 from eaglegis.extractors import (
@@ -1118,11 +1119,20 @@ class NormalizedBuilder:
         write_csv(core_dir / "projects.csv", self.projects, [
             "project_id", "project_name", "description", "start_year", "status",
         ])
-        write_csv(core_dir / "locations.csv", self.locations, [
+        # Normalize location_type to the canonical UPPER_SNAKE vocabulary at
+        # write time only — resolution/branching logic above runs on the raw
+        # values, so this cannot change behavior. Keeps schema.sql's CHECK
+        # (public.locations) enforceable. legacy_locations.csv is the same
+        # rows, so it stays consistent.
+        canonical_locations = [
+            {**row, "location_type": normalize_location_type(row.get("location_type"))}
+            for row in self.locations
+        ]
+        write_csv(core_dir / "locations.csv", canonical_locations, [
             "location_id", "location_name", "location_type", "address",
             "description", "latitude", "longitude",
         ])
-        write_csv(core_dir / "legacy_locations.csv", self.locations, [
+        write_csv(core_dir / "legacy_locations.csv", canonical_locations, [
             "location_id", "location_name", "location_type", "address",
             "description", "latitude", "longitude",
         ])

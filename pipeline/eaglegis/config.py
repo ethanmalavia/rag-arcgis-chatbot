@@ -1,5 +1,59 @@
 from __future__ import annotations
 
+import re
+
+# ---------------------------------------------------------------------------
+# Canonical location_type vocabulary
+#
+# The pipeline historically emitted two conventions: uppercase GEOMETRY types
+# assigned by location_resolver.py, and title-case DESCRIPTIVE types from the
+# location seeds below / the classifier. Everything is normalized to a single
+# UPPER_SNAKE controlled vocabulary at write time (build.py) so the serving
+# schema (pipeline/schema.sql, public.locations) can enforce a clean CHECK.
+# ---------------------------------------------------------------------------
+
+CANONICAL_LOCATION_TYPES: frozenset[str] = frozenset({
+    # geometry — how the place is geolocated
+    "PARCEL", "PARCEL_ADDRESS", "MULTI_PARCEL", "INTERSECTION", "CORRIDOR",
+    "WHOLE_STREET", "NAMED_VENUE", "NEIGHBORHOOD", "ANCHORED_OFFSET",
+    # descriptive — what the place is
+    "PROJECT_SITE", "GENERAL_AREA", "DEVELOPMENT", "INFRASTRUCTURE",
+    "ROAD", "TRAIL", "PARK",
+})
+
+# Legacy label -> canonical. Synonyms fold; case-variants collapse.
+_LOCATION_TYPE_ALIASES: dict[str, str] = {
+    "project site": "PROJECT_SITE",
+    "general area": "GENERAL_AREA",
+    "development": "DEVELOPMENT",
+    "infrastructure": "INFRASTRUCTURE",
+    "meeting venue": "NAMED_VENUE",   # a meeting venue is a named venue
+    "road": "ROAD",
+    "trail": "TRAIL",
+    "park": "PARK",
+    "neighborhood": "NEIGHBORHOOD",   # collapse case-variant of NEIGHBORHOOD
+}
+
+
+def normalize_location_type(value: object) -> str:
+    """Map any emitted location_type to the canonical UPPER_SNAKE vocabulary.
+
+    Already-canonical values pass through; known legacy labels fold via
+    _LOCATION_TYPE_ALIASES. An unrecognized value is upper-snaked as a
+    best-effort fallback so a novel classifier label never silently drops
+    (it will still surface against schema.sql's CHECK, by design).
+    """
+    raw = ("" if value is None else str(value)).strip()
+    if not raw:
+        return ""
+    if raw in CANONICAL_LOCATION_TYPES:
+        return raw
+    aliased = _LOCATION_TYPE_ALIASES.get(raw.lower())
+    if aliased is not None:
+        return aliased
+    return re.sub(r"[^A-Z0-9]+", "_", raw.upper()).strip("_")
+
+
 PROJECT_ALIASES: dict[str, list[str]] = {
     "BERT Rail Trail": [
         "bert", "rail trail", "bonita-estero regional trail", "sunterra", "suntrail",
