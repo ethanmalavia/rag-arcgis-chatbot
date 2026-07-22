@@ -47,3 +47,9 @@ STALE_SOURCE_YEARS = float(os.getenv("STALE_SOURCE_YEARS", "5"))
 
 OTEL_ENABLED = os.getenv("OTEL_ENABLED", "").lower() in {"1", "true", "yes"}
 SERVE_FRONTEND = os.getenv("SERVE_FRONTEND", "true").lower() not in {"0", "false", "no"}
+# Bearer token for /admin/* and /load. Leave empty to disable admin mutations.
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "").strip()
+REPORTS_FILE = os.getenv(
+    "REPORTS_FILE",
+    os.path.join(DATA_DIR, "ops", "reports.json"),
+)

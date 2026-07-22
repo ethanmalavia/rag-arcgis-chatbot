@@ -1,0 +1,26 @@
+{
+  "_comment": "MANUALLY MAINTAINED — see frontend-react/README.md for the update process. This file seeds the Community Pulse dashboard's Next Meetings widget until the Village publishes a machine-readable calendar (roadmap item, not built yet). Regular schedule: Planning, Zoning & Design Board meets the 2nd Tuesday of each month at 5:30 PM; Village Council meets the 1st and 3rd Wednesday of each month at 9:30 AM. Both at Estero Village Hall, 9401 Corkscrew Palms Circle. Update this list monthly — drop past dates, add the next occurrence(s). Verify against https://estero-fl.gov/agendas-minutes/ before publishing, since holidays/rescheduling do happen.",
+  "meetings": [
+    {
+      "id": "council-2026-08-05",
+      "board": "Village Council",
+      "date": "2026-08-05",
+      "time": "9:30 AM",
+      "venue": "Estero Village Hall"
+    },
+    {
+      "id": "pzdb-2026-08-11",
+      "board": "Planning, Zoning & Design Board",
+      "date": "2026-08-11",
+      "time": "5:30 PM",
+      "venue": "Estero Village Hall"
+    },
+    {
+      "id": "council-2026-08-19",
+      "board": "Village Council",
+      "date": "2026-08-19",
+      "time": "9:30 AM",
+      "venue": "Estero Village Hall"
+    }
+  ]
+}

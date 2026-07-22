@@ -1,0 +1,211 @@
+/* Administrator page — extends shared styles.css tokens */
+.admin-body {
+  overflow: auto;
+  background: var(--bg);
+}
+.admin-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 88px 20px 48px;
+}
+.admin-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.admin-card h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.admin-muted {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.admin-muted code {
+  font-size: 12px;
+  background: var(--navy-light);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.admin-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.admin-label.inline {
+  display: inline;
+  margin: 0 8px 0 0;
+}
+.admin-card input[type="password"],
+.admin-card input[type="text"],
+.admin-card input[type="email"],
+.admin-card textarea,
+.admin-card select {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: var(--font);
+  margin-bottom: 12px;
+  background: var(--white);
+  color: var(--text);
+}
+.admin-card textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+.admin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.admin-btn {
+  border: none;
+  border-radius: 8px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.admin-btn:hover { background: var(--navy-dark); }
+.admin-btn.secondary {
+  background: var(--white);
+  color: var(--navy);
+  border: 1.5px solid var(--navy);
+}
+.admin-btn.secondary:hover { background: var(--navy-light); }
+.admin-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+.admin-status {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.admin-status.ok { color: var(--success); }
+.admin-status.err { color: var(--denied); }
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 0;
+}
+.admin-grid .admin-card { margin-bottom: 0; }
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 16px;
+  margin: 12px 0 16px;
+}
+.status-grid dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+.status-grid dd {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+.admin-reports-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.admin-reports-head h2 { margin-bottom: 0; }
+.admin-reports-head select {
+  width: auto;
+  margin-bottom: 0;
+  min-width: 140px;
+}
+.reports-list { display: flex; flex-direction: column; gap: 12px; }
+.report-item {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 10px 10px 0;
+  padding: 12px 14px;
+  background: var(--bg);
+}
+.report-item.resolved { border-left-color: var(--success); }
+.report-item.dismissed { border-left-color: var(--text-muted); opacity: 0.85; }
+.report-item.acknowledged { border-left-color: var(--warning); }
+.report-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: ui-monospace, monospace;
+  margin-bottom: 6px;
+}
+.report-kind {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.report-details {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+  margin-bottom: 10px;
+}
+.report-fields {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  line-height: 1.45;
+}
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.report-actions select {
+  width: auto;
+  margin: 0;
+  min-width: 140px;
+}
+.report-actions input[type="text"] {
+  flex: 1;
+  min-width: 160px;
+  margin: 0;
+}
+.empty-reports {
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 20px 0;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .admin-grid { grid-template-columns: 1fr; }
+  .status-grid { grid-template-columns: 1fr; }
+  #topbar { height: auto; min-height: 64px; flex-wrap: wrap; padding: 10px 16px; gap: 8px; }
+  .admin-main { padding-top: 100px; }
+}

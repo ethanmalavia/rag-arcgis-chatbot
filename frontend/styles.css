@@ -136,6 +136,44 @@
       display: inline-flex; align-items: center; gap: 5px;
     }
     .btn-dir:hover { background: var(--navy-light); }
+    .btn-report {
+      background: var(--white); color: var(--text-muted); border: 1.5px solid var(--border);
+      border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-report:hover { border-color: var(--navy); color: var(--navy); background: var(--navy-light); }
+
+    /* REPORT DIALOG */
+    .report-dialog {
+      border: none; border-radius: 14px; padding: 0; width: min(440px, calc(100vw - 24px));
+      box-shadow: 0 16px 48px rgba(18, 36, 64, 0.28); color: var(--text);
+    }
+    .report-dialog::backdrop { background: rgba(18, 36, 64, 0.45); }
+    .report-dialog form { padding: 20px 22px 18px; }
+    .report-dialog-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px;
+    }
+    .report-dialog-head h2 { font-size: 17px; font-weight: 700; color: var(--navy); }
+    .report-close {
+      border: none; background: transparent; font-size: 22px; line-height: 1; color: var(--text-muted); cursor: pointer;
+      width: 32px; height: 32px; border-radius: 8px;
+    }
+    .report-close:hover { background: var(--bg); color: var(--navy); }
+    .report-intro { font-size: 13px; color: var(--text-muted); line-height: 1.45; margin-bottom: 14px; }
+    .report-label {
+      display: block; font-size: 12px; font-weight: 600; color: var(--navy); margin: 0 0 6px;
+    }
+    .report-dialog input,
+    .report-dialog select,
+    .report-dialog textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 11px;
+      font-size: 14px; font-family: var(--font); margin-bottom: 12px; background: var(--white); color: var(--text);
+    }
+    .report-dialog textarea { min-height: 88px; resize: vertical; }
+    .report-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+    .report-form-status { font-size: 12px; margin-top: 10px; color: var(--text-muted); min-height: 1.2em; }
+    .report-form-status.ok { color: var(--success); }
+    .report-form-status.err { color: var(--denied); }
 
     /* TYPING */
     .typing-wrap { display: flex; flex-direction: column; gap: 6px; }
@@ -194,3 +232,86 @@
       #mobile-map-toggle { display: flex !important; }
     }
     #mobile-map-toggle { display: none; }
+/* ═══════════════════════════════════════════════
+   ADDITIONS for unified board-record + article cards
+   Paste at the END of your existing styles.css
+   ═══════════════════════════════════════════════ */
+
+/* ── Card source tags ── */
+.card-tag {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-bottom: 7px;
+}
+.card-tag-board {
+  background: rgba(26, 51, 86, 0.08);
+  color: #1a3356;
+  border: 1px solid rgba(26, 51, 86, 0.18);
+}
+.card-tag-article {
+  background: rgba(201, 151, 58, 0.12);
+  color: #9a6800;
+  border: 1px solid rgba(201, 151, 58, 0.3);
+}
+
+/* ── Article card variant ── */
+.article-card {
+  border-left: 3px solid #c9973a;
+}
+
+.btn-article {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #c9973a;
+  color: #fff !important;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 13px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+}
+.btn-article:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-article:active { transform: translateY(0); }
+
+/* ── Markdown prose inside bot bubbles ── */
+.prose { line-height: 1.65; }
+.prose p { margin: 0 0 10px; }
+.prose p:last-child { margin-bottom: 0; }
+.prose strong { font-weight: 700; color: #1a2535; }
+.prose ol, .prose ul { margin: 8px 0 12px; padding-left: 22px; }
+.prose li { margin: 5px 0; line-height: 1.55; }
+.prose li::marker { color: #c9973a; font-weight: 700; }
+.prose h1, .prose h2, .prose h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a3356;
+  margin: 14px 0 6px;
+}
+.prose h1:first-child, .prose h2:first-child, .prose h3:first-child { margin-top: 0; }
+.prose a { color: #1a3356; font-weight: 600; }
+.prose a:hover { color: #c9973a; }
+.prose hr { border: none; border-top: 1px solid #e3e8f0; margin: 12px 0; }
+.prose code {
+  background: #f0f3f8;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.78rem;
+}
+
+/* ── Multiple cards stack with spacing ── */
+.proj-card + .proj-card { margin-top: 10px; }
+
+/* ── Status pill variants (if not already present) ── */
+.status-approved  { color: #1e7e4c; }
+.status-denied    { color: #b42318; }
+.status-continued { color: #9a6800; }
+.status-unknown   { color: #64748b; }

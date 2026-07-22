@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Ask Engage Estero</title>
+  <link rel="stylesheet" href="styles.css?v=20260722a" />
+  <link rel="stylesheet" href="admin.css?v=20260722a" />
+</head>
+<body class="admin-body">
+<header id="topbar">
+  <div id="topbar-left">
+    <img id="topbar-logo" src="assets/logo-eeed38b6b8dd.png" alt="Engage Estero" />
+    <div id="topbar-divider"></div>
+    <div id="topbar-title">
+      <h1>Administrator</h1>
+      <p>Index health · corpus upload · user reports</p>
+    </div>
+  </div>
+  <div class="admin-top-actions">
+    <a class="map-btn" href="/">← Public chat</a>
+    <button type="button" class="map-btn" id="logout-btn" hidden>Sign out</button>
+  </div>
+</header>
+
+<main class="admin-main">
+  <section id="login-panel" class="admin-card">
+    <h2>Sign in</h2>
+    <p class="admin-muted">Enter the server <code>ADMIN_API_KEY</code>. It is stored only in this browser session.</p>
+    <label class="admin-label" for="admin-key">API key</label>
+    <input id="admin-key" type="password" autocomplete="current-password" placeholder="ADMIN_API_KEY" />
+    <div class="admin-row">
+      <button type="button" class="admin-btn" id="login-btn">Unlock admin</button>
+      <span id="login-status" class="admin-status" role="status"></span>
+    </div>
+  </section>
+
+  <div id="admin-app" hidden>
+    <section class="admin-grid">
+      <article class="admin-card">
+        <h2>System status</h2>
+        <dl id="status-grid" class="status-grid"></dl>
+        <div class="admin-row">
+          <button type="button" class="admin-btn secondary" id="refresh-status-btn">Refresh</button>
+          <button type="button" class="admin-btn secondary" id="warmup-btn">Run warmup</button>
+          <span id="ops-status" class="admin-status" role="status"></span>
+        </div>
+      </article>
+
+      <article class="admin-card">
+        <h2>Replace corpus</h2>
+        <p class="admin-muted">Uploads a CSV and rebuilds the in-memory FAISS/BM25 index on <strong>this</strong> instance. Prefer the PDF pipeline + redeploy for production data updates.</p>
+        <input id="csv-file-input" type="file" accept=".csv,text/csv" />
+        <div class="admin-row">
+          <button type="button" class="admin-btn" id="load-btn">Upload &amp; rebuild</button>
+          <span id="load-status" class="admin-status" role="status"></span>
+        </div>
+      </article>
+    </section>
+
+    <section class="admin-card admin-reports">
+      <div class="admin-reports-head">
+        <h2>User reports</h2>
+        <div class="admin-row">
+          <label class="admin-label inline" for="report-filter">Status</label>
+          <select id="report-filter">
+            <option value="">All</option>
+            <option value="open" selected>Open</option>
+            <option value="acknowledged">Acknowledged</option>
+            <option value="resolved">Resolved</option>
+            <option value="dismissed">Dismissed</option>
+          </select>
+          <button type="button" class="admin-btn secondary" id="refresh-reports-btn">Refresh</button>
+        </div>
+      </div>
+      <p class="admin-muted">Public visitors can flag incorrect locations or suggest changes from the chat page. Review them here.</p>
+      <div id="reports-list" class="reports-list"></div>
+    </section>
+  </div>
+</main>
+
+<script src="config.js?v=20260715c"></script>
+<script src="admin.js?v=20260722a"></script>
+</body>
+</html>

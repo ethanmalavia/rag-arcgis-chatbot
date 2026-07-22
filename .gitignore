@@ -16,6 +16,10 @@ backend/faiss_index/
 .test_tmp/
 .tmp/
 
+# Runtime user reports (admin inbox)
+backend/data/ops/reports.json
+backend/data/ops/reports.json.tmp
+
 # OS
 .DS_Store
 Thumbs.db

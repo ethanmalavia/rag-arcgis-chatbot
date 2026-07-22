@@ -18,6 +18,9 @@ ALIASES: dict[str, tuple[str, ...]] = {
     "status": ("Status",),
     "document_url": ("Document_Link", "PrimarySourceUrl"),
     "filename": ("Filename", "SourceFilename"),
+    "latitude": ("Latitude", "Lat"),
+    "longitude": ("Longitude", "Lon", "Lng"),
+    "board": ("Board", "SourceBoard"),
 }
 
 

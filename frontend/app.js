@@ -300,8 +300,22 @@ function renderProjectCard(p) {
     <div class="proj-status ${statusClass(p.status)}">${statusEmoji(p.status)} ${escHtml(p.status||"No decision recorded")}${p.date?" · "+escHtml(p.date):""}</div>
     <div class="proj-actions">
       ${p.documentUrl?`<a class="btn-minutes" href="${escHtml(p.documentUrl)}" target="_blank">📄 View Minutes</a>`:""}
-      ${p.location?`<button class="btn-dir" onclick="panAndDirect('${escHtml(p.location)}')">📍 Directions</button>`:""}
+      ${p.location?`<button type="button" class="btn-dir proj-directions">📍 Directions</button>`:""}
+      <button type="button" class="btn-report proj-report">⚑ Report</button>
     </div>`;
+  const dirBtn = card.querySelector(".proj-directions");
+  if (dirBtn && p.location) {
+    dirBtn.addEventListener("click", () => panAndDirect(p.location));
+  }
+  const reportBtn = card.querySelector(".proj-report");
+  if (reportBtn) {
+    reportBtn.addEventListener("click", () => openReportDialog({
+      kind: p.location ? "incorrect_location" : "suggest_change",
+      application_id: p.id || "",
+      location: p.location || "",
+      current_value: p.location || p.title || "",
+    }));
+  }
   return card;
 }
 
@@ -629,31 +643,86 @@ function panAndDirect(address) {
   }
 }
 
-async function loadCSV() {
-  const file = document.getElementById("csv-file-input").files[0];
-  if (!file) { alert("Please select a CSV file first."); return; }
-  const statusEl = document.getElementById("load-status");
-  statusEl.style.color = "var(--text-muted)";
-  statusEl.textContent = "⏳ Loading…";
-  const formData = new FormData(); formData.append("file", file);
+function openReportDialog(prefill) {
+  const dialog = document.getElementById("report-dialog");
+  if (!dialog) return;
+  const p = prefill || {};
+  document.getElementById("report-kind").value = p.kind || "incorrect_location";
+  document.getElementById("report-application-id").value = p.application_id || "";
+  document.getElementById("report-location").value = p.location || "";
+  document.getElementById("report-current").value = p.current_value || "";
+  document.getElementById("report-suggested").value = p.suggested_value || "";
+  document.getElementById("report-details").value = p.details || "";
+  document.getElementById("report-email").value = p.contact_email || "";
+  const status = document.getElementById("report-form-status");
+  status.textContent = "";
+  status.classList.remove("ok", "err");
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.setAttribute("open", "");
+}
+
+function closeReportDialog() {
+  const dialog = document.getElementById("report-dialog");
+  if (!dialog) return;
+  if (typeof dialog.close === "function") dialog.close();
+  else dialog.removeAttribute("open");
+}
+
+async function submitReport(event) {
+  event.preventDefault();
+  const status = document.getElementById("report-form-status");
+  const btn = document.getElementById("report-submit-btn");
+  const payload = {
+    kind: document.getElementById("report-kind").value,
+    application_id: document.getElementById("report-application-id").value.trim(),
+    location: document.getElementById("report-location").value.trim(),
+    current_value: document.getElementById("report-current").value.trim(),
+    suggested_value: document.getElementById("report-suggested").value.trim(),
+    details: document.getElementById("report-details").value.trim(),
+    contact_email: document.getElementById("report-email").value.trim(),
+    page_url: window.location.href,
+  };
+  if (payload.details.length < 5) {
+    status.textContent = "Please add a few more details.";
+    status.classList.add("err");
+    return;
+  }
+  btn.disabled = true;
+  status.textContent = "Sending…";
+  status.classList.remove("ok", "err");
   try {
-    const res = await fetch(`${API_BASE}/load`, { method: "POST", body: formData });
-    const data = await res.json();
+    const res = await fetch(`${API_BASE}/reports`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      // Show the actual server error detail
-      statusEl.style.color = "var(--denied)";
-      statusEl.textContent = "❌ " + (data.detail || "Server error " + res.status);
-      console.error("Load error:", data);
-    } else {
-      statusEl.style.color = "var(--success)";
-      statusEl.textContent = "✅ " + (data.message || "Loaded!");
+      throw new Error(data.detail || `Could not send (${res.status})`);
     }
-  } catch(e) {
-    statusEl.style.color = "var(--denied)";
-    statusEl.textContent = `❌ Can't reach backend at ${API_BASE}`;
-    console.error(e);
+    status.textContent = "Thanks — your report was submitted.";
+    status.classList.add("ok");
+    setTimeout(closeReportDialog, 900);
+  } catch (e) {
+    status.textContent = e.message || "Could not reach the server.";
+    status.classList.add("err");
+  } finally {
+    btn.disabled = false;
   }
 }
+
+function wireReportUi() {
+  const openBtn = document.getElementById("report-open-btn");
+  if (openBtn) openBtn.addEventListener("click", () => openReportDialog());
+  const form = document.getElementById("report-form");
+  if (form) form.addEventListener("submit", submitReport);
+  const closeBtn = document.getElementById("report-close-btn");
+  if (closeBtn) closeBtn.addEventListener("click", closeReportDialog);
+  const cancelBtn = document.getElementById("report-cancel-btn");
+  if (cancelBtn) cancelBtn.addEventListener("click", closeReportDialog);
+}
+
+wireReportUi();
 
 function expandMap(e) {
   e.preventDefault();

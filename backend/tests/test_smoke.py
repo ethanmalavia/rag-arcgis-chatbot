@@ -19,7 +19,7 @@ def test_app_metadata():
 
 def test_expected_routes_registered():
     paths = {route.path for route in backend_app.app.routes}
-    assert {"/health", "/ready", "/chat", "/chat/stream", "/load"}.issubset(paths)
+    assert {"/health", "/ready", "/chat", "/chat/stream", "/load", "/reports", "/admin/status", "/recent-decisions"}.issubset(paths)
 
 
 def test_csv_hash_is_stable(tmp_path):

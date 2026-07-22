@@ -33,5 +33,49 @@ class ChatResponse(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    question: str
+    question: str = Field(..., min_length=1, max_length=4000)
     session_id: str = "default"
+
+
+class ReportKind(str, Enum):
+    INCORRECT_LOCATION = "incorrect_location"
+    SUGGEST_CHANGE = "suggest_change"
+    OTHER = "other"
+
+
+class ReportStatus(str, Enum):
+    OPEN = "open"
+    ACKNOWLEDGED = "acknowledged"
+    RESOLVED = "resolved"
+    DISMISSED = "dismissed"
+
+
+class ReportCreate(BaseModel):
+    kind: ReportKind
+    details: str = Field(..., min_length=5, max_length=4000)
+    application_id: str = Field(default="", max_length=120)
+    location: str = Field(default="", max_length=500)
+    current_value: str = Field(default="", max_length=1000)
+    suggested_value: str = Field(default="", max_length=1000)
+    contact_email: str = Field(default="", max_length=254)
+    page_url: str = Field(default="", max_length=500)
+
+
+class ReportOut(BaseModel):
+    id: str
+    created_at: str
+    kind: ReportKind
+    status: ReportStatus = ReportStatus.OPEN
+    details: str
+    application_id: str = ""
+    location: str = ""
+    current_value: str = ""
+    suggested_value: str = ""
+    contact_email: str = ""
+    page_url: str = ""
+    admin_note: str = ""
+
+
+class ReportStatusUpdate(BaseModel):
+    status: ReportStatus
+    admin_note: str = Field(default="", max_length=2000)

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Ask Engage Estero — Planning & Zoning Decisions</title>
-  <link rel="stylesheet" href="styles.css?v=20260715d" />
+  <link rel="stylesheet" href="styles.css?v=20260722a" />
   <link rel="preload" as="image" href="assets/hero.webp" type="image/webp" />
 </head>
 <body>
@@ -19,6 +19,7 @@
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <div id="live-badge"><div id="live-dot"></div><span id="record-count">Live data · loading…</span></div>
+    <button type="button" id="report-open-btn" class="map-btn" title="Report incorrect data">Report</button>
     <button type="button" id="mobile-map-toggle" class="map-btn" onclick="toggleMobileMap()">🗺 Map</button>
   </div>
 </header>
@@ -71,7 +72,41 @@
     <div id="map-footer"><div id="map-footer-dot"></div>Powered by Esri · ArcGIS Online</div>
   </section>
 </div>
+
+<dialog id="report-dialog" class="report-dialog">
+  <form id="report-form" method="post" action="#">
+    <header class="report-dialog-head">
+      <h2>Report a data issue</h2>
+      <button type="button" class="report-close" id="report-close-btn" aria-label="Close">×</button>
+    </header>
+    <p class="report-intro">Flag an incorrect location or suggest a change. Reports go to the Engage Estero admin inbox.</p>
+    <label class="report-label" for="report-kind">What is this about?</label>
+    <select id="report-kind" name="kind" required>
+      <option value="incorrect_location">Incorrect location</option>
+      <option value="suggest_change">Suggest a change</option>
+      <option value="other">Other</option>
+    </select>
+    <label class="report-label" for="report-application-id">Application ID (optional)</label>
+    <input id="report-application-id" name="application_id" type="text" maxlength="120" placeholder="e.g. DOS2022-E016" />
+    <label class="report-label" for="report-location">Location (optional)</label>
+    <input id="report-location" name="location" type="text" maxlength="500" placeholder="Address or place shown in the answer" />
+    <label class="report-label" for="report-current">What does it say now? (optional)</label>
+    <input id="report-current" name="current_value" type="text" maxlength="1000" />
+    <label class="report-label" for="report-suggested">What should it say? (optional)</label>
+    <input id="report-suggested" name="suggested_value" type="text" maxlength="1000" />
+    <label class="report-label" for="report-details">Details</label>
+    <textarea id="report-details" name="details" required minlength="5" maxlength="4000" placeholder="Describe the problem or suggested correction…"></textarea>
+    <label class="report-label" for="report-email">Email if we may follow up (optional)</label>
+    <input id="report-email" name="contact_email" type="email" maxlength="254" autocomplete="email" />
+    <div class="report-dialog-actions">
+      <button type="button" class="btn-dir" id="report-cancel-btn">Cancel</button>
+      <button type="submit" class="btn-minutes" id="report-submit-btn">Submit report</button>
+    </div>
+    <p id="report-form-status" class="report-form-status" role="status"></p>
+  </form>
+</dialog>
+
   <script src="config.js?v=20260715c"></script>
-  <script src="app.js?v=20260715d"></script>
+  <script src="app.js?v=20260722a"></script>
 </body>
 </html>

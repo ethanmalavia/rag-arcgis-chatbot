@@ -3,20 +3,38 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import shutil
 import traceback
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from config import DATA_DIR, DEFAULT_CSV_PATH, EMBEDDING_MODEL, FRONTEND_DIR, SERVE_FRONTEND
-from models import ChatRequest, ChatResponse
+from admin_auth import require_admin
+from config import (
+    DATA_DIR,
+    DEFAULT_CSV_PATH,
+    EMBEDDING_MODEL,
+    FRONTEND_DIR,
+    RERANKER_MODEL,
+    SERVE_FRONTEND,
+)
+import config as app_config
+from models import (
+    ChatRequest,
+    ChatResponse,
+    ReportCreate,
+    ReportOut,
+    ReportStatusUpdate,
+)
 from orchestrator import answer_question, stream_answer
+from reports import create_report, list_reports, report_counts, update_report
+from schema_aliases import row_value
 from store import build_store, get_store
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,6 +42,8 @@ load_dotenv(dotenv_path=os.path.join(BACKEND_DIR, ".env"))
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+_SAFE_CSV_NAME = re.compile(r"^[\w.\- ]+\.csv$", re.IGNORECASE)
 
 
 def _warm_models() -> dict[str, bool]:
@@ -152,7 +172,7 @@ def chat(req: ChatRequest):
         raise
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(500, str(e)) from e
+        raise HTTPException(500, "Chat failed") from e
 
 
 @app.get("/warmup")
@@ -169,7 +189,7 @@ def warmup():
         raise
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(503, f"Warmup failed: {e}") from e
+        raise HTTPException(503, "Warmup failed") from e
 
 
 @app.post("/chat/stream")
@@ -180,21 +200,101 @@ def chat_stream(req: ChatRequest):
         raise
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(500, str(e)) from e
+        raise HTTPException(500, "Stream failed") from e
+
+
+@app.post("/reports", response_model=ReportOut)
+def submit_report(payload: ReportCreate):
+    """Public: flag an incorrect location or suggest a data change."""
+    try:
+        return create_report(payload)
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(500, "Could not save report") from e
+
+
+@app.get("/recent-decisions")
+def recent_decisions(limit: int = 5):
+    """Dashboard widget: recent board rows that have a project name."""
+    store = get_store()
+    if store is None or store.dataframe is None or store.dataframe.empty:
+        raise HTTPException(503, "No board data loaded yet.")
+    df = store.dataframe
+    rows = df.to_dict(orient="records")
+
+    def sort_key(row: dict) -> str:
+        return row_value(row, "meeting_date") or ""
+
+    named = [r for r in rows if row_value(r, "project_name")]
+    named.sort(key=sort_key, reverse=True)
+    decisions = []
+    for row in named[: max(1, min(limit, 25))]:
+        decisions.append(
+            {
+                "title": row_value(row, "project_name"),
+                "date": row_value(row, "meeting_date") or None,
+                "board": row_value(row, "board") or "Planning, Zoning & Design Board",
+                "status": row_value(row, "status", "outcome", "action_taken") or None,
+                "application_id": row_value(row, "application_id") or None,
+            }
+        )
+    return {"decisions": decisions}
+
+
+@app.get("/admin")
+def admin_redirect():
+    return RedirectResponse(url="/admin.html", status_code=307)
+
+
+@app.get("/admin/status")
+def admin_status(_: None = Depends(require_admin)):
+    store = get_store()
+    return {
+        "status": "ok",
+        "admin_configured": bool(app_config.ADMIN_API_KEY),
+        "chain_ready": _chain_ready(),
+        "record_count": _record_count(),
+        "chunk_count": store.chunk_count if store else 0,
+        "embedding_model": EMBEDDING_MODEL,
+        "reranker_model": RERANKER_MODEL,
+        "csv_path": DEFAULT_CSV_PATH,
+        "reports": report_counts(),
+    }
+
+
+@app.get("/admin/reports", response_model=list[ReportOut])
+def admin_list_reports(status: str | None = None, _: None = Depends(require_admin)):
+    return list_reports(status=status)
+
+
+@app.patch("/admin/reports/{report_id}", response_model=ReportOut)
+def admin_update_report(
+    report_id: str,
+    payload: ReportStatusUpdate,
+    _: None = Depends(require_admin),
+):
+    try:
+        return update_report(report_id, payload)
+    except KeyError:
+        raise HTTPException(404, "Report not found") from None
 
 
 @app.post("/load")
-async def load_csv(file: UploadFile = File(...)):
+async def load_csv(file: UploadFile = File(...), _: None = Depends(require_admin)):
+    """Replace the in-memory corpus (admin only). Prefer pipeline rebuild in production."""
+    raw_name = os.path.basename(file.filename or "upload.csv")
+    if not _SAFE_CSV_NAME.match(raw_name):
+        raise HTTPException(400, "Filename must be a simple .csv name")
     os.makedirs(DATA_DIR, exist_ok=True)
-    dest = os.path.join(DATA_DIR, file.filename or "upload.csv")
+    dest = os.path.join(DATA_DIR, raw_name)
     with open(dest, "wb") as f:
         shutil.copyfileobj(file.file, f)
     try:
         build_store(dest)
-        return {"message": f"Loaded {_record_count()} records from {file.filename}"}
+        return {"message": f"Loaded {_record_count()} records from {raw_name}"}
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(500, str(e)) from e
+        raise HTTPException(500, "Failed to rebuild index from upload") from e
 
 
 if SERVE_FRONTEND and os.path.isdir(FRONTEND_DIR):
