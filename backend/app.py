@@ -34,6 +34,7 @@ from models import (
 )
 from orchestrator import answer_question, stream_answer
 from reports import create_report, list_reports, report_counts, update_report
+from schema_aliases import row_value
 from store import build_store, get_store
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -210,6 +211,34 @@ def submit_report(payload: ReportCreate):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(500, "Could not save report") from e
+
+
+@app.get("/recent-decisions")
+def recent_decisions(limit: int = 5):
+    """Dashboard widget: recent board rows that have a project name."""
+    store = get_store()
+    if store is None or store.dataframe is None or store.dataframe.empty:
+        raise HTTPException(503, "No board data loaded yet.")
+    df = store.dataframe
+    rows = df.to_dict(orient="records")
+
+    def sort_key(row: dict) -> str:
+        return row_value(row, "meeting_date") or ""
+
+    named = [r for r in rows if row_value(r, "project_name")]
+    named.sort(key=sort_key, reverse=True)
+    decisions = []
+    for row in named[: max(1, min(limit, 25))]:
+        decisions.append(
+            {
+                "title": row_value(row, "project_name"),
+                "date": row_value(row, "meeting_date") or None,
+                "board": row_value(row, "board") or "Planning, Zoning & Design Board",
+                "status": row_value(row, "status", "outcome", "action_taken") or None,
+                "application_id": row_value(row, "application_id") or None,
+            }
+        )
+    return {"decisions": decisions}
 
 
 @app.get("/admin")

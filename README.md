@@ -1,24 +1,27 @@
-# RAG ArcGIS Chatbot
+# Ask Engage Estero / RAG ArcGIS Chatbot
 
-Router-first Q&A for Estero planning & zoning records: structured filters, keyword lookup, and corrective RAG with hybrid retrieval. The EagleGIS PDF extraction pipeline lives in this repo and produces the chatbot corpus.
+Router-first Q&A for Estero planning & zoning records: structured filters, keyword lookup, and corrective RAG with hybrid retrieval. Includes a vanilla chat UI, a React + Community Pulse frontend, an administrator console, and a public “report incorrect location / suggest a change” flow. The EagleGIS PDF extraction pipeline in this repo produces the chatbot corpus.
 
 ## What you need
 
 - Python 3.11 **or** Docker Desktop
-- Groq API key (`GROQ_API_KEY`)
+- Groq API key (`GROQ_API_KEY`); Gemini optional for collaborate mode
+- Optional: `ADMIN_API_KEY` for `/admin` and CSV `/load`
 - Optional: GCP account for Cloud Run deploy
 - Pipeline rebuild: Tesseract OCR (`apt install tesseract-ocr` on Linux)
+- React UI: Node 18+ (`frontend-react/`)
 
 ## Quick start (Docker — recommended)
 
 ```powershell
 cd T:\eagleGIS\rag-arcgis-chatbot
-copy backend\.env.example backend\.env   # add GROQ_API_KEY
+copy backend\.env.example backend\.env   # add GROQ_API_KEY (and ADMIN_API_KEY)
 docker compose up --build
 ```
 
 - Frontend: http://localhost:3000  
 - API: http://localhost:8080/docs  
+- Admin: http://localhost:3000/admin.html  
 
 Full local + Google Cloud instructions: **[docs/DEPLOY_DOCKER.md](docs/DEPLOY_DOCKER.md)**
 
@@ -29,11 +32,21 @@ cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env   # add GROQ_API_KEY
+copy .env.example .env   # add GROQ_API_KEY (and ADMIN_API_KEY)
 uvicorn app:app --reload --port 8000
 ```
 
-Open http://localhost:8000 — the API serves the frontend when `SERVE_FRONTEND=true` (default).
+Open http://localhost:8000 — the API serves the vanilla frontend when `SERVE_FRONTEND=true` (default). Admin: http://localhost:8000/admin.html
+
+### React frontend (Vite)
+
+```powershell
+cd frontend-react
+npm install
+npm run dev
+```
+
+Serves on http://localhost:5173 and talks to the API via `VITE_API_BASE` (default `http://localhost:8000` — see `frontend-react/.env.example`).
 
 ## Pipeline architecture
 
@@ -41,18 +54,16 @@ Open http://localhost:8000 — the API serves the frontend when `SERVE_FRONTEND=
 Question → Router
   ├─ structured  → pandas filters (counts, year, status, location)
   ├─ keyword     → ApplicationID / minutes / token search
-  ├─ mixed         → keyword first, else RAG
-  └─ rag           → BM25 + FAISS (RRF) → reranker → CRAG → Groq JSON
+  ├─ mixed       → keyword first, else RAG
+  └─ rag         → BM25 + FAISS (RRF) → reranker → CRAG → Gemini/Groq JSON
 ```
 
 | Component | Default |
 |-----------|---------|
 | Embeddings | `BAAI/bge-small-en-v1.5` (`EMBEDDING_MODEL`) |
-| Reranker | `BAAI/bge-reranker-base` (`RERANKER_MODEL`) |
-| Score threshold | `0.35` |
-| CRAG max iterations | `2` |
-
-Production Docker/Cloud Run can set `EMBEDDING_MODEL=BAAI/bge-m3` for higher quality.
+| Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` (`RERANKER_MODEL`) |
+| Score threshold | `0.25` |
+| CRAG max iterations | `1` |
 
 ## API
 
@@ -69,37 +80,25 @@ Production Docker/Cloud Run can set `EMBEDDING_MODEL=BAAI/bge-m3` for higher qua
 | `PATCH /admin/reports/{id}` | Admin: update report status |
 | `POST /load` | Admin: upload replacement CSV + rebuild index |
 
-Set `ADMIN_API_KEY` in `backend/.env`, then open **/admin.html** (or `/admin`) and sign in with that key. Public users submit reports from the chat **Report** button.
+Set `ADMIN_API_KEY` in `backend/.env`, then open **/admin.html** and sign in with that key. Public users submit reports from the chat **Report** button (vanilla and React).
 
 ## Project structure
 
 ```text
 rag-arcgis-chatbot/
-├── .github/workflows/
-│   ├── ci.yml                  # lint + backend pytest
-│   ├── deploy.yml              # Cloud Run (opt-in)
-│   ├── pipeline-ci.yml         # pipeline tests + rebuild guard
-│   ├── pipeline-refresh.yml    # weekly scrape + rebuild + commit
-│   └── pipeline-drift-watch.yml
+├── .github/workflows/          # lint, pytest, pipeline CI/refresh, deploy
 ├── backend/
-│   ├── app.py                  # FastAPI + static frontend
-│   ├── config.py
+│   ├── app.py                  # FastAPI + admin/reports + optional static UI
+│   ├── admin_auth.py / reports.py
 │   ├── store.py                # FAISS + BM25 index
-│   ├── data/
-│   │   ├── bronze/             # hand-curated geocode overrides, URL lookup
-│   │   ├── silver/             # relational tables + QA triage
-│   │   └── gold/
-│   │       └── meetings_ai_public.csv   # chatbot corpus (~2,600 agenda items)
-│   └── tests/golden_qa.json
-├── frontend/
-│   ├── config.js               # API_BASE for split local stack
-│   └── ...
-├── pipeline/                   # EagleGIS PDF-extraction pipeline
-│   ├── build.py
-│   ├── discover.py
-│   ├── verify.py
+│   ├── data/gold/meetings_ai_public.csv
+│   ├── data/esterotoday_content.csv   # EsteroToday articles (React Pulse / experimental)
+│   ├── ingest.py / diagnose_retrieval.py  # helpers from React branch (not wired into app.py)
 │   └── tests/
-├── pdfs/                       # source meeting-minute PDFs
+├── frontend/                   # Vanilla JS chat + admin.html
+├── frontend-react/             # Vite + React + TypeScript + Community Pulse
+├── pipeline/                   # EagleGIS PDF → medallion CSVs
+├── pdfs/
 ├── docker-compose.yml
 └── docs/DEPLOY_DOCKER.md
 ```
@@ -117,23 +116,20 @@ python -m pytest pipeline/tests -q
 
 See [`pipeline/README.md`](pipeline/README.md) for full details.
 
-**Autonomous updates:** `pipeline-refresh.yml` runs weekly (and on new PDFs): scrapes estero-fl.gov for new minutes, rebuilds, verifies against Lee County parcels, and commits `backend/data/`. `pipeline-ci.yml` fails any PR whose committed data doesn't match a fresh rebuild.
-
 ## CI
 
-- **ci.yml** — ruff + backend router/golden/smoke tests (no Groq key required)
+- **ci.yml** — ruff + backend router/golden/smoke/admin tests (no Groq key required)
 - **pipeline-ci.yml** — pipeline pytest + deliverables up-to-date guard
 - **pipeline-refresh.yml** — weekly data refresh from source PDFs
 - **deploy.yml** — Cloud Run deploy when `ENABLE_DEPLOY=true`
 
 ## Production
 
-Cloud Run serves the frontend and API from one container (`SERVE_FRONTEND=true`). The UI uses same-origin API calls; no `config.js` changes needed on Cloud Run.
-
-Set `ENABLE_DEPLOY=true` and GCP secrets/vars per [docs/DEPLOY_DOCKER.md](docs/DEPLOY_DOCKER.md).
+Cloud Run serves the vanilla frontend and API from one container (`SERVE_FRONTEND=true`). Set `ENABLE_DEPLOY=true` and GCP secrets/vars per [docs/DEPLOY_DOCKER.md](docs/DEPLOY_DOCKER.md).
 
 ## Notes
 
 - Corpus path: `backend/data/gold/meetings_ai_public.csv` (override with `CSV_PATH`)
 - Index is rebuilt when the CSV changes (hash in `faiss_index/manifest.json`)
 - Optional tracing: `OTEL_ENABLED=true` + `pip install -r requirements-eval.txt`
+- `frontend-react/` Community Pulse widgets (meetings/news/recent decisions) expect companion APIs or static JSON; `/recent-decisions` from the alternate backend rewrite is **not** mounted on the Schema V3 `app.py` yet
