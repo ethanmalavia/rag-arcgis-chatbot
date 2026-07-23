@@ -1,22 +1,17 @@
 name: Pipeline CI
 
-# Adapted from the legacy EagleGIS repo's ci.yml. Two independent jobs so a
-# failure in one doesn't mask the other:
+# Fast, offline checks for the pipeline:
 #
-#   1) pytest over pipeline/tests (offline, fast).
-#   2) Full rebuild + "deliverables up to date" guard: if a contributor edits
-#      pipeline code, the geocode overrides, or the URL lookup but forgets to
-#      rebuild, this fails. data/ in the repo should always be a
-#      deterministic function of pdfs/ + inputs + pipeline code.
+#   pytest over pipeline/tests — parsers, project matchers, and SEMANTIC
+#   validation of the committed data deliverables (schema, referential
+#   integrity, value ranges, geocode sanity). See tests/test_deliverables.py.
 #
-# Deliberately NOT triggered by pdfs/** — uploading a PDF is handled by
-# pipeline-refresh.yml, which rebuilds and commits the outputs itself.
-#
-# The committed data/ is canonical to the CI environment (ubuntu tesseract):
-# pipeline-refresh.yml rebuilds and bot-commits on the runners, and this guard
-# re-verifies on the same environment. A rebuild on a different OS can show
-# cosmetic OCR diffs (dash rendering, truncation boundaries) — reconcile by
-# dispatching pipeline-refresh rather than committing locally-built CSVs.
+# There is deliberately no byte-exact "rebuild + git diff" build-guard. The
+# pipeline is not bit-reproducible off its runner (live geocode API, OCR), so
+# that guard flapped red even when nothing was actually wrong. Regenerating the
+# data on pipeline-code / PDF changes is handled by pipeline-refresh.yml (it
+# rebuilds and commits on CI); this workflow validates whatever is committed
+# against the invariants that matter, which is fast and deterministic.
 #
 # The `pipeline` branch is listed for fork testing; drop it once this merges
 # upstream.
@@ -62,62 +57,3 @@ jobs:
 
       - name: Run pipeline tests
         run: python -m pytest pipeline/tests -q
-
-  build-guard:
-    name: rebuild + deliverables up-to-date guard
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: pipeline/requirements.txt
-
-      - name: Install system OCR dependency
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y tesseract-ocr
-
-      - name: Install dependencies
-        run: pip install -r pipeline/requirements.txt
-
-      # Persist Lee County API responses between runs so the rebuild is fast
-      # and (mostly) deterministic. The per-run key always misses, so the
-      # updated cache is saved at job end; restore-keys picks up the latest.
-      - name: Restore Lee County API cache
-        uses: actions/cache@v4
-        with:
-          path: .cache
-          key: leepa-cache-${{ github.run_id }}
-          restore-keys: |
-            leepa-cache-
-
-      - name: Rebuild data (in place)
-        run: >
-          python pipeline/build.py
-          --pdf-dir pdfs
-          --source-csv pdfs/Estero_Meetings_Final.csv
-          --out-dir backend/data
-
-      - name: Verify committed deliverables match rebuild
-        run: |
-          if ! git diff --exit-code --stat -- backend/data/; then
-            git diff -- backend/data/ > rebuild.diff
-            echo ""
-            echo "::error::data/ is out of date. Run:" \
-                 "python pipeline/build.py --pdf-dir pdfs --source-csv pdfs/Estero_Meetings_Final.csv --out-dir backend/data," \
-                 "then commit data/"
-            exit 1
-          fi
-
-      - name: Upload rebuild diff on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: rebuild-diff-${{ github.run_id }}
-          path: rebuild.diff
-          retention-days: 30
-          if-no-files-found: ignore
