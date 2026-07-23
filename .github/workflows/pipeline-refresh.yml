@@ -7,6 +7,9 @@ name: Refresh pipeline deliverables
 #   - On push of new/changed PDFs (or the hand-curated geocode overrides /
 #     URL lookup): "upload a PDF and the pipeline re-runs" — the legacy
 #     pzdb_pilot trigger.
+#   - On push of pipeline code (build.py, eaglegis/**, ...): the deliverables
+#     are a function of the code, so regenerate them here rather than making
+#     contributors rebuild + commit data by hand.
 #   - Weekly Monday 07:00 UTC: same flow without input changes; picks up
 #     upstream Lee County parcel changes in resolved coordinates.
 #   - Manual dispatch from the Actions tab.
@@ -33,6 +36,14 @@ on:
       - "backend/data/bronze/geocoded_locations.csv"
       - "backend/data/bronze/estero_minutes_urls.txt"
       - ".github/workflows/pipeline-refresh.yml"
+      # Pipeline code changes the deliverables too — regenerate on CI so the
+      # committed data stays a function of the code (keeps pipeline-ci's
+      # build-guard green without a manual dispatch). Tests excluded.
+      - "pipeline/build.py"
+      - "pipeline/discover.py"
+      - "pipeline/verify.py"
+      - "pipeline/eaglegis/**"
+      - "pipeline/requirements.txt"
   schedule:
     - cron: "0 7 * * 1"
   workflow_dispatch:
