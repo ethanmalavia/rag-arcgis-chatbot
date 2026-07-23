@@ -1,11 +1,12 @@
 """Gold-tier export: the flat, AI-ready meetings CSV.
 
-Produces gold/meetings_ai_public.csv in the 52-column contract consumed by
+Produces gold/meetings_ai_public.csv in the 54-column contract consumed by
 the rag-arcgis-chatbot backend (`backend/data/gold/meetings_ai_public.csv`). One row per agenda item; the item's primary resolved
 location is denormalized onto the row when one exists.
 
 Column order and names must not change without coordinating with the
-chatbot backend.
+chatbot backend. New columns are appended at the end for the same reason
+(ProjectId/ProjectKey were added this way — the backend reads by name).
 """
 from __future__ import annotations
 
@@ -24,6 +25,10 @@ AI_PUBLIC_FIELDS = [
     "GeocodeConfidence", "LocationGrain", "ParcelId", "PrimarySourceUrl",
     "SourceFilename", "ExtractionMethod", "ExtractionConfidence",
     "ReviewRequired", "ReviewReason", "AiReady", "CitationText",
+    # Stable project grouping key (from agenda_item_projects -> projects).
+    # Appended to preserve the existing column contract. ProjectId joins to
+    # projects.project_id; ProjectKey is a debuggable slug of the name.
+    "ProjectId", "ProjectKey",
 ]
 
 _APPLICATION_CODE = re.compile(r"\b(DOS|DCI|LDO|ADD|CPA|REZ)\d*", re.I)
@@ -168,5 +173,7 @@ def build_ai_public_rows(tables: dict[str, list[dict]]) -> list[dict]:
             "ReviewReason": _text(item.get("extraction_notes")),
             "AiReady": "true" if (action and not review_required) else "false",
             "CitationText": citation,
+            "ProjectId": _text(project.get("project_id")) if project else "",
+            "ProjectKey": _slug(project.get("project_name")) if project else "",
         })
     return rows

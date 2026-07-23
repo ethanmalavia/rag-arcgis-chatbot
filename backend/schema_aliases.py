@@ -9,6 +9,8 @@ import pandas as pd
 ALIASES: dict[str, tuple[str, ...]] = {
     "application_id": ("ApplicationID", "ApplicationId"),
     "project_name": ("ProjectName", "ProjectTitle"),
+    "project_id": ("ProjectId",),
+    "project_key": ("ProjectKey",),
     "location": ("Location", "LocationName", "AddressNormalized", "AddressRaw"),
     "meeting_date": ("MeetingDate",),
     "meeting_year": ("MeetingYear",),

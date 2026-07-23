@@ -42,6 +42,14 @@ ENABLE_RECENCY_BOOST = os.getenv("ENABLE_RECENCY_BOOST", "true").lower() not in 
 RECENCY_BOOST = float(os.getenv("RECENCY_BOOST", "0.35"))
 # Days until a record's recency score halves (≈3 years).
 RECENCY_HALF_LIFE_DAYS = float(os.getenv("RECENCY_HALF_LIFE_DAYS", "1095"))
+
+# Project-scoped retrieval: when the top hits converge on one project (via the
+# ProjectId grouping key from the gold corpus), expand to that project's full
+# linked set (recall) and drop hits from a different project (precision).
+ENABLE_PROJECT_SCOPE = os.getenv("ENABLE_PROJECT_SCOPE", "true").lower() not in {"0", "false", "no"}
+PROJECT_SCOPE_MIN_SUPPORT = int(os.getenv("PROJECT_SCOPE_MIN_SUPPORT", "2"))
+PROJECT_SCOPE_CAP = int(os.getenv("PROJECT_SCOPE_CAP", "20"))
+
 # Warn users when an answer cites meeting records older than this many years.
 STALE_SOURCE_YEARS = float(os.getenv("STALE_SOURCE_YEARS", "5"))
 

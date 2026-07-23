@@ -27,7 +27,7 @@ def build_search_header(fields: dict[str, Any]) -> str:
 
 def _format_fields(fields: dict[str, Any]) -> str:
     logical_keys = (
-        "project_name", "application_id", "location", "meeting_date",
+        "project_name", "project_id", "application_id", "location", "meeting_date",
         "meeting_year", "status", "summary", "action_taken", "outcome", "document_url",
     )
     lines = []
@@ -48,6 +48,8 @@ def rows_to_chunks(df: pd.DataFrame, summary_min_len: int = 200) -> list[Documen
             "row_index": int(idx),
             "meeting_year": row_value(fields, "meeting_year"),
             "meeting_date": row_value(fields, "meeting_date"),
+            "project_id": row_value(fields, "project_id"),
+            "project_key": row_value(fields, "project_key"),
         }
         header = build_search_header(fields)
         body = _format_fields(fields)

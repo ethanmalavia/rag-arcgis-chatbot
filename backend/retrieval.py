@@ -10,8 +10,11 @@ from sentence_transformers import CrossEncoder
 
 from config import (
     DENSE_K,
+    ENABLE_PROJECT_SCOPE,
     ENABLE_RECENCY_BOOST,
     ENABLE_RERANKER,
+    PROJECT_SCOPE_CAP,
+    PROJECT_SCOPE_MIN_SUPPORT,
     RECENCY_BOOST,
     RECENCY_HALF_LIFE_DAYS,
     RERANK_CANDIDATES,
@@ -160,6 +163,70 @@ def hybrid_retrieve(store: DataStore, query: str) -> list[tuple[Document, float]
     filtered = [(d, s) for d, s in ranked if s >= SCORE_THRESHOLD]
     pool = filtered or ranked
     return apply_recency_boost(pool, query)[:RERANK_K]
+
+
+def _project_id(doc: Document) -> str:
+    return str(doc.metadata.get("project_id") or "").strip()
+
+
+def dominant_project_id(
+    hits: list[tuple[Document, float]], min_support: int
+) -> str | None:
+    """The project the hits converge on, by DISTINCT linked items (rows).
+
+    Counts distinct row_index per project_id so several chunks of one item
+    can't fake support. Returns None unless one project has >= min_support
+    distinct items, so ordinary (non-project) queries are left untouched.
+    """
+    rows_by_pid: dict[str, set] = {}
+    for doc, _ in hits:
+        pid = _project_id(doc)
+        if pid:
+            rows_by_pid.setdefault(pid, set()).add(doc.metadata.get("row_index"))
+    if not rows_by_pid:
+        return None
+    pid = max(rows_by_pid, key=lambda p: len(rows_by_pid[p]))
+    return pid if len(rows_by_pid[pid]) >= min_support else None
+
+
+def scope_hits_to_project(
+    store: DataStore, hits: list[tuple[Document, float]]
+) -> list[tuple[Document, float]]:
+    """Focus retrieval on the project the hits converge on.
+
+    Precision: drop hits belonging to a *different* non-empty project.
+    Recall: pull in every item linked to the target project (its canonical
+    'meta' chunk), so scattered actions (contracts, ordinances, updates) are
+    all present. Unlinked keyword hits are kept but demoted below the linked
+    set; grounding rules in the prompt prevent them being mis-attributed.
+    """
+    if not ENABLE_PROJECT_SCOPE or not hits:
+        return hits
+    pid = dominant_project_id(hits, PROJECT_SCOPE_MIN_SUPPORT)
+    if not pid:
+        return hits
+
+    kept = [(d, s) for d, s in hits if _project_id(d) in ("", pid)]
+    seen_rows = {d.metadata.get("row_index") for d, _ in kept}
+    floor = min((s for _, s in kept), default=1.0)
+
+    additions = [
+        doc
+        for doc in store.documents
+        if _project_id(doc) == pid
+        and doc.metadata.get("chunk_type") == "meta"
+        and doc.metadata.get("row_index") not in seen_rows
+    ]
+    # Most-recent linked items first, so the cap keeps current activity when a
+    # coarse bucket (e.g. a whole road) has more items than the cap.
+    additions.sort(key=lambda d: (document_meeting_date(d) or date.min), reverse=True)
+    for rank, doc in enumerate(additions):
+        kept.append((doc, floor - 0.001 * (rank + 1)))
+
+    # Target-project records first (retrieved hits by score, then recent linked
+    # items); unlinked keyword hits demoted after and dropped if the cap fills.
+    kept.sort(key=lambda t: (0 if _project_id(t[0]) == pid else 1, -t[1]))
+    return kept[:PROJECT_SCOPE_CAP]
 
 
 def format_docs(hits: list[tuple[Document, float]]) -> str:

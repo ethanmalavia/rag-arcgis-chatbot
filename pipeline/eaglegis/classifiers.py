@@ -103,11 +103,42 @@ def infer_category(text: str, action_type: str) -> str:
     return "Meetings, Records & Public Input"
 
 
+def _alias_list_matches(lo: str, aliases: list[str]) -> bool:
+    """Legacy form: match if any alias phrase appears as a whole word."""
+    return any(re.search(rf"\b{re.escape(alias)}\b", lo) for alias in aliases)
+
+
+def _alias_spec_matches(lo: str, spec: dict) -> bool:
+    """Structured form for road/corridor projects, where a bare road name
+    would wrongly capture every private development on that road.
+
+    Terms are regexes. Match requires: at least one ``require`` term (the road)
+    AND at least one ``with`` term (a public-works action) AND no ``exclude``
+    term (a private land-use signal: development order, zoning amendment, etc.).
+    An omitted key is not enforced.
+    """
+    require = spec.get("require") or []
+    works = spec.get("with") or []
+    exclude = spec.get("exclude") or []
+    if require and not any(re.search(p, lo) for p in require):
+        return False
+    if works and not any(re.search(p, lo) for p in works):
+        return False
+    if exclude and any(re.search(p, lo) for p in exclude):
+        return False
+    return True
+
+
 def match_projects(text: str, fallback_project: str | None = None) -> list[str]:
     lo = text.lower()
     matches = [
-        project for project, aliases in PROJECT_ALIASES.items()
-        if any(re.search(rf"\b{re.escape(alias)}\b", lo) for alias in aliases)
+        project
+        for project, aliases in PROJECT_ALIASES.items()
+        if (
+            _alias_spec_matches(lo, aliases)
+            if isinstance(aliases, dict)
+            else _alias_list_matches(lo, aliases)
+        )
     ]
     if fallback_project and fallback_project not in matches:
         matches.append(fallback_project)

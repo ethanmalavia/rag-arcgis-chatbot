@@ -54,7 +54,31 @@ def normalize_location_type(value: object) -> str:
     return re.sub(r"[^A-Z0-9]+", "_", raw.upper()).strip("_")
 
 
-PROJECT_ALIASES: dict[str, list[str]] = {
+# Shared vocab for road-improvement project specs (see classifiers.match_projects).
+# _ROAD_WORKS: public-works actions that mark a corridor capital project.
+# _ROAD_LANDUSE: private land-use signals that mark a development on the road
+# (which must NOT be swept into the road project). Terms are regexes.
+_ROAD_WORKS: list[str] = [
+    r"\bpath\b", r"pathway", r"landscap", r"lighting", r"street light", r"widen",
+    r"sidewalk", r"traffic signal", r"\beasement", r"improvement", r"bicycle",
+    r"pedestrian", r"\bbike\b", r"roundabout", r"\bbridge\b", r"roadway",
+    r"road cross", r"repav", r"intersection", r"turn lane", r"enhancement",
+    r"streetscape", r"median", r"wetland mitigation", r"structure demolition",
+    r"debris removal", r"maintenance agreement", r"maintenance responsibilit",
+    r"right-of-way", r"river creek", r"design and permitting", r"interlocal agreement",
+    r"\bupdate\b", r"change order", r"construction engineering", r"\bcei\b",
+    r"concept design", r"plant replacement", r"preliminary design", r"value engineering",
+]
+_ROAD_LANDUSE: list[str] = [
+    r"development order", r"zoning amendment", r"rezon", r"replat", r"\bplat\b",
+    r"conditional use", r"special exception", r"monument sign", r"sign package",
+    r"consumption on premises", r"comprehensive plan", r"\bd\.o\.", r"\bdci\s*20",
+    r"\bdos\s*20", r"\bsez\s*20", r"\badd\s*20", r"\bldo\s*20", r"\bcpa\s*20",
+    r"dealership", r"restaurant", r"\bschool\b", r"\bbank\b", r"pharma", r"auto ",
+    r"monument", r"\bhotel", r"apartment",
+]
+
+PROJECT_ALIASES: dict[str, list[str] | dict[str, list[str]]] = {
     "BERT Rail Trail": [
         "bert", "rail trail", "bonita-estero regional trail", "sunterra", "suntrail",
     ],
@@ -62,9 +86,16 @@ PROJECT_ALIASES: dict[str, list[str]] = {
         "septic", "sewer", "utility extension", "uep", "estero bay village",
         "sunny grove", "cypress bend", "broadway avenue east",
     ],
-    "Corkscrew Road": [
-        "corkscrew road", "corkscrew rd", "puente lane", "traffic signal",
-    ],
+    # Road-improvement PROJECT — the public capital work on the corridor, not
+    # every private development that happens to front the road. A bare road
+    # name matched ~144 items (dozens of unrelated rezonings / development
+    # orders). Structured form: require the road + a public-works action, and
+    # exclude private land-use signals. See classifiers._alias_spec_matches.
+    "Corkscrew Road": {
+        "require": [r"corkscrew road", r"corkscrew rd", r"puente lane"],
+        "with": _ROAD_WORKS,
+        "exclude": _ROAD_LANDUSE,
+    },
     "Comprehensive Plan": [
         "comprehensive plan", "comp plan", "land development code",
     ],
@@ -74,22 +105,30 @@ PROJECT_ALIASES: dict[str, list[str]] = {
     "Estero on the River": [
         "estero on the river", "river oaks", "river oaks preserve",
     ],
-    "Sandy Lane Improvements": [
-        "sandy lane", "sandy lake bike", "sandy lane bike", "sandy lane right of way",
-    ],
+    "Sandy Lane Improvements": {
+        "require": [r"sandy lane", r"sandy lake bike"],
+        "with": _ROAD_WORKS,
+        "exclude": _ROAD_LANDUSE,
+    },
     "Broadway Avenue Utility Extension": [
         "broadway avenue east", "broadway ave. east", "broadway east",
         "broadway avenue west", "broadway ave. west", "broadway west",
     ],
-    "Williams Road Improvements": [
-        "williams road", "williams rd",
-    ],
-    "Estero Parkway Improvements": [
-        "estero parkway",
-    ],
-    "Ben Hill Griffin Parkway Improvements": [
-        "ben hill griffin",
-    ],
+    "Williams Road Improvements": {
+        "require": [r"williams road", r"williams rd"],
+        "with": _ROAD_WORKS,
+        "exclude": _ROAD_LANDUSE,
+    },
+    "Estero Parkway Improvements": {
+        "require": [r"estero parkway"],
+        "with": _ROAD_WORKS,
+        "exclude": _ROAD_LANDUSE,
+    },
+    "Ben Hill Griffin Parkway Improvements": {
+        "require": [r"ben hill griffin"],
+        "with": _ROAD_WORKS,
+        "exclude": _ROAD_LANDUSE,
+    },
     "Comprehensive Plan / Land Development Code": [
         "comprehensive plan", "land development code", "official zoning map",
     ],

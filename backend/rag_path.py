@@ -22,7 +22,7 @@ from config import (
     SCORE_THRESHOLD,
 )
 from models import ChatResponse, ProjectOut, RouteKind
-from retrieval import best_score, format_docs, hybrid_retrieve
+from retrieval import best_score, format_docs, hybrid_retrieve, scope_hits_to_project
 from store import DataStore
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ RULES — follow exactly:
 6. document_url must be copied exactly from Document_Link in the context — never invent URLs.
 7. status must be one of: Approved, Denied, Continued, or No decision recorded.
 8. Prefer the most relevant projects (up to 5).
+9. Records sharing the same project_id are the same project; group them. Only attribute an action to a project when its record's project_id matches — never infer that two records concern the same project from a shared road, location, or keyword.
 
 Return ONLY valid JSON (no markdown fences) with this exact shape:
 {{
@@ -74,6 +75,7 @@ RULES:
 4. status must be one of: Approved, Denied, Continued, or No decision recorded.
 5. Each project summary must be 1–2 COMPLETE sentences that end with a period — never cut off mid-sentence.
 6. Return at most 5 of the most relevant projects for the question.
+7. Records sharing the same project_id belong to the same project; group them. Only attribute an action to a project when its record's project_id matches — never infer shared identity from a common road, location, or keyword.
 
 Return ONLY valid JSON (no markdown fences):
 {{
@@ -298,7 +300,10 @@ def retrieve_with_crag(store: DataStore, question: str) -> tuple[str, dict[str, 
             meta["rewrites"].append(query)
     meta["best_score"] = float(round(best_score(hits), 4))
     meta["retrieved"] = len(hits)
-    return format_docs(hits), meta
+    scoped = scope_hits_to_project(store, hits)
+    if len(scoped) != len(hits):
+        meta["project_scoped"] = len(scoped)
+    return format_docs(scoped), meta
 
 
 def _invoke_solo(question: str, context: str, provider: Provider, route: str) -> ChatResponse:
