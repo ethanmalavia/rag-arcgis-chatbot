@@ -50,174 +50,175 @@ location_id,location_name,location_type,address,description,latitude,longitude
 49,21351 HAPPY HOLLOW LN,PARCEL_ADDRESS,21351 HAPPY HOLLOW LN,,26.428150046589735,-81.80559959172314
 50,10500 Corkscrew Road,GENERAL_AREA,"10500 Corkscrew Road, Estero, FL",,,
 51,Casta Del Sol at Pelican Landing Condominium,NEIGHBORHOOD,Casta Del Sol at Pelican Landing Condominium,,26.368806512145348,-81.80994853587833
-52,9201 and 9301 Corkscrew Road,GENERAL_AREA,"9201 and 9301 Corkscrew Road, Estero, FL",,,
-53,21520 STRADA NUOVA CIR,PARCEL_ADDRESS,21520 STRADA NUOVA CIR,,26.43073303806516,-81.80426648794258
-54,21471 STRADA NUOVA CIR,PARCEL_ADDRESS,21471 STRADA NUOVA CIR,,26.42928776119197,-81.80371477374048
-55,21510 STRADA NUOVA CIR,PARCEL_ADDRESS,21510 STRADA NUOVA CIR,,26.43075533778512,-81.80321493448558
-56,19501 Vintage Trace Circle,GENERAL_AREA,"19501 Vintage Trace Circle, Estero, FL",,,
-57,"8111 Broadway Avenue East, Estero, FL",PROJECT_SITE,"8111 Broadway Avenue East, Estero, FL",,26.44244610632,-81.809993666508
-58,23050 Via Villagio,GENERAL_AREA,"23050 Via Villagio, Estero, FL",,,
-59,"21500 Three Oaks Parkway, Estero, FL",PROJECT_SITE,"21500 Three Oaks Parkway, Estero, FL",,26.426449705114,-81.788771609677
-60,"Shadow Wood, Estero, FL",NAMED_VENUE,"Shadow Wood, Estero, FL",,26.4099337,-81.7949565
-61,"9401 Corkscrew Palms Circle, Estero, FL 33928",NAMED_VENUE,"9401 Corkscrew Palms Circle, Estero, FL 33928",,26.430490662544,-81.799280001688
-62,9170 Estero River Ct,GENERAL_AREA,"9170 Estero River Ct, Estero, FL",,,
-63,"Sandy Lane & Via Coconut Point, Estero, FL",PROJECT_SITE,"Sandy Lane & Via Coconut Point, Estero, FL",,26.431370008006,-81.804867965078
-64,21700 S TAMIAMI TRL,PARCEL_ADDRESS,21700 S TAMIAMI TRL,,26.425199217459866,-81.81186425425616
-65,along Coconut Road,WHOLE_STREET,along Coconut Road,,26.402206366062057,-81.80454380971804
-66,along Corkscrew Road,WHOLE_STREET,along Corkscrew Road,,26.436406641374045,-81.7775478216657
-67,"Corkscrew Road & Puente Lane, Estero, FL",PROJECT_SITE,"Corkscrew Road & Puente Lane, Estero, FL",,26.431386394627,-81.784740920078
-68,"Estero Sports Park, north of Williams Road and east of Via Coconut Point, Estero, FL",PROJECT_SITE,"Estero Sports Park, north of Williams Road and east of Via Coconut Point, Estero, FL",,26.422098,-81.802186
-69,"20897 Three Oaks Parkway, Estero, FL",PROJECT_SITE,"20897 Three Oaks Parkway, Estero, FL",,26.436576930078,-81.784532881242
-70,Copperleaf at The Brooks Subdivision,NEIGHBORHOOD,Copperleaf at The Brooks Subdivision,,26.403150903589538,-81.77854759318382
-71,4410 Coconut Road,GENERAL_AREA,"4410 Coconut Road, Estero, FL",,,
-72,"Seminole Gulf Railway corridor from southern Village limits to Estero Parkway, Estero, FL",NAMED_VENUE,"Seminole Gulf Railway corridor from southern Village limits to Estero Parkway, Estero, FL",,26.423875,-81.804915
-73,"Sandy Lane and Broadway East bicycle/pedestrian improvements, Estero, FL",PROJECT_SITE,"Sandy Lane and Broadway East bicycle/pedestrian improvements, Estero, FL",,26.438402,-81.80693
-74,"Broadway Avenue East from US 41 to Sandy Lane, Estero, FL",PROJECT_SITE,"Broadway Avenue East from US 41 to Sandy Lane, Estero, FL",,26.441974498538,-81.807963485741
-75,"River Ranch Road from Williams Road to Corkscrew Road, Estero, FL",PROJECT_SITE,"River Ranch Road from Williams Road to Corkscrew Road, Estero, FL",,26.425785502152,-81.794620501714
-76,"US 41 from Williams Road to south of Estero Parkway, Estero, FL",PROJECT_SITE,"US 41 from Williams Road to south of Estero Parkway, Estero, FL",,26.434255,-81.814695788461
-77,19975 S TAMIAMI TRL,PARCEL_ADDRESS,19975 S TAMIAMI TRL,,26.45078577512305,-81.81707272622631
-78,23106 FASHION DR,PARCEL_ADDRESS,23106 FASHION DR,,26.404355403292666,-81.80731508067035
-79,19950 S TAMIAMI TRL,PARCEL_ADDRESS,19950 S TAMIAMI TRL,,26.450390144390827,-81.82081539161072
-80,"Home2 Suites proposed hotel site, Coconut Point Mall, Estero, FL",PROJECT_SITE,"Home2 Suites proposed hotel site, Coconut Point Mall, Estero, FL",,26.403277778,-81.808611111
-81,"9000 Williams Road, Estero, FL",PROJECT_SITE,"9000 Williams Road, Estero, FL",,26.420956750596,-81.80311832661
-82,"Downtown Estero project site, east of US 41 and north of Broadway Avenue East, Estero, FL",PROJECT_SITE,"Downtown Estero project site, east of US 41 and north of Broadway Avenue East, Estero, FL",,26.4432,-81.807
-83,"Woodfield Estero project site, northwest corner of US 41 & Coconut Road, Estero, FL",PROJECT_SITE,"Woodfield Estero project site, northwest corner of US 41 & Coconut Road, Estero, FL",,26.4022,-81.815
-84,"Williams Road & Atlantic Gulf Boulevard, Estero, FL",PROJECT_SITE,"Williams Road & Atlantic Gulf Boulevard, Estero, FL",,26.420304009887,-81.812656010414
-85,9441 CORKSCREW PALMS CIR,PARCEL_ADDRESS,9441 CORKSCREW PALMS CIR,,26.430465596510277,-81.79763059961697
-86,"Northeast corner of US 41 and Corkscrew Road, Estero, FL",PROJECT_SITE,"Northeast corner of US 41 and Corkscrew Road, Estero, FL",,26.432555,-81.80817
-87,CORKSCREW RD & THREE OAKS PKWY,INTERSECTION,CORKSCREW RD & THREE OAKS PKWY,,26.4312076018546,-81.7885401402789
-88,Riverside Park,NAMED_VENUE,Riverside Park,,26.340123664681304,-81.77944144235532
-89,"Williams Road from Via Coconut Point to Three Oaks Parkway, Estero, FL",PROJECT_SITE,"Williams Road from Via Coconut Point to Three Oaks Parkway, Estero, FL",,26.420434746622,-81.797464230004
-90,"Ben Hill Griffin Parkway from Corkscrew Road to Estero Parkway, Estero, FL",PROJECT_SITE,"Ben Hill Griffin Parkway from Corkscrew Road to Estero Parkway, Estero, FL",,26.442888042165,-81.772410260408
-91,Heatherstone at Rookery Pointe Subdivision,NEIGHBORHOOD,Heatherstone at Rookery Pointe Subdivision,,26.447607197915094,-81.79310346599338
-92,"Estero River North Branch from Bamboo Island to River Oaks Preserve, Estero, FL",PROJECT_SITE,"Estero River North Branch from Bamboo Island to River Oaks Preserve, Estero, FL",,26.4390196,-81.8105466
-93,"The Colonnade / Estero Townhomes site, 9301 Corkscrew Road, Estero, FL",PROJECT_SITE,"The Colonnade / Estero Townhomes site, 9301 Corkscrew Road, Estero, FL",,26.432264859989,-81.801155452524
-94,"9501 Spring Run Boulevard, Estero, FL",PROJECT_SITE,"9501 Spring Run Boulevard, Estero, FL",,26.395734095199,-81.797042452636
-95,8900 Commons Way,GENERAL_AREA,"8900 Commons Way, Estero, FL",,,
-96,"The Brooks, Estero, FL",NAMED_VENUE,"The Brooks, Estero, FL",,26.3926426,-81.7753764
-97,"18251 Three Oaks Parkway, Estero, FL",PROJECT_SITE,"18251 Three Oaks Parkway, Estero, FL",,26.433779738905564,-81.78952626707927
-98,"22800 Via Villagio, Estero, FL",PROJECT_SITE,"22800 Via Villagio, Estero, FL",,26.412588048918,-81.811355977231
-99,"Estero Community Park, 9101 Corkscrew Palms Boulevard, Estero, FL",PROJECT_SITE,"Estero Community Park, 9101 Corkscrew Palms Boulevard, Estero, FL",,26.422098,-81.802186
-100,10411 CORKSCREW COMMONS DR,PARCEL_ADDRESS,10411 CORKSCREW COMMONS DR,,26.43209160703068,-81.78142473104408
-101,19980 BELLA TERRA BLVD,PARCEL_ADDRESS,19980 BELLA TERRA BLVD,,26.4505876442332,-81.73116264197117
-102,10100 ARCOS AVE,PARCEL_ADDRESS,10100 ARCOS AVE,,26.43361648020414,-81.78794350168731
-103,9600 CORKSCREW RD,PARCEL_ADDRESS,9600 CORKSCREW RD,,26.43034708593776,-81.79527741717419
-104,"Corkscrew Pines project site, Estero, FL",PROJECT_SITE,"Corkscrew Pines project site, Estero, FL",,26.4383,-81.7603
-105,21301 TOWN COMMONS DR,PARCEL_ADDRESS,21301 TOWN COMMONS DR,,26.430779622713892,-81.78597422303042
-106,"Cypress Bend, Estero, FL",NAMED_VENUE,"Cypress Bend, Estero, FL",,26.4469,-81.8116
-107,"River Oaks Preserve, Estero, FL",NAMED_VENUE,"River Oaks Preserve, Estero, FL",,26.4420079,-81.7993579
-108,"21500 Three Oaks Parkway, Estero, FL 33928",NAMED_VENUE,"21500 Three Oaks Parkway, Estero, FL 33928",,26.426449705114,-81.788771609677
-109,Village on Crescent Lake at Breckenridge Condominium,NEIGHBORHOOD,Village on Crescent Lake at Breckenridge Condominium,,26.44425079079401,-81.82629414204098
-110,"Estero Parkway from US 41 to Three Oaks Parkway, Estero, FL",PROJECT_SITE,"Estero Parkway from US 41 to Three Oaks Parkway, Estero, FL",,26.448792003304,-81.803409304378
-111,"19980 Bella Terra Boulevard, Estero, FL",PROJECT_SITE,"19980 Bella Terra Boulevard, Estero, FL",,26.450582796918,-81.73115952021
-112,"21450 Strada Nuova Circle, Estero, FL",NAMED_VENUE,"21450 Strada Nuova Circle, Estero, FL",,26.428168875365,-81.804317441678
-113,Cypress Cove at Wildcat Run Condominium,NEIGHBORHOOD,Cypress Cove at Wildcat Run Condominium,,26.44468674839979,-81.74528909824977
-114,10251 ARCOS AVE,PARCEL_ADDRESS,10251 ARCOS AVE,,26.433481009353372,-81.78575313231335
-115,Avalon at Grandezza Condominium,NEIGHBORHOOD,Avalon at Grandezza Condominium,,26.44124231180666,-81.76991455364423
-116,19701 S TAMIAMI TRL,PARCEL_ADDRESS,19701 S TAMIAMI TRL,,26.45400113110861,-81.82155996077842
-117,22910 LYDEN DR,PARCEL_ADDRESS,22910 LYDEN DR,,26.40558748660281,-81.81256928300715
-118,20300 COUNTRY CLUB DR,PARCEL_ADDRESS,20300 COUNTRY CLUB DR,,26.435736902147063,-81.74958822940889
-119,"Commons Club at The Brooks, Estero, FL",PROJECT_SITE,"Commons Club at The Brooks, Estero, FL",,26.3974648,-81.7889557
-120,"Coconut Road & Oakwilde Boulevard, Estero, FL",PROJECT_SITE,"Coconut Road & Oakwilde Boulevard, Estero, FL",,26.398580002784,-81.798864007834
-121,"Miromar Outlets, Estero, FL",PROJECT_SITE,"Miromar Outlets, Estero, FL",,26.438084,-81.772808
-122,21530 STRADA NUOVA CIR,PARCEL_ADDRESS,21530 STRADA NUOVA CIR,,26.42982261302848,-81.80432487481026
-123,WILLIAMS RD & THREE OAKS PKWY,INTERSECTION,WILLIAMS RD & THREE OAKS PKWY,,26.4203700396588,-81.7883783801721
-124,"8801 Corkscrew Road, Estero, FL",PROJECT_SITE,"8801 Corkscrew Road, Estero, FL",,26.434598214195,-81.807374237947
-125,"Williams Road from US 41 to Via Coconut Point, Estero, FL",PROJECT_SITE,"Williams Road from US 41 to Via Coconut Point, Estero, FL",,26.420397237605,-81.80904475125
-126,"Williams Road & Via Coconut Point, Estero, FL",PROJECT_SITE,"Williams Road & Via Coconut Point, Estero, FL",,26.42047948503,-81.806570497251
-127,Pelican Sound Subdivision,NEIGHBORHOOD,Pelican Sound Subdivision,,26.42929045220349,-81.82471928963577
-128,"Sunny Grove, Estero, FL",NAMED_VENUE,"Sunny Grove, Estero, FL",,26.4376,-81.8128
-129,"Estero River Park (Village property), northeast corner of US 41 and Corkscrew Road, Estero, FL",PROJECT_SITE,"Estero River Park (Village property), northeast corner of US 41 and Corkscrew Road, Estero, FL",,26.432555,-81.80817
-130,"Stoneybrook, Estero, FL",NAMED_VENUE,"Stoneybrook, Estero, FL",,26.4298062,-81.7679548
-131,12840 Corkscrew Road,GENERAL_AREA,"12840 Corkscrew Road, Estero, FL",,,
-132,20161 Camellia Crosse Lane,GENERAL_AREA,"20161 Camellia Crosse Lane, Estero, FL",,,
-133,23421 WALDEN CENTER DR,PARCEL_ADDRESS,23421 WALDEN CENTER DR,,26.396727649271075,-81.81122295278746
-134,22961 Lyden Drive,GENERAL_AREA,"22961 Lyden Drive, Estero, FL",,,
-135,Corkscrew Woodlands Subdivision,NEIGHBORHOOD,Corkscrew Woodlands Subdivision,,26.424061060167862,-81.77959546794243
-136,"Koreshan State Park, Estero, FL",NAMED_VENUE,"Koreshan State Park, Estero, FL",,26.4368409,-81.8180833
-137,"8790 Broadway Avenue East, Estero, FL",PROJECT_SITE,"8790 Broadway Avenue East, Estero, FL",,26.440585868638,-81.806135895572
-138,"Ben Hill Griffin Parkway & Everblades Parkway North, Estero, FL",PROJECT_SITE,"Ben Hill Griffin Parkway & Everblades Parkway North, Estero, FL",,26.443920189721,-81.773684686876
-139,10351 Corkscrew Commons Drive,GENERAL_AREA,"10351 Corkscrew Commons Drive, Estero, FL",,,
-140,"Corkscrew Road at Stoneybrook Golf Drive, Estero, FL",PROJECT_SITE,"Corkscrew Road at Stoneybrook Golf Drive, Estero, FL",,26.439657614771,-81.762920730637
-141,"Shadow Wood Country Club Lifestyle Center, Estero, FL",PROJECT_SITE,"Shadow Wood Country Club Lifestyle Center, Estero, FL",,26.407365,-81.789795
-142,"Via Coconut Point from Coconut Road to Corkscrew Road, Estero, FL",PROJECT_SITE,"Via Coconut Point from Coconut Road to Corkscrew Road, Estero, FL",,26.420479,-81.80657
-143,"Mayfair Village site between Broadway Avenue East and Sandy Lane, Estero, FL",PROJECT_SITE,"Mayfair Village site between Broadway Avenue East and Sandy Lane, Estero, FL",,26.43890234243,-81.805657540358
-144,8420 MURANO DEL LAGO DR,PARCEL_ADDRESS,8420 MURANO DEL LAGO DR,,26.391199708507013,-81.80905839333157
-145,19511 Highlands Oaks Drive,GENERAL_AREA,"19511 Highlands Oaks Drive, Estero, FL",,,
-146,20320 GRANDE OAK SHOPPES BLVD,PARCEL_ADDRESS,20320 GRANDE OAK SHOPPES BLVD,,26.437023507620733,-81.76987508479715
-147,10251 Arcos Avenue,GENERAL_AREA,"10251 Arcos Avenue, Estero, FL",,,
-148,21580 RIVER RANCH RD,PARCEL_ADDRESS,21580 RIVER RANCH RD,,26.426366236141643,-81.7957610238013
-149,"10500 Corkscrew Road, Estero, FL",PROJECT_SITE,"10500 Corkscrew Road, Estero, FL",,26.430907704137,-81.783054229702
-150,Riverwoods Plantation Condominium,NEIGHBORHOOD,Riverwoods Plantation Condominium,,26.44551087014053,-81.83135830974891
-151,10150 ARCOS AVE,PARCEL_ADDRESS,10150 ARCOS AVE,,26.4323387671025,-81.78783499987172
-152,along Williams Road,WHOLE_STREET,along Williams Road,,26.420210096558677,-81.81166992220037
-153,"The Brooks Town Center, Estero, FL",PROJECT_SITE,"The Brooks Town Center, Estero, FL",,26.396617,-81.786171
-154,"Pelican Sound Golf & River Club, Estero, FL",PROJECT_SITE,"Pelican Sound Golf & River Club, Estero, FL",,26.4360814,-81.8298334
-155,"Sandy Lane from Corkscrew Road to Broadway Avenue East, Estero, FL",PROJECT_SITE,"Sandy Lane from Corkscrew Road to Broadway Avenue East, Estero, FL",,26.43663000848,-81.804926512673
-156,20318 Sherrill Lane,GENERAL_AREA,"20318 Sherrill Lane, Estero, FL",,,
-157,"Coconut Road from US 41 to Via Coconut Point, Estero, FL",PROJECT_SITE,"Coconut Road from US 41 to Via Coconut Point, Estero, FL",,26.398474495578,-81.808064278126
-158,"Estero Parkway & Three Oaks Parkway, Estero, FL",PROJECT_SITE,"Estero Parkway & Three Oaks Parkway, Estero, FL",,26.449389004358,-81.788946037082
-159,"Estero Townhomes EPD site, 9301 Corkscrew Road, Estero, FL",PROJECT_SITE,"Estero Townhomes EPD site, 9301 Corkscrew Road, Estero, FL",,26.432264859989,-81.801155452524
-160,"Coconut Pointe Residences at Brooks Town Center site, Estero, FL",PROJECT_SITE,"Coconut Pointe Residences at Brooks Town Center site, Estero, FL",,26.39711,-81.78531
-161,10640 CHEVROLET WAY,PARCEL_ADDRESS,10640 CHEVROLET WAY,,26.430182136164337,-81.77888336722721
-162,23161 Village Shops Way,GENERAL_AREA,"23161 Village Shops Way, Estero, FL",,,
-163,"10081 Estero Town Commons Place, Estero, FL",PROJECT_SITE,"10081 Estero Town Commons Place, Estero, FL",,26.430921743825,-81.785430080157
-164,3231 COCONUT RD,PARCEL_ADDRESS,3231 COCONUT RD,,26.397287176635327,-81.81527773523757
-165,"8400 Murano Del Lago Drive, Estero, FL",PROJECT_SITE,"8400 Murano Del Lago Drive, Estero, FL",,26.3916729,-81.8086935
-166,"Tidewater by Del Webb, Estero, FL",PROJECT_SITE,"Tidewater by Del Webb, Estero, FL",,26.4462,-81.7765
-167,00023 Via Coconut Ordinance No,GENERAL_AREA,"00023 Via Coconut Ordinance No, Estero, FL",,,
-168,10801 CORKSCREW RD,PARCEL_ADDRESS,10801 CORKSCREW RD,,26.436264784102917,-81.77458415265198
-169,Tides at Pelican Landing Subdivision,NEIGHBORHOOD,Tides at Pelican Landing Subdivision,,26.395281758063803,-81.81280564789286
-170,1962 Federal Aid Highway,GENERAL_AREA,"1962 Federal Aid Highway, Estero, FL",,,
-171,"9401 Corkscrew Palms Circle, Estero, FL",PROJECT_SITE,"9401 Corkscrew Palms Circle, Estero, FL",,26.430490662544,-81.799280001688
-172,21180 COUNTRY CREEK DR,PARCEL_ADDRESS,21180 COUNTRY CREEK DR,,26.437389192896752,-81.79482782963828
-173,10081 ESTERO TOWN COMMONS PL,PARCEL_ADDRESS,10081 ESTERO TOWN COMMONS PL,,26.43076631928911,-81.78522309388235
-174,21681 PELICAN SOUND DR,PARCEL_ADDRESS,21681 PELICAN SOUND DR,,26.426821246198617,-81.81254924478783
-175,22604 S. Tamiami Trail,GENERAL_AREA,"22604 S. Tamiami Trail, Estero, FL",,,
-176,"11000 Everblades Parkway, Estero, FL",PROJECT_SITE,"11000 Everblades Parkway, Estero, FL",,26.440541,-81.77872
-177,20481 PLANTATION BLVD,PARCEL_ADDRESS,20481 PLANTATION BLVD,,26.442851624532015,-81.83135034257168
-178,8001 Via Rapallo Drive,GENERAL_AREA,"8001 Via Rapallo Drive, Estero, FL",,,
-179,Wildblue Subdivision,NEIGHBORHOOD,Wildblue Subdivision,,26.4712167943269,-81.74053465372089
-180,"Marketplace at Coconut Point, 22780 Via Villagio, Estero, FL",PROJECT_SITE,"Marketplace at Coconut Point, 22780 Via Villagio, Estero, FL",,26.413657789311,-81.811493859539
-181,ESTERO PKWY EXT & BEN HILL GRIFFIN PKWY,INTERSECTION,ESTERO PKWY EXT & BEN HILL GRIFFIN PKWY,,26.4494494986795,-81.7745225786558
-182,Cascades at Estero Subdivision,NEIGHBORHOOD,Cascades at Estero Subdivision,,26.445926882167896,-81.80216655230441
-183,San Carlos Community Pool,NAMED_VENUE,San Carlos Community Pool,,26.472200171612343,-81.81472550367627
-184,"Corkscrew Road from I-75 to Ben Hill Griffin Parkway, Estero, FL",PROJECT_SITE,"Corkscrew Road from I-75 to Ben Hill Griffin Parkway, Estero, FL",,26.434333052689,-81.774029266916
-185,"US 41 from Williams Road to Estero Parkway, Estero, FL",PROJECT_SITE,"US 41 from Williams Road to Estero Parkway, Estero, FL",,26.434255,-81.814695788461
-186,along Three Oaks Parkway,WHOLE_STREET,along Three Oaks Parkway,,26.43322615964779,-81.78756454009005
-187,645 feet south of Salerno Bay Road,ANCHORED_OFFSET,645 feet south of Salerno Bay Road,,26.390572486797655,-81.78268526206986
-188,20771 S TAMIAMI TRL,PARCEL_ADDRESS,20771 S TAMIAMI TRL,,26.438067892298672,-81.81034230320134
-189,"10041 Estero Town Commons Place, Estero, FL",PROJECT_SITE,"10041 Estero Town Commons Place, Estero, FL",,26.4306485776,-81.787676765485
-190,22770 S TAMIAMI TRL,PARCEL_ADDRESS,22770 S TAMIAMI TRL,,26.410611816525495,-81.81283797603913
-191,"Williams Road & Baybridge Boulevard, Estero, FL",PROJECT_SITE,"Williams Road & Baybridge Boulevard, Estero, FL",,26.419972358933,-81.832872657959
-192,"Summercrest / Estero Townhomes site, 9301 Corkscrew Road, Estero, FL",PROJECT_SITE,"Summercrest / Estero Townhomes site, 9301 Corkscrew Road, Estero, FL",,26.432264859989,-81.801155452524
-193,20275 SHERRILL LN,PARCEL_ADDRESS,20275 SHERRILL LN,,26.4462424982507,-81.82850106089776
-194,8009 SWEETWATER RANCH BLVD,PARCEL_ADDRESS,8009 SWEETWATER RANCH BLVD,,26.41181500803066,-81.80949049712162
-195,20280 Grand Oaks Shoppes Boulevard,GENERAL_AREA,"20280 Grand Oaks Shoppes Boulevard, Estero, FL",,,
-196,COUNTY RD & HIGHLANDS AV,INTERSECTION,COUNTY RD & HIGHLANDS AV,,26.4369968537222,-81.8089779384038
-197,along Estero Parkway,WHOLE_STREET,along Estero Parkway,,26.449247750065645,-81.79628353545071
-198,"Three Oaks Parkway & Oakwilde Boulevard, Estero, FL",PROJECT_SITE,"Three Oaks Parkway & Oakwilde Boulevard, Estero, FL",,26.413073989755,-81.785739540023
-199,22942 Lyden Lane,GENERAL_AREA,"22942 Lyden Lane, Estero, FL",,,
-200,WILLIAMS RD & ATLANTIC GULF BLVD,INTERSECTION,WILLIAMS RD & ATLANTIC GULF BLVD,,26.4202187405292,-81.8164404839566
-201,20248 LUETTICH LN,PARCEL_ADDRESS,20248 LUETTICH LN,,26.446753561708146,-81.82810422512709
-202,"12840 Corkscrew Road, Estero, FL",PROJECT_SITE,"12840 Corkscrew Road, Estero, FL",,26.449146368339,-81.742899851451
-203,9975 CORKSCREW RD,PARCEL_ADDRESS,9975 CORKSCREW RD,,26.432064604150423,-81.78949228466479
-204,Tidewater Subdivision,NEIGHBORHOOD,Tidewater Subdivision,,26.44579161420031,-81.77837751443633
-205,22941 Lyden Drive,GENERAL_AREA,"22941 Lyden Drive, Estero, FL",,,
-206,4741 BROADWAY W,PARCEL_ADDRESS,4741 BROADWAY W,,26.44143915958968,-81.8334326479997
-207,9501 Vintage Trace Circle,GENERAL_AREA,"9501 Vintage Trace Circle, Estero, FL",,,
-208,CORKSCREW RD & SANDY LN,INTERSECTION,CORKSCREW RD & SANDY LN,,26.431204211573,-81.8037443415935
-209,10800 CORKSCREW RD,PARCEL_ADDRESS,10800 CORKSCREW RD,,26.432337818892933,-81.77458455039597
-210,21250 HAPPY HOLLOW LN,PARCEL_ADDRESS,21250 HAPPY HOLLOW LN,,26.43100891473684,-81.80627237841547
-211,9870 Horne Lane,GENERAL_AREA,"9870 Horne Lane, Estero, FL",,,
-212,"Williams Road at Estero High School, Estero, FL",PROJECT_SITE,"Williams Road at Estero High School, Estero, FL",,26.422301,-81.798178
-213,TRAILSIDE DR & POINCIANA AV,INTERSECTION,TRAILSIDE DR & POINCIANA AV,,26.4437985295955,-81.8130436513598
-214,20511 PORT DR,PARCEL_ADDRESS,20511 PORT DR,,26.441805895225407,-81.82436864425183
-215,3548 CHERRY BLOSSOM CT 101,PARCEL_ADDRESS,3548 CHERRY BLOSSOM CT 101,,26.423090922086306,-81.8151692312548
-216,8401 MOCKINGBIRD LN,PARCEL_ADDRESS,8401 MOCKINGBIRD LN,,26.440986791396274,-81.8085330982752
-217,4406 And 4410 Coconut Road,GENERAL_AREA,"4406 And 4410 Coconut Road, Estero, FL",,,
-218,20170 S TAMIAMI TRL,PARCEL_ADDRESS,20170 S TAMIAMI TRL,,26.446129441340606,-81.81579980052186
-219,4406 and 4410 Coconut Road,GENERAL_AREA,"4406 and 4410 Coconut Road, Estero, FL",,,
-220,20031 SEAGROVE ST 1401,PARCEL_ADDRESS,20031 SEAGROVE ST 1401,,26.448417322049917,-81.76565306133051
-221,22350 S Tamiami Trail,GENERAL_AREA,"22350 S Tamiami Trail, Estero, FL",,,
-222,"Corkscrew Road from Ben Hill Griffin Parkway to east of Bella Terra Boulevard, Estero, FL",PROJECT_SITE,"Corkscrew Road from Ben Hill Griffin Parkway to east of Bella Terra Boulevard, Estero, FL",,26.443916962688,-81.750022322755
+52,9301 CORKSCREW RD,PARCEL_ADDRESS,9301 CORKSCREW RD,,26.43226931570325,-81.8011623153021
+53,9201 CORKSCREW RD,PARCEL_ADDRESS,9201 CORKSCREW RD,,26.43227641629388,-81.80365201707615
+54,21520 STRADA NUOVA CIR,PARCEL_ADDRESS,21520 STRADA NUOVA CIR,,26.43073303806516,-81.80426648794258
+55,21471 STRADA NUOVA CIR,PARCEL_ADDRESS,21471 STRADA NUOVA CIR,,26.42928776119197,-81.80371477374048
+56,21510 STRADA NUOVA CIR,PARCEL_ADDRESS,21510 STRADA NUOVA CIR,,26.43075533778512,-81.80321493448558
+57,19501 Vintage Trace Circle,GENERAL_AREA,"19501 Vintage Trace Circle, Estero, FL",,,
+58,"8111 Broadway Avenue East, Estero, FL",PROJECT_SITE,"8111 Broadway Avenue East, Estero, FL",,26.44244610632,-81.809993666508
+59,23050 Via Villagio,GENERAL_AREA,"23050 Via Villagio, Estero, FL",,,
+60,"21500 Three Oaks Parkway, Estero, FL",PROJECT_SITE,"21500 Three Oaks Parkway, Estero, FL",,26.426449705114,-81.788771609677
+61,"Shadow Wood, Estero, FL",NAMED_VENUE,"Shadow Wood, Estero, FL",,26.4099337,-81.7949565
+62,"9401 Corkscrew Palms Circle, Estero, FL 33928",NAMED_VENUE,"9401 Corkscrew Palms Circle, Estero, FL 33928",,26.430490662544,-81.799280001688
+63,9170 Estero River Ct,GENERAL_AREA,"9170 Estero River Ct, Estero, FL",,,
+64,"Sandy Lane & Via Coconut Point, Estero, FL",PROJECT_SITE,"Sandy Lane & Via Coconut Point, Estero, FL",,26.431370008006,-81.804867965078
+65,21700 S TAMIAMI TRL,PARCEL_ADDRESS,21700 S TAMIAMI TRL,,26.425199217459866,-81.81186425425616
+66,along Coconut Road,WHOLE_STREET,along Coconut Road,,26.402206366062057,-81.80454380971804
+67,along Corkscrew Road,WHOLE_STREET,along Corkscrew Road,,26.436406641374045,-81.7775478216657
+68,"Corkscrew Road & Puente Lane, Estero, FL",PROJECT_SITE,"Corkscrew Road & Puente Lane, Estero, FL",,26.431386394627,-81.784740920078
+69,"Estero Sports Park, north of Williams Road and east of Via Coconut Point, Estero, FL",PROJECT_SITE,"Estero Sports Park, north of Williams Road and east of Via Coconut Point, Estero, FL",,26.422098,-81.802186
+70,"20897 Three Oaks Parkway, Estero, FL",PROJECT_SITE,"20897 Three Oaks Parkway, Estero, FL",,26.436576930078,-81.784532881242
+71,Copperleaf at The Brooks Subdivision,NEIGHBORHOOD,Copperleaf at The Brooks Subdivision,,26.403150903589538,-81.77854759318382
+72,4410 Coconut Road,GENERAL_AREA,"4410 Coconut Road, Estero, FL",,,
+73,"Seminole Gulf Railway corridor from southern Village limits to Estero Parkway, Estero, FL",NAMED_VENUE,"Seminole Gulf Railway corridor from southern Village limits to Estero Parkway, Estero, FL",,26.423875,-81.804915
+74,"Sandy Lane and Broadway East bicycle/pedestrian improvements, Estero, FL",PROJECT_SITE,"Sandy Lane and Broadway East bicycle/pedestrian improvements, Estero, FL",,26.438402,-81.80693
+75,"Broadway Avenue East from US 41 to Sandy Lane, Estero, FL",PROJECT_SITE,"Broadway Avenue East from US 41 to Sandy Lane, Estero, FL",,26.441974498538,-81.807963485741
+76,"River Ranch Road from Williams Road to Corkscrew Road, Estero, FL",PROJECT_SITE,"River Ranch Road from Williams Road to Corkscrew Road, Estero, FL",,26.425785502152,-81.794620501714
+77,"US 41 from Williams Road to south of Estero Parkway, Estero, FL",PROJECT_SITE,"US 41 from Williams Road to south of Estero Parkway, Estero, FL",,26.434255,-81.814695788461
+78,19975 S TAMIAMI TRL,PARCEL_ADDRESS,19975 S TAMIAMI TRL,,26.45078577512305,-81.81707272622631
+79,23106 FASHION DR,PARCEL_ADDRESS,23106 FASHION DR,,26.404355403292666,-81.80731508067035
+80,19950 S TAMIAMI TRL,PARCEL_ADDRESS,19950 S TAMIAMI TRL,,26.450390144390827,-81.82081539161072
+81,"Home2 Suites proposed hotel site, Coconut Point Mall, Estero, FL",PROJECT_SITE,"Home2 Suites proposed hotel site, Coconut Point Mall, Estero, FL",,26.403277778,-81.808611111
+82,"9000 Williams Road, Estero, FL",PROJECT_SITE,"9000 Williams Road, Estero, FL",,26.420956750596,-81.80311832661
+83,"Downtown Estero project site, east of US 41 and north of Broadway Avenue East, Estero, FL",PROJECT_SITE,"Downtown Estero project site, east of US 41 and north of Broadway Avenue East, Estero, FL",,26.4432,-81.807
+84,"Woodfield Estero project site, northwest corner of US 41 & Coconut Road, Estero, FL",PROJECT_SITE,"Woodfield Estero project site, northwest corner of US 41 & Coconut Road, Estero, FL",,26.4022,-81.815
+85,"Williams Road & Atlantic Gulf Boulevard, Estero, FL",PROJECT_SITE,"Williams Road & Atlantic Gulf Boulevard, Estero, FL",,26.420304009887,-81.812656010414
+86,9441 CORKSCREW PALMS CIR,PARCEL_ADDRESS,9441 CORKSCREW PALMS CIR,,26.430465596510277,-81.79763059961697
+87,"Northeast corner of US 41 and Corkscrew Road, Estero, FL",PROJECT_SITE,"Northeast corner of US 41 and Corkscrew Road, Estero, FL",,26.432555,-81.80817
+88,CORKSCREW RD & THREE OAKS PKWY,INTERSECTION,CORKSCREW RD & THREE OAKS PKWY,,26.4312076018546,-81.7885401402789
+89,Riverside Park,NAMED_VENUE,Riverside Park,,26.340123664681304,-81.77944144235532
+90,"Williams Road from Via Coconut Point to Three Oaks Parkway, Estero, FL",PROJECT_SITE,"Williams Road from Via Coconut Point to Three Oaks Parkway, Estero, FL",,26.420434746622,-81.797464230004
+91,"Ben Hill Griffin Parkway from Corkscrew Road to Estero Parkway, Estero, FL",PROJECT_SITE,"Ben Hill Griffin Parkway from Corkscrew Road to Estero Parkway, Estero, FL",,26.442888042165,-81.772410260408
+92,Heatherstone at Rookery Pointe Subdivision,NEIGHBORHOOD,Heatherstone at Rookery Pointe Subdivision,,26.447607197915094,-81.79310346599338
+93,"Estero River North Branch from Bamboo Island to River Oaks Preserve, Estero, FL",PROJECT_SITE,"Estero River North Branch from Bamboo Island to River Oaks Preserve, Estero, FL",,26.4390196,-81.8105466
+94,"The Colonnade / Estero Townhomes site, 9301 Corkscrew Road, Estero, FL",PROJECT_SITE,"The Colonnade / Estero Townhomes site, 9301 Corkscrew Road, Estero, FL",,26.432264859989,-81.801155452524
+95,"9501 Spring Run Boulevard, Estero, FL",PROJECT_SITE,"9501 Spring Run Boulevard, Estero, FL",,26.395734095199,-81.797042452636
+96,8900 Commons Way,GENERAL_AREA,"8900 Commons Way, Estero, FL",,,
+97,"The Brooks, Estero, FL",NAMED_VENUE,"The Brooks, Estero, FL",,26.3926426,-81.7753764
+98,"18251 Three Oaks Parkway, Estero, FL",PROJECT_SITE,"18251 Three Oaks Parkway, Estero, FL",,26.433779738905564,-81.78952626707927
+99,"22800 Via Villagio, Estero, FL",PROJECT_SITE,"22800 Via Villagio, Estero, FL",,26.412588048918,-81.811355977231
+100,"Estero Community Park, 9101 Corkscrew Palms Boulevard, Estero, FL",PROJECT_SITE,"Estero Community Park, 9101 Corkscrew Palms Boulevard, Estero, FL",,26.422098,-81.802186
+101,10411 CORKSCREW COMMONS DR,PARCEL_ADDRESS,10411 CORKSCREW COMMONS DR,,26.43209160703068,-81.78142473104408
+102,19980 BELLA TERRA BLVD,PARCEL_ADDRESS,19980 BELLA TERRA BLVD,,26.4505876442332,-81.73116264197117
+103,10100 ARCOS AVE,PARCEL_ADDRESS,10100 ARCOS AVE,,26.43361648020414,-81.78794350168731
+104,9600 CORKSCREW RD,PARCEL_ADDRESS,9600 CORKSCREW RD,,26.43034708593776,-81.79527741717419
+105,"Corkscrew Pines project site, Estero, FL",PROJECT_SITE,"Corkscrew Pines project site, Estero, FL",,26.4383,-81.7603
+106,21301 TOWN COMMONS DR,PARCEL_ADDRESS,21301 TOWN COMMONS DR,,26.430779622713892,-81.78597422303042
+107,"Cypress Bend, Estero, FL",NAMED_VENUE,"Cypress Bend, Estero, FL",,26.4469,-81.8116
+108,"River Oaks Preserve, Estero, FL",NAMED_VENUE,"River Oaks Preserve, Estero, FL",,26.4420079,-81.7993579
+109,"21500 Three Oaks Parkway, Estero, FL 33928",NAMED_VENUE,"21500 Three Oaks Parkway, Estero, FL 33928",,26.426449705114,-81.788771609677
+110,Village on Crescent Lake at Breckenridge Condominium,NEIGHBORHOOD,Village on Crescent Lake at Breckenridge Condominium,,26.44425079079401,-81.82629414204098
+111,"Estero Parkway from US 41 to Three Oaks Parkway, Estero, FL",PROJECT_SITE,"Estero Parkway from US 41 to Three Oaks Parkway, Estero, FL",,26.448792003304,-81.803409304378
+112,"19980 Bella Terra Boulevard, Estero, FL",PROJECT_SITE,"19980 Bella Terra Boulevard, Estero, FL",,26.450582796918,-81.73115952021
+113,"21450 Strada Nuova Circle, Estero, FL",NAMED_VENUE,"21450 Strada Nuova Circle, Estero, FL",,26.428168875365,-81.804317441678
+114,Cypress Cove at Wildcat Run Condominium,NEIGHBORHOOD,Cypress Cove at Wildcat Run Condominium,,26.44468674839979,-81.74528909824977
+115,10251 ARCOS AVE,PARCEL_ADDRESS,10251 ARCOS AVE,,26.433481009353372,-81.78575313231335
+116,Avalon at Grandezza Condominium,NEIGHBORHOOD,Avalon at Grandezza Condominium,,26.44124231180666,-81.76991455364423
+117,19701 S TAMIAMI TRL,PARCEL_ADDRESS,19701 S TAMIAMI TRL,,26.45400113110861,-81.82155996077842
+118,22910 LYDEN DR,PARCEL_ADDRESS,22910 LYDEN DR,,26.40558748660281,-81.81256928300715
+119,20300 COUNTRY CLUB DR,PARCEL_ADDRESS,20300 COUNTRY CLUB DR,,26.435736902147063,-81.74958822940889
+120,"Commons Club at The Brooks, Estero, FL",PROJECT_SITE,"Commons Club at The Brooks, Estero, FL",,26.3974648,-81.7889557
+121,"Coconut Road & Oakwilde Boulevard, Estero, FL",PROJECT_SITE,"Coconut Road & Oakwilde Boulevard, Estero, FL",,26.398580002784,-81.798864007834
+122,"Miromar Outlets, Estero, FL",PROJECT_SITE,"Miromar Outlets, Estero, FL",,26.438084,-81.772808
+123,21530 STRADA NUOVA CIR,PARCEL_ADDRESS,21530 STRADA NUOVA CIR,,26.42982261302848,-81.80432487481026
+124,WILLIAMS RD & THREE OAKS PKWY,INTERSECTION,WILLIAMS RD & THREE OAKS PKWY,,26.4203700396588,-81.7883783801721
+125,"8801 Corkscrew Road, Estero, FL",PROJECT_SITE,"8801 Corkscrew Road, Estero, FL",,26.434598214195,-81.807374237947
+126,"Williams Road from US 41 to Via Coconut Point, Estero, FL",PROJECT_SITE,"Williams Road from US 41 to Via Coconut Point, Estero, FL",,26.420397237605,-81.80904475125
+127,"Williams Road & Via Coconut Point, Estero, FL",PROJECT_SITE,"Williams Road & Via Coconut Point, Estero, FL",,26.42047948503,-81.806570497251
+128,Pelican Sound Subdivision,NEIGHBORHOOD,Pelican Sound Subdivision,,26.42929045220349,-81.82471928963577
+129,"Sunny Grove, Estero, FL",NAMED_VENUE,"Sunny Grove, Estero, FL",,26.4376,-81.8128
+130,"Estero River Park (Village property), northeast corner of US 41 and Corkscrew Road, Estero, FL",PROJECT_SITE,"Estero River Park (Village property), northeast corner of US 41 and Corkscrew Road, Estero, FL",,26.432555,-81.80817
+131,"Stoneybrook, Estero, FL",NAMED_VENUE,"Stoneybrook, Estero, FL",,26.4298062,-81.7679548
+132,12840 Corkscrew Road,GENERAL_AREA,"12840 Corkscrew Road, Estero, FL",,,
+133,20161 Camellia Crosse Lane,GENERAL_AREA,"20161 Camellia Crosse Lane, Estero, FL",,,
+134,23421 WALDEN CENTER DR,PARCEL_ADDRESS,23421 WALDEN CENTER DR,,26.396727649271075,-81.81122295278746
+135,22961 Lyden Drive,GENERAL_AREA,"22961 Lyden Drive, Estero, FL",,,
+136,Corkscrew Woodlands Subdivision,NEIGHBORHOOD,Corkscrew Woodlands Subdivision,,26.424061060167862,-81.77959546794243
+137,"Koreshan State Park, Estero, FL",NAMED_VENUE,"Koreshan State Park, Estero, FL",,26.4368409,-81.8180833
+138,"8790 Broadway Avenue East, Estero, FL",PROJECT_SITE,"8790 Broadway Avenue East, Estero, FL",,26.440585868638,-81.806135895572
+139,"Ben Hill Griffin Parkway & Everblades Parkway North, Estero, FL",PROJECT_SITE,"Ben Hill Griffin Parkway & Everblades Parkway North, Estero, FL",,26.443920189721,-81.773684686876
+140,10351 Corkscrew Commons Drive,GENERAL_AREA,"10351 Corkscrew Commons Drive, Estero, FL",,,
+141,"Corkscrew Road at Stoneybrook Golf Drive, Estero, FL",PROJECT_SITE,"Corkscrew Road at Stoneybrook Golf Drive, Estero, FL",,26.439657614771,-81.762920730637
+142,"Shadow Wood Country Club Lifestyle Center, Estero, FL",PROJECT_SITE,"Shadow Wood Country Club Lifestyle Center, Estero, FL",,26.407365,-81.789795
+143,"Via Coconut Point from Coconut Road to Corkscrew Road, Estero, FL",PROJECT_SITE,"Via Coconut Point from Coconut Road to Corkscrew Road, Estero, FL",,26.420479,-81.80657
+144,"Mayfair Village site between Broadway Avenue East and Sandy Lane, Estero, FL",PROJECT_SITE,"Mayfair Village site between Broadway Avenue East and Sandy Lane, Estero, FL",,26.43890234243,-81.805657540358
+145,8420 MURANO DEL LAGO DR,PARCEL_ADDRESS,8420 MURANO DEL LAGO DR,,26.391199708507013,-81.80905839333157
+146,19511 Highlands Oaks Drive,GENERAL_AREA,"19511 Highlands Oaks Drive, Estero, FL",,,
+147,20320 GRANDE OAK SHOPPES BLVD,PARCEL_ADDRESS,20320 GRANDE OAK SHOPPES BLVD,,26.437023507620733,-81.76987508479715
+148,10251 Arcos Avenue,GENERAL_AREA,"10251 Arcos Avenue, Estero, FL",,,
+149,21580 RIVER RANCH RD,PARCEL_ADDRESS,21580 RIVER RANCH RD,,26.426366236141643,-81.7957610238013
+150,"10500 Corkscrew Road, Estero, FL",PROJECT_SITE,"10500 Corkscrew Road, Estero, FL",,26.430907704137,-81.783054229702
+151,Riverwoods Plantation Condominium,NEIGHBORHOOD,Riverwoods Plantation Condominium,,26.44551087014053,-81.83135830974891
+152,10150 ARCOS AVE,PARCEL_ADDRESS,10150 ARCOS AVE,,26.4323387671025,-81.78783499987172
+153,along Williams Road,WHOLE_STREET,along Williams Road,,26.420210096558677,-81.81166992220037
+154,"The Brooks Town Center, Estero, FL",PROJECT_SITE,"The Brooks Town Center, Estero, FL",,26.396617,-81.786171
+155,"Pelican Sound Golf & River Club, Estero, FL",PROJECT_SITE,"Pelican Sound Golf & River Club, Estero, FL",,26.4360814,-81.8298334
+156,"Sandy Lane from Corkscrew Road to Broadway Avenue East, Estero, FL",PROJECT_SITE,"Sandy Lane from Corkscrew Road to Broadway Avenue East, Estero, FL",,26.43663000848,-81.804926512673
+157,20318 Sherrill Lane,GENERAL_AREA,"20318 Sherrill Lane, Estero, FL",,,
+158,"Coconut Road from US 41 to Via Coconut Point, Estero, FL",PROJECT_SITE,"Coconut Road from US 41 to Via Coconut Point, Estero, FL",,26.398474495578,-81.808064278126
+159,"Estero Parkway & Three Oaks Parkway, Estero, FL",PROJECT_SITE,"Estero Parkway & Three Oaks Parkway, Estero, FL",,26.449389004358,-81.788946037082
+160,"Estero Townhomes EPD site, 9301 Corkscrew Road, Estero, FL",PROJECT_SITE,"Estero Townhomes EPD site, 9301 Corkscrew Road, Estero, FL",,26.432264859989,-81.801155452524
+161,"Coconut Pointe Residences at Brooks Town Center site, Estero, FL",PROJECT_SITE,"Coconut Pointe Residences at Brooks Town Center site, Estero, FL",,26.39711,-81.78531
+162,10640 CHEVROLET WAY,PARCEL_ADDRESS,10640 CHEVROLET WAY,,26.430182136164337,-81.77888336722721
+163,23161 Village Shops Way,GENERAL_AREA,"23161 Village Shops Way, Estero, FL",,,
+164,"10081 Estero Town Commons Place, Estero, FL",PROJECT_SITE,"10081 Estero Town Commons Place, Estero, FL",,26.430921743825,-81.785430080157
+165,3231 COCONUT RD,PARCEL_ADDRESS,3231 COCONUT RD,,26.397287176635327,-81.81527773523757
+166,"8400 Murano Del Lago Drive, Estero, FL",PROJECT_SITE,"8400 Murano Del Lago Drive, Estero, FL",,26.3916729,-81.8086935
+167,"Tidewater by Del Webb, Estero, FL",PROJECT_SITE,"Tidewater by Del Webb, Estero, FL",,26.4462,-81.7765
+168,00023 Via Coconut Ordinance No,GENERAL_AREA,"00023 Via Coconut Ordinance No, Estero, FL",,,
+169,10801 CORKSCREW RD,PARCEL_ADDRESS,10801 CORKSCREW RD,,26.436264784102917,-81.77458415265198
+170,Tides at Pelican Landing Subdivision,NEIGHBORHOOD,Tides at Pelican Landing Subdivision,,26.395281758063803,-81.81280564789286
+171,1962 Federal Aid Highway,GENERAL_AREA,"1962 Federal Aid Highway, Estero, FL",,,
+172,"9401 Corkscrew Palms Circle, Estero, FL",PROJECT_SITE,"9401 Corkscrew Palms Circle, Estero, FL",,26.430490662544,-81.799280001688
+173,21180 COUNTRY CREEK DR,PARCEL_ADDRESS,21180 COUNTRY CREEK DR,,26.437389192896752,-81.79482782963828
+174,10081 ESTERO TOWN COMMONS PL,PARCEL_ADDRESS,10081 ESTERO TOWN COMMONS PL,,26.43076631928911,-81.78522309388235
+175,21681 PELICAN SOUND DR,PARCEL_ADDRESS,21681 PELICAN SOUND DR,,26.426821246198617,-81.81254924478783
+176,22604 S. Tamiami Trail,GENERAL_AREA,"22604 S. Tamiami Trail, Estero, FL",,,
+177,"11000 Everblades Parkway, Estero, FL",PROJECT_SITE,"11000 Everblades Parkway, Estero, FL",,26.440541,-81.77872
+178,20481 PLANTATION BLVD,PARCEL_ADDRESS,20481 PLANTATION BLVD,,26.442851624532015,-81.83135034257168
+179,8001 Via Rapallo Drive,GENERAL_AREA,"8001 Via Rapallo Drive, Estero, FL",,,
+180,Wildblue Subdivision,NEIGHBORHOOD,Wildblue Subdivision,,26.4712167943269,-81.74053465372089
+181,"Marketplace at Coconut Point, 22780 Via Villagio, Estero, FL",PROJECT_SITE,"Marketplace at Coconut Point, 22780 Via Villagio, Estero, FL",,26.413657789311,-81.811493859539
+182,ESTERO PKWY EXT & BEN HILL GRIFFIN PKWY,INTERSECTION,ESTERO PKWY EXT & BEN HILL GRIFFIN PKWY,,26.4494494986795,-81.7745225786558
+183,Cascades at Estero Subdivision,NEIGHBORHOOD,Cascades at Estero Subdivision,,26.445926882167896,-81.80216655230441
+184,San Carlos Community Pool,NAMED_VENUE,San Carlos Community Pool,,26.472200171612343,-81.81472550367627
+185,"Corkscrew Road from I-75 to Ben Hill Griffin Parkway, Estero, FL",PROJECT_SITE,"Corkscrew Road from I-75 to Ben Hill Griffin Parkway, Estero, FL",,26.434333052689,-81.774029266916
+186,"US 41 from Williams Road to Estero Parkway, Estero, FL",PROJECT_SITE,"US 41 from Williams Road to Estero Parkway, Estero, FL",,26.434255,-81.814695788461
+187,along Three Oaks Parkway,WHOLE_STREET,along Three Oaks Parkway,,26.43322615964779,-81.78756454009005
+188,645 feet south of Salerno Bay Road,ANCHORED_OFFSET,645 feet south of Salerno Bay Road,,26.390572486797655,-81.78268526206986
+189,20771 S TAMIAMI TRL,PARCEL_ADDRESS,20771 S TAMIAMI TRL,,26.438067892298672,-81.81034230320134
+190,"10041 Estero Town Commons Place, Estero, FL",PROJECT_SITE,"10041 Estero Town Commons Place, Estero, FL",,26.4306485776,-81.787676765485
+191,22770 S TAMIAMI TRL,PARCEL_ADDRESS,22770 S TAMIAMI TRL,,26.410611816525495,-81.81283797603913
+192,"Williams Road & Baybridge Boulevard, Estero, FL",PROJECT_SITE,"Williams Road & Baybridge Boulevard, Estero, FL",,26.419972358933,-81.832872657959
+193,"Summercrest / Estero Townhomes site, 9301 Corkscrew Road, Estero, FL",PROJECT_SITE,"Summercrest / Estero Townhomes site, 9301 Corkscrew Road, Estero, FL",,26.432264859989,-81.801155452524
+194,20275 SHERRILL LN,PARCEL_ADDRESS,20275 SHERRILL LN,,26.4462424982507,-81.82850106089776
+195,8009 SWEETWATER RANCH BLVD,PARCEL_ADDRESS,8009 SWEETWATER RANCH BLVD,,26.41181500803066,-81.80949049712162
+196,20280 Grand Oaks Shoppes Boulevard,GENERAL_AREA,"20280 Grand Oaks Shoppes Boulevard, Estero, FL",,,
+197,COUNTY RD & HIGHLANDS AV,INTERSECTION,COUNTY RD & HIGHLANDS AV,,26.4369968537222,-81.8089779384038
+198,along Estero Parkway,WHOLE_STREET,along Estero Parkway,,26.449247750065645,-81.79628353545071
+199,"Three Oaks Parkway & Oakwilde Boulevard, Estero, FL",PROJECT_SITE,"Three Oaks Parkway & Oakwilde Boulevard, Estero, FL",,26.413073989755,-81.785739540023
+200,22942 Lyden Lane,GENERAL_AREA,"22942 Lyden Lane, Estero, FL",,,
+201,WILLIAMS RD & ATLANTIC GULF BLVD,INTERSECTION,WILLIAMS RD & ATLANTIC GULF BLVD,,26.4202187405292,-81.8164404839566
+202,20248 LUETTICH LN,PARCEL_ADDRESS,20248 LUETTICH LN,,26.446753561708146,-81.82810422512709
+203,"12840 Corkscrew Road, Estero, FL",PROJECT_SITE,"12840 Corkscrew Road, Estero, FL",,26.449146368339,-81.742899851451
+204,9975 CORKSCREW RD,PARCEL_ADDRESS,9975 CORKSCREW RD,,26.432064604150423,-81.78949228466479
+205,Tidewater Subdivision,NEIGHBORHOOD,Tidewater Subdivision,,26.44579161420031,-81.77837751443633
+206,22941 Lyden Drive,GENERAL_AREA,"22941 Lyden Drive, Estero, FL",,,
+207,4741 BROADWAY W,PARCEL_ADDRESS,4741 BROADWAY W,,26.44143915958968,-81.8334326479997
+208,9501 Vintage Trace Circle,GENERAL_AREA,"9501 Vintage Trace Circle, Estero, FL",,,
+209,CORKSCREW RD & SANDY LN,INTERSECTION,CORKSCREW RD & SANDY LN,,26.431204211573,-81.8037443415935
+210,10800 CORKSCREW RD,PARCEL_ADDRESS,10800 CORKSCREW RD,,26.432337818892933,-81.77458455039597
+211,21250 HAPPY HOLLOW LN,PARCEL_ADDRESS,21250 HAPPY HOLLOW LN,,26.43100891473684,-81.80627237841547
+212,9870 Horne Lane,GENERAL_AREA,"9870 Horne Lane, Estero, FL",,,
+213,"Williams Road at Estero High School, Estero, FL",PROJECT_SITE,"Williams Road at Estero High School, Estero, FL",,26.422301,-81.798178
+214,TRAILSIDE DR & POINCIANA AV,INTERSECTION,TRAILSIDE DR & POINCIANA AV,,26.4437985295955,-81.8130436513598
+215,20511 PORT DR,PARCEL_ADDRESS,20511 PORT DR,,26.441805895225407,-81.82436864425183
+216,3548 CHERRY BLOSSOM CT 101,PARCEL_ADDRESS,3548 CHERRY BLOSSOM CT 101,,26.423090922086306,-81.8151692312548
+217,8401 MOCKINGBIRD LN,PARCEL_ADDRESS,8401 MOCKINGBIRD LN,,26.440986791396274,-81.8085330982752
+218,4406 And 4410 Coconut Road,GENERAL_AREA,"4406 And 4410 Coconut Road, Estero, FL",,,
+219,20170 S TAMIAMI TRL,PARCEL_ADDRESS,20170 S TAMIAMI TRL,,26.446129441340606,-81.81579980052186
+220,4406 and 4410 Coconut Road,GENERAL_AREA,"4406 and 4410 Coconut Road, Estero, FL",,,
+221,20031 SEAGROVE ST 1401,PARCEL_ADDRESS,20031 SEAGROVE ST 1401,,26.448417322049917,-81.76565306133051
+222,22350 S Tamiami Trail,GENERAL_AREA,"22350 S Tamiami Trail, Estero, FL",,,
+223,"Corkscrew Road from Ben Hill Griffin Parkway to east of Bella Terra Boulevard, Estero, FL",PROJECT_SITE,"Corkscrew Road from Ben Hill Griffin Parkway to east of Bella Terra Boulevard, Estero, FL",,26.443916962688,-81.750022322755

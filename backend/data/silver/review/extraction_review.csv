@@ -11,6 +11,7 @@ filename,meeting_id,needs_ocr,reason
 010417 Council Meeting Approved Minutes.pdf,2,False,Review item 11: weak or fallback extraction.
 010417 Council Meeting Approved Minutes.pdf,2,False,Review item 12: weak or fallback extraction.
 010417 Council Meeting Approved Minutes.pdf,2,False,Review item 13: weak or fallback extraction.
+010417 Council Meeting Approved Minutes.pdf,2,False,Review item 14: weak or fallback extraction.
 010417 Council Meeting Approved Minutes.pdf,2,False,Review item 15: weak or fallback extraction.
 010417 Council Meeting Approved Minutes.pdf,2,False,Review item 16: weak or fallback extraction.
 010417 Council Meeting Approved Minutes.pdf,2,False,Review item 17: weak or fallback extraction.
@@ -56,11 +57,17 @@ filename,meeting_id,needs_ocr,reason
 01112022 PZDB Minutes.pdf,8,False,Review item 61: weak or fallback extraction.
 01112022 PZDB Minutes.pdf,8,False,Review item 62: weak or fallback extraction.
 01112022 PZDB Minutes.pdf,8,False,Review item 63: weak or fallback extraction.
+01112022 PZDB Minutes.pdf,8,False,Review item 64: weak or fallback extraction.
+01112022 PZDB Minutes.pdf,8,False,Review item 65: weak or fallback extraction.
 01112023 PZDB Minutes.pdf,9,False,Review item 66: weak or fallback extraction.
 01112023 PZDB Minutes.pdf,9,False,Review item 67: weak or fallback extraction.
 01112023 PZDB Minutes.pdf,9,False,Review item 68: weak or fallback extraction.
+01112023 PZDB Minutes.pdf,9,False,Review item 69: weak or fallback extraction.
+01112023 PZDB Minutes.pdf,9,False,Review item 70: weak or fallback extraction.
 01132016 minutes.pdf,10,False,Review item 71: weak or fallback extraction.
+01132016 minutes.pdf,10,False,Review item 72: weak or fallback extraction.
 01132021 Minutes.pdf,11,False,Review item 73: weak or fallback extraction.
+01142025 PZDB Minutes.pdf,12,False,Review item 74: weak or fallback extraction.
 01142025 PZDB Minutes.pdf,12,False,Review item 75: weak or fallback extraction.
 01142025 PZDB Minutes.pdf,12,False,Review item 77: weak or fallback extraction.
 01142026 PZDB Minutes.pdf,13,False,Review item 78: weak or fallback extraction.
@@ -93,6 +100,8 @@ filename,meeting_id,needs_ocr,reason
 01202016 minutes.pdf,16,False,Review item 106: weak or fallback extraction.
 01202016 minutes.pdf,16,False,Review item 107: weak or fallback extraction.
 01202016 minutes.pdf,16,False,Review item 108: weak or fallback extraction.
+01202016 minutes.pdf,16,False,Review item 109: weak or fallback extraction.
+01202016 minutes.pdf,16,False,Review item 110: weak or fallback extraction.
 01202016 minutes.pdf,16,False,Review item 111: weak or fallback extraction.
 01202016 minutes.pdf,16,False,Review item 112: weak or fallback extraction.
 01202016 minutes.pdf,16,False,Review item 113: weak or fallback extraction.
@@ -138,6 +147,7 @@ filename,meeting_id,needs_ocr,reason
 020117 Council Meeting  Approved Minutes.pdf,22,False,Review item 157: weak or fallback extraction.
 020117 Council Meeting  Approved Minutes.pdf,22,False,Review item 158: weak or fallback extraction.
 020117 Council Meeting  Approved Minutes.pdf,22,False,Review item 159: weak or fallback extraction.
+020117 Council Meeting  Approved Minutes.pdf,22,False,Review item 160: weak or fallback extraction.
 020117 Council Meeting  Approved Minutes.pdf,22,False,Review item 161: weak or fallback extraction.
 020117 Council Meeting  Approved Minutes.pdf,22,False,Review item 162: weak or fallback extraction.
 020117 Council Meeting  Approved Minutes.pdf,22,False,Review item 163: weak or fallback extraction.
@@ -190,14 +200,18 @@ filename,meeting_id,needs_ocr,reason
 021016 Council Regular Meeting Approved Minutes.pdf,28,False,Review item 217: weak or fallback extraction.
 021016 Council Regular Meeting Approved Minutes.pdf,28,False,Review item 218: weak or fallback extraction.
 021016 Council Regular Meeting Approved Minutes.pdf,28,False,Review item 219: weak or fallback extraction.
+02102026 PZDB Minutes.pdf,29,False,Review item 220: weak or fallback extraction.
 02102026 PZDB Minutes.pdf,29,False,Review item 221: weak or fallback extraction.
 02102026 PZDB Minutes.pdf,29,False,Review item 222: weak or fallback extraction.
 02112025 PZDB Minutes.pdf,30,False,Review item 223: weak or fallback extraction.
+02112025 PZDB Minutes.pdf,30,False,Review item 224: weak or fallback extraction.
 02112025 PZDB Minutes.pdf,30,False,Review item 225: weak or fallback extraction.
 02112025 PZDB Minutes.pdf,30,False,Review item 226: weak or fallback extraction.
+02112025 PZDB Minutes.pdf,30,False,Review item 227: weak or fallback extraction.
 02112025 PZDB Minutes.pdf,30,False,Review item 228: weak or fallback extraction.
 02132024 PZDB Minutes.pdf,31,False,Review item 230: weak or fallback extraction.
 02132024 PZDB Minutes.pdf,31,False,Review item 231: weak or fallback extraction.
+02132024 PZDB Minutes.pdf,31,False,Review item 232: weak or fallback extraction.
 02132024 PZDB Minutes.pdf,31,False,Review item 234: weak or fallback extraction.
 021517 Council Meeting  Approved Minutes.pdf,32,False,Review item 235: weak or fallback extraction.
 021517 Council Meeting  Approved Minutes.pdf,32,False,Review item 236: weak or fallback extraction.
@@ -230,9 +244,13 @@ filename,meeting_id,needs_ocr,reason
 02192025.pdf,35,False,Review item 264: weak or fallback extraction.
 02192025.pdf,35,False,Review item 265: weak or fallback extraction.
 02192025.pdf,35,False,Review item 266: weak or fallback extraction.
+02212023 PZDB Minutes.pdf,36,False,Review item 267: weak or fallback extraction.
+02212023 PZDB Minutes.pdf,36,False,Review item 268: weak or fallback extraction.
 02212023 PZDB Minutes.pdf,36,False,Review item 269: weak or fallback extraction.
 02212023 PZDB Minutes.pdf,36,False,Review item 270: weak or fallback extraction.
+02212023 PZDB Minutes.pdf,36,False,Review item 271: weak or fallback extraction.
 02212023 PZDB Minutes.pdf,36,False,Review item 272: weak or fallback extraction.
+02212023 PZDB Minutes.pdf,36,False,Review item 273: weak or fallback extraction.
 02212024 minutes.pdf,37,False,Review item 274: weak or fallback extraction.
 02212024 minutes.pdf,37,False,Review item 275: weak or fallback extraction.
 02212024 minutes.pdf,37,False,Review item 277: weak or fallback extraction.
@@ -303,6 +321,7 @@ filename,meeting_id,needs_ocr,reason
 03062024 minutes.pdf,48,False,Review item 344: weak or fallback extraction.
 03062024 minutes.pdf,48,False,Review item 345: weak or fallback extraction.
 03062024 minutes.pdf,48,False,Review item 346: weak or fallback extraction.
+03082022 PZDB Minutes.pdf,49,False,Review item 347: weak or fallback extraction.
 03082022 PZDB Minutes.pdf,49,False,Review item 348: weak or fallback extraction.
 03082022 PZDB Minutes.pdf,49,False,Review item 349: weak or fallback extraction.
 03082022 PZDB Minutes.pdf,49,False,Review item 350: weak or fallback extraction.
@@ -310,15 +329,23 @@ filename,meeting_id,needs_ocr,reason
 030917 Council Workshop Approved Minutes.pdf,51,False,Review item 352: weak or fallback extraction.
 03102026 PZDB Minutes.pdf,52,False,Review item 353: weak or fallback extraction.
 03102026 PZDB Minutes.pdf,52,False,Review item 354: weak or fallback extraction.
+03102026 PZDB Minutes.pdf,52,False,Review item 355: weak or fallback extraction.
 03102026 PZDB Minutes.pdf,52,False,Review item 356: weak or fallback extraction.
 03112025 PZDB Minutes.pdf,53,False,Review item 357: weak or fallback extraction.
+03112025 PZDB Minutes.pdf,53,False,Review item 358: weak or fallback extraction.
 03112025 PZDB Minutes.pdf,53,False,Review item 359: weak or fallback extraction.
 03112025 PZDB Minutes.pdf,53,False,Review item 360: weak or fallback extraction.
+03112025 PZDB Minutes.pdf,53,False,Review item 361: weak or fallback extraction.
+03112025 PZDB Minutes.pdf,53,False,Review item 362: weak or fallback extraction.
+03122024 PZDB Minutes.pdf,54,False,Review item 363: weak or fallback extraction.
 03122024 PZDB Minutes.pdf,54,False,Review item 364: weak or fallback extraction.
 03122024 PZDB Minutes.pdf,54,False,Review item 365: weak or fallback extraction.
+03122024 PZDB Minutes.pdf,54,False,Review item 366: weak or fallback extraction.
 03132024 minutes.pdf,55,False,Review item 367: weak or fallback extraction.
+03142023 PZDB Minutes.pdf,56,False,Review item 368: weak or fallback extraction.
 03142023 PZDB Minutes.pdf,56,False,Review item 369: weak or fallback extraction.
 03142023 PZDB Minutes.pdf,56,False,Review item 370: weak or fallback extraction.
+03142023 PZDB Minutes.pdf,56,False,Review item 371: weak or fallback extraction.
 03142023 PZDB Minutes.pdf,56,False,Review item 372: weak or fallback extraction.
 031517 Council Meeting Approved Minutes.pdf,57,False,Review item 373: weak or fallback extraction.
 031517 Council Meeting Approved Minutes.pdf,57,False,Review item 374: weak or fallback extraction.
@@ -326,6 +353,7 @@ filename,meeting_id,needs_ocr,reason
 031517 Council Meeting Approved Minutes.pdf,57,False,Review item 376: weak or fallback extraction.
 031517 Council Meeting Approved Minutes.pdf,57,False,Review item 377: weak or fallback extraction.
 031517 Council Meeting Approved Minutes.pdf,57,False,Review item 378: weak or fallback extraction.
+031517 Council Meeting Approved Minutes.pdf,57,False,Review item 379: weak or fallback extraction.
 031517 Council Meeting Approved Minutes.pdf,57,False,Review item 380: weak or fallback extraction.
 031517 Council Meeting Approved Minutes.pdf,57,False,Review item 381: weak or fallback extraction.
 031517 Council Meeting Approved Minutes.pdf,57,False,Review item 382: weak or fallback extraction.
@@ -434,6 +462,7 @@ filename,meeting_id,needs_ocr,reason
 04052023 minutes.pdf,72,False,Review item 489: weak or fallback extraction.
 04052023 minutes.pdf,72,False,Review item 490: weak or fallback extraction.
 04052023 minutes.pdf,72,False,Review item 491: weak or fallback extraction.
+04052023 minutes.pdf,72,False,Review item 493: weak or fallback extraction.
 04052023 minutes.pdf,72,False,Review item 494: weak or fallback extraction.
 04052023 minutes.pdf,72,False,Review item 495: weak or fallback extraction.
 04052023 minutes.pdf,72,False,Review item 496: weak or fallback extraction.
@@ -462,6 +491,7 @@ filename,meeting_id,needs_ocr,reason
 04062022 minutes.pdf,75,False,Review item 519: weak or fallback extraction.
 04062022 minutes.pdf,75,False,Review item 520: weak or fallback extraction.
 04062022 minutes.pdf,75,False,Review item 521: weak or fallback extraction.
+04062022 minutes.pdf,75,False,Review item 523: weak or fallback extraction.
 04062022 minutes.pdf,75,False,Review item 524: weak or fallback extraction.
 04062022 minutes.pdf,75,False,Review item 525: weak or fallback extraction.
 04062022 minutes.pdf,75,False,Review item 526: weak or fallback extraction.
@@ -475,6 +505,7 @@ filename,meeting_id,needs_ocr,reason
 04072021 minutes.pdf,77,False,Review item 537: weak or fallback extraction.
 04072021 minutes.pdf,77,False,Review item 538: weak or fallback extraction.
 04072021 minutes.pdf,77,False,Review item 539: weak or fallback extraction.
+04082025 PZDB Minutes.pdf,78,False,Review item 541: weak or fallback extraction.
 04082025 PZDB Minutes.pdf,78,False,Review item 542: weak or fallback extraction.
 04082025 PZDB Minutes.pdf,78,False,Review item 543: weak or fallback extraction.
 04082025 PZDB Minutes.pdf,78,False,Review item 544: weak or fallback extraction.
@@ -484,13 +515,20 @@ filename,meeting_id,needs_ocr,reason
 04092024 PZDB Minutes.pdf,79,False,Review item 548: weak or fallback extraction.
 04092024 PZDB Minutes.pdf,79,False,Review item 549: weak or fallback extraction.
 04092024 PZDB Minutes.pdf,79,False,Review item 550: weak or fallback extraction.
+04092024 PZDB Minutes.pdf,79,False,Review item 551: weak or fallback extraction.
 041015 Workshop Minutes.pdf,80,False,Review item 552: weak or fallback extraction.
 04112023 PZDB Minutes.pdf,81,False,Review item 553: weak or fallback extraction.
 04112023 PZDB Minutes.pdf,81,False,Review item 554: weak or fallback extraction.
+04112023 PZDB Minutes.pdf,81,False,Review item 555: weak or fallback extraction.
 04112023 PZDB Minutes.pdf,81,False,Review item 556: weak or fallback extraction.
 04122022 PZDB Minutes.pdf,82,False,Review item 557: weak or fallback extraction.
+04122022 PZDB Minutes.pdf,82,False,Review item 558: weak or fallback extraction.
 04122022 PZDB Minutes.pdf,82,False,Review item 559: weak or fallback extraction.
+04122022 PZDB Minutes.pdf,82,False,Review item 560: weak or fallback extraction.
+04122022 PZDB Minutes.pdf,82,False,Review item 561: weak or fallback extraction.
+04122022 PZDB Minutes.pdf,82,False,Review item 562: weak or fallback extraction.
 04132022 minutes.pdf,83,False,Review item 563: weak or fallback extraction.
+04132022 minutes.pdf,83,False,Review item 564: weak or fallback extraction.
 04162025.pdf,84,False,Review item 565: weak or fallback extraction.
 04162025.pdf,84,False,Review item 566: weak or fallback extraction.
 04162025.pdf,84,False,Review item 567: weak or fallback extraction.
@@ -534,6 +572,7 @@ filename,meeting_id,needs_ocr,reason
 04192023  minutes.pdf,88,False,Review item 606: weak or fallback extraction.
 04192023  minutes.pdf,88,False,Review item 607: weak or fallback extraction.
 04192023  minutes.pdf,88,False,Review item 608: weak or fallback extraction.
+04192023  minutes.pdf,88,False,Review item 609: weak or fallback extraction.
 04192023  minutes.pdf,88,False,Review item 611: weak or fallback extraction.
 04192023  minutes.pdf,88,False,Review item 612: weak or fallback extraction.
 04192023  minutes.pdf,88,False,Review item 613: weak or fallback extraction.
@@ -649,14 +688,18 @@ filename,meeting_id,needs_ocr,reason
 05082015 minutes.pdf,102,False,Review item 731: weak or fallback extraction.
 05082015 minutes.pdf,102,False,Review item 732: weak or fallback extraction.
 05082015 minutes.pdf,102,False,Review item 733: weak or fallback extraction.
+05092023 PZDB Minutes.pdf,103,False,Review item 734: weak or fallback extraction.
 05092023 PZDB Minutes.pdf,103,False,Review item 735: weak or fallback extraction.
 05092023 PZDB Minutes.pdf,103,False,Review item 736: weak or fallback extraction.
 05092023 PZDB Minutes.pdf,103,False,Review item 737: weak or fallback extraction.
 05092023 PZDB Minutes.pdf,103,False,Review item 738: weak or fallback extraction.
+05092023 PZDB Minutes.pdf,103,False,Review item 739: weak or fallback extraction.
+05092023 PZDB Minutes.pdf,103,False,Review item 740: weak or fallback extraction.
 05102022 PZDB Minutes.pdf,104,False,Review item 741: weak or fallback extraction.
 05102022 PZDB Minutes.pdf,104,False,Review item 742: weak or fallback extraction.
 05102022 PZDB Minutes.pdf,104,False,Review item 743: weak or fallback extraction.
 05102022 PZDB Minutes.pdf,104,False,Review item 744: weak or fallback extraction.
+05102022 PZDB Minutes.pdf,104,False,Review item 745: weak or fallback extraction.
 05102022 PZDB Minutes.pdf,104,False,Review item 746: weak or fallback extraction.
 05102022 PZDB Minutes.pdf,104,False,Review item 747: weak or fallback extraction.
 05102022 PZDB Minutes.pdf,104,False,Review item 748: weak or fallback extraction.
@@ -666,12 +709,18 @@ filename,meeting_id,needs_ocr,reason
 05112021 PZDB Minutes.pdf,105,False,Review item 752: weak or fallback extraction.
 05112021 PZDB Minutes.pdf,105,False,Review item 753: weak or fallback extraction.
 05132025 PZDB Minutes.pdf,106,False,Review item 754: weak or fallback extraction.
+05132025 PZDB Minutes.pdf,106,False,Review item 755: weak or fallback extraction.
+05132025 PZDB Minutes.pdf,106,False,Review item 756: weak or fallback extraction.
 05132025 PZDB Minutes.pdf,106,False,Review item 757: weak or fallback extraction.
+05132025 PZDB Minutes.pdf,106,False,Review item 758: weak or fallback extraction.
 05142024 PZDB Minutes.pdf,107,False,Review item 759: weak or fallback extraction.
 05142024 PZDB Minutes.pdf,107,False,Review item 760: weak or fallback extraction.
+05142024 PZDB Minutes.pdf,107,False,Review item 761: weak or fallback extraction.
 05142024 PZDB Minutes.pdf,107,False,Review item 762: weak or fallback extraction.
 05142024 PZDB Minutes.pdf,107,False,Review item 764: weak or fallback extraction.
 05142024 PZDB Minutes.pdf,107,False,Review item 765: weak or fallback extraction.
+05142024 PZDB Minutes.pdf,107,False,Review item 766: weak or fallback extraction.
+05142024 PZDB Minutes.pdf,107,False,Review item 767: weak or fallback extraction.
 051517 Council Meeting Approved Minutes.pdf,108,False,Review item 768: weak or fallback extraction.
 051517 Council Meeting Approved Minutes.pdf,108,False,Review item 769: weak or fallback extraction.
 051517 Council Meeting Approved Minutes.pdf,108,False,Review item 770: weak or fallback extraction.
@@ -690,9 +739,11 @@ filename,meeting_id,needs_ocr,reason
 05152015 minutes.pdf,109,False,Review item 783: weak or fallback extraction.
 05152024 minutes.pdf,110,False,Review item 784: weak or fallback extraction.
 05152024 minutes.pdf,110,False,Review item 785: weak or fallback extraction.
+05152024 minutes.pdf,110,False,Review item 786: weak or fallback extraction.
 05152024 minutes.pdf,110,False,Review item 787: weak or fallback extraction.
 05152024 minutes.pdf,110,False,Review item 788: weak or fallback extraction.
 05152024 minutes.pdf,110,False,Review item 789: weak or fallback extraction.
+05152024 minutes.pdf,110,False,Review item 790: weak or fallback extraction.
 05152024 minutes.pdf,110,False,Review item 791: weak or fallback extraction.
 051717 Council Meeting Approved Minutes.pdf,111,False,Review item 792: weak or fallback extraction.
 051717 Council Meeting Approved Minutes.pdf,111,False,Review item 793: weak or fallback extraction.
@@ -759,6 +810,7 @@ filename,meeting_id,needs_ocr,reason
 05262021 minutes.pdf,120,False,Review item 860: weak or fallback extraction.
 053117 Council Meeting Approved Minutes.pdf,121,False,Review item 861: weak or fallback extraction.
 053117 Council Meeting Approved Minutes.pdf,121,False,Review item 862: weak or fallback extraction.
+053117 Council Meeting Approved Minutes.pdf,121,False,Review item 863: weak or fallback extraction.
 053117 Council Meeting Approved Minutes.pdf,121,False,Review item 864: weak or fallback extraction.
 060116 Council Meeting Approved Minutes.pdf,122,False,Review item 865: weak or fallback extraction.
 060116 Council Meeting Approved Minutes.pdf,122,False,Review item 866: weak or fallback extraction.
@@ -796,6 +848,7 @@ filename,meeting_id,needs_ocr,reason
 060315 Regular Meeting Approved Minutes.pdf,125,False,Review item 898: weak or fallback extraction.
 060315 Regular Meeting Approved Minutes.pdf,125,False,Review item 899: weak or fallback extraction.
 060315 Regular Meeting Approved Minutes.pdf,125,False,Review item 900: weak or fallback extraction.
+060315 Regular Meeting Approved Minutes.pdf,125,False,Review item 901: weak or fallback extraction.
 060315 Regular Meeting Approved Minutes.pdf,125,False,Review item 902: weak or fallback extraction.
 060315 Regular Meeting Approved Minutes.pdf,125,False,Review item 903: weak or fallback extraction.
 060315 Regular Meeting Approved Minutes.pdf,125,False,Review item 904: weak or fallback extraction.
@@ -820,6 +873,7 @@ filename,meeting_id,needs_ocr,reason
 060717 Council Meeting Approved Minutes.pdf,128,False,Review item 926: weak or fallback extraction.
 060717 Council Meeting Approved Minutes.pdf,128,False,Review item 927: weak or fallback extraction.
 060717 Council Meeting Approved Minutes.pdf,128,False,Review item 928: weak or fallback extraction.
+060717 Council Meeting Approved Minutes.pdf,128,False,Review item 929: weak or fallback extraction.
 060717 Council Meeting Approved Minutes.pdf,128,False,Review item 930: weak or fallback extraction.
 060717 Council Meeting Approved Minutes.pdf,128,False,Review item 931: weak or fallback extraction.
 060717 Council Meeting Approved Minutes.pdf,128,False,Review item 932: weak or fallback extraction.
@@ -833,6 +887,7 @@ filename,meeting_id,needs_ocr,reason
 06072023  minutes.pdf,129,False,Review item 940: weak or fallback extraction.
 06072023  minutes.pdf,129,False,Review item 941: weak or fallback extraction.
 06072023  minutes.pdf,129,False,Review item 942: weak or fallback extraction.
+06072023  minutes.pdf,129,False,Review item 943: weak or fallback extraction.
 06072023  minutes.pdf,129,False,Review item 944: weak or fallback extraction.
 06072023  minutes.pdf,129,False,Review item 945: weak or fallback extraction.
 06072023  minutes.pdf,129,False,Review item 946: weak or fallback extraction.
@@ -844,21 +899,32 @@ filename,meeting_id,needs_ocr,reason
 06082021 PZDB Minutes.pdf,131,False,Review item 952: weak or fallback extraction.
 06082021 PZDB Minutes.pdf,131,False,Review item 953: weak or fallback extraction.
 06082021 PZDB Minutes.pdf,131,False,Review item 954: weak or fallback extraction.
+06082021 PZDB Minutes.pdf,131,False,Review item 955: weak or fallback extraction.
+06082021 PZDB Minutes.pdf,131,False,Review item 956: weak or fallback extraction.
+06082021 PZDB Minutes.pdf,131,False,Review item 957: weak or fallback extraction.
 06102025 PZDB Minutes.pdf,132,False,Review item 958: weak or fallback extraction.
 06102025 PZDB Minutes.pdf,132,False,Review item 959: weak or fallback extraction.
 06102025 PZDB Minutes.pdf,132,False,Review item 960: weak or fallback extraction.
+06102025 PZDB Minutes.pdf,132,False,Review item 961: weak or fallback extraction.
 06112024 PZDB Minutes.pdf,133,False,Review item 962: weak or fallback extraction.
 06112024 PZDB Minutes.pdf,133,False,Review item 963: weak or fallback extraction.
+06112024 PZDB Minutes.pdf,133,False,Review item 964: weak or fallback extraction.
 06112024 PZDB Minutes.pdf,133,False,Review item 965: weak or fallback extraction.
 06112024 PZDB Minutes.pdf,133,False,Review item 966: weak or fallback extraction.
 06112024 PZDB Minutes.pdf,133,False,Review item 967: weak or fallback extraction.
+06112024 PZDB Minutes.pdf,133,False,Review item 968: weak or fallback extraction.
+06132023 PZDB Minutes.pdf,134,False,Review item 969: weak or fallback extraction.
 06132023 PZDB Minutes.pdf,134,False,Review item 970: weak or fallback extraction.
 06132023 PZDB Minutes.pdf,134,False,Review item 971: weak or fallback extraction.
 06132023 PZDB Minutes.pdf,134,False,Review item 972: weak or fallback extraction.
+06132023 PZDB Minutes.pdf,134,False,Review item 973: weak or fallback extraction.
 06142022 PZDB Minutes.pdf,135,False,Review item 974: weak or fallback extraction.
+06142022 PZDB Minutes.pdf,135,False,Review item 975: weak or fallback extraction.
 06142022 PZDB Minutes.pdf,135,False,Review item 977: weak or fallback extraction.
 06142022 PZDB Minutes.pdf,135,False,Review item 978: weak or fallback extraction.
 06142022 PZDB Minutes.pdf,135,False,Review item 979: weak or fallback extraction.
+06142022 PZDB Minutes.pdf,135,False,Review item 980: weak or fallback extraction.
+06142022 PZDB Minutes.pdf,135,False,Review item 981: weak or fallback extraction.
 06152022 minutes.pdf,136,False,Review item 982: weak or fallback extraction.
 06152022 minutes.pdf,136,False,Review item 983: weak or fallback extraction.
 06152022 minutes.pdf,136,False,Review item 984: weak or fallback extraction.
@@ -888,6 +954,7 @@ filename,meeting_id,needs_ocr,reason
 061720 Council Meeting Minutes.pdf,139,False,Review item 1008: weak or fallback extraction.
 061720 Council Meeting Minutes.pdf,139,False,Review item 1009: weak or fallback extraction.
 061720 Council Meeting Minutes.pdf,139,False,Review item 1010: weak or fallback extraction.
+061720 Council Meeting Minutes.pdf,139,False,Review item 1011: weak or fallback extraction.
 061720 Council Meeting Minutes.pdf,139,False,Review item 1012: weak or fallback extraction.
 061720 Council Meeting Minutes.pdf,139,False,Review item 1013: weak or fallback extraction.
 061720 Council Meeting Minutes.pdf,139,False,Review item 1014: weak or fallback extraction.
@@ -946,6 +1013,7 @@ filename,meeting_id,needs_ocr,reason
 06212023  minutes.pdf,144,False,Review item 1076: weak or fallback extraction.
 06212023  minutes.pdf,144,False,Review item 1077: weak or fallback extraction.
 06212023  minutes.pdf,144,False,Review item 1078: weak or fallback extraction.
+06212023  minutes.pdf,144,False,Review item 1079: weak or fallback extraction.
 06212023  minutes.pdf,144,False,Review item 1080: weak or fallback extraction.
 06212023  minutes.pdf,144,False,Review item 1081: weak or fallback extraction.
 06212023  minutes.pdf,144,False,Review item 1082: weak or fallback extraction.
@@ -1033,6 +1101,7 @@ filename,meeting_id,needs_ocr,reason
 07062022 minutes.pdf,153,False,Review item 1168: weak or fallback extraction.
 07062022 minutes.pdf,153,False,Review item 1169: weak or fallback extraction.
 07062022 minutes.pdf,153,False,Review item 1170: weak or fallback extraction.
+07062022 minutes.pdf,153,False,Review item 1172: weak or fallback extraction.
 07062022 minutes.pdf,153,False,Review item 1173: weak or fallback extraction.
 07062022 minutes.pdf,153,False,Review item 1174: weak or fallback extraction.
 07062022 minutes.pdf,153,False,Review item 1175: weak or fallback extraction.
@@ -1058,16 +1127,23 @@ filename,meeting_id,needs_ocr,reason
 07082020 Council Meeting Minutes.pdf,155,False,Review item 1196: weak or fallback extraction.
 07082020 Council Meeting Minutes.pdf,155,False,Review item 1197: weak or fallback extraction.
 07082020 Council Meeting Minutes.pdf,155,False,Review item 1198: weak or fallback extraction.
+07082025 PZDB Minutes.pdf,156,False,Review item 1199: weak or fallback extraction.
+07082025 PZDB Minutes.pdf,156,False,Review item 1200: weak or fallback extraction.
 07082025 PZDB Minutes.pdf,156,False,Review item 1201: weak or fallback extraction.
 07082025 PZDB Minutes.pdf,156,False,Review item 1202: weak or fallback extraction.
+07092024 PZDB Minutes.pdf,157,False,Review item 1204: weak or fallback extraction.
+07092024 PZDB Minutes.pdf,157,False,Review item 1205: weak or fallback extraction.
 07092024 PZDB Minutes.pdf,157,False,Review item 1206: weak or fallback extraction.
 071015 Workshop Approved Minutes.pdf,158,False,Review item 1207: weak or fallback extraction.
 071015 Workshop Approved Minutes.pdf,158,False,Review item 1208: weak or fallback extraction.
 071015 Workshop Approved Minutes.pdf,158,False,Review item 1210: weak or fallback extraction.
 07112023 PZDB Minutes.pdf,159,False,Review item 1211: weak or fallback extraction.
+07112023 PZDB Minutes.pdf,159,False,Review item 1212: weak or fallback extraction.
+07112023 PZDB Minutes.pdf,159,False,Review item 1213: weak or fallback extraction.
 07112023 PZDB Minutes.pdf,159,False,Review item 1214: weak or fallback extraction.
 07112023 PZDB Minutes.pdf,159,False,Review item 1215: weak or fallback extraction.
 07122022 PZDB Minutes.pdf,160,False,Review item 1216: weak or fallback extraction.
+07122022 PZDB Minutes.pdf,160,False,Review item 1217: weak or fallback extraction.
 07122022 PZDB Minutes.pdf,160,False,Review item 1218: weak or fallback extraction.
 07122022 PZDB Minutes.pdf,160,False,Review item 1219: weak or fallback extraction.
 07122022 PZDB Minutes.pdf,160,False,Review item 1220: weak or fallback extraction.
@@ -1082,8 +1158,13 @@ filename,meeting_id,needs_ocr,reason
 071316 Council Meeting Approved Minutes.pdf,161,False,Review item 1229: weak or fallback extraction.
 071316 Council Meeting Approved Minutes.pdf,161,False,Review item 1230: weak or fallback extraction.
 071316 Council Meeting Approved Minutes.pdf,161,False,Review item 1231: weak or fallback extraction.
+07132021 PZDB Minutes.pdf,162,False,Review item 1232: weak or fallback extraction.
+07132021 PZDB Minutes.pdf,162,False,Review item 1233: weak or fallback extraction.
+07132021 PZDB Minutes.pdf,162,False,Review item 1234: weak or fallback extraction.
 07132021 PZDB Minutes.pdf,162,False,Review item 1235: weak or fallback extraction.
 07132021 PZDB Minutes.pdf,162,False,Review item 1236: weak or fallback extraction.
+07132021 PZDB Minutes.pdf,162,False,Review item 1237: weak or fallback extraction.
+07132021 PZDB Minutes.pdf,162,False,Review item 1238: weak or fallback extraction.
 07142021 Minutes.pdf,163,False,Review item 1239: weak or fallback extraction.
 07142021 Minutes.pdf,163,False,Review item 1240: weak or fallback extraction.
 07142021 Minutes.pdf,163,False,Review item 1241: weak or fallback extraction.
@@ -1148,8 +1229,11 @@ filename,meeting_id,needs_ocr,reason
 07222020 Council Meeting Minutes.pdf,170,False,Review item 1302: weak or fallback extraction.
 07222020 Council Meeting Minutes.pdf,170,False,Review item 1303: weak or fallback extraction.
 07252023 PZDB Minutes.pdf,171,False,Review item 1304: weak or fallback extraction.
+07252023 PZDB Minutes.pdf,171,False,Review item 1305: weak or fallback extraction.
 07252023 PZDB Minutes.pdf,171,False,Review item 1306: weak or fallback extraction.
+07252023 PZDB Minutes.pdf,171,False,Review item 1307: weak or fallback extraction.
 07252023 PZDB Minutes.pdf,171,False,Review item 1308: weak or fallback extraction.
+07252023 PZDB Minutes.pdf,171,False,Review item 1309: weak or fallback extraction.
 07252023 PZDB Minutes.pdf,171,False,Review item 1310: weak or fallback extraction.
 07252023 PZDB Minutes.pdf,171,False,Review item 1311: weak or fallback extraction.
 072617 Zoning and DRI Development Order Hearing Approved Minutes.pdf,172,False,Review item 1312: weak or fallback extraction.
@@ -1174,6 +1258,8 @@ filename,meeting_id,needs_ocr,reason
 080217 Council Meeting Approved Minutes.pdf,174,False,Review item 1331: weak or fallback extraction.
 080217 Council Meeting Approved Minutes.pdf,174,False,Review item 1332: weak or fallback extraction.
 08082023 PZDB Rescheduled.pdf,175,False,No agenda/action items extracted.
+08092022 PZDB Minutes.pdf,176,False,Review item 1334: weak or fallback extraction.
+08092022 PZDB Minutes.pdf,176,False,Review item 1335: weak or fallback extraction.
 08092022 PZDB Minutes.pdf,176,False,Review item 1336: weak or fallback extraction.
 081015 Regular Meeting Approved Minutes.pdf,177,False,Review item 1337: weak or fallback extraction.
 081015 Regular Meeting Approved Minutes.pdf,177,False,Review item 1338: weak or fallback extraction.
@@ -1189,9 +1275,13 @@ filename,meeting_id,needs_ocr,reason
 081015 Regular Meeting Approved Minutes.pdf,177,False,Review item 1348: weak or fallback extraction.
 081015 Regular Meeting Approved Minutes.pdf,177,False,Review item 1349: weak or fallback extraction.
 08102021 PZDB Minutes.pdf,178,False,Review item 1350: weak or fallback extraction.
+08102021 PZDB Minutes.pdf,178,False,Review item 1351: weak or fallback extraction.
+08102021 PZDB Minutes.pdf,178,False,Review item 1352: weak or fallback extraction.
 08102021 PZDB Minutes.pdf,178,False,Review item 1353: weak or fallback extraction.
+08102021 PZDB Minutes.pdf,178,False,Review item 1354: weak or fallback extraction.
 08122025 PZDB Minutes.pdf,179,False,Review item 1355: weak or fallback extraction.
 08122025 PZDB Minutes.pdf,179,False,Review item 1356: weak or fallback extraction.
+08122025 PZDB Minutes.pdf,179,False,Review item 1357: weak or fallback extraction.
 08132024 PZDB cancellation.pdf,180,False,Review item 1358: weak or fallback extraction.
 081716 Council Meeting Approved Minutes.pdf,181,False,Review item 1359: weak or fallback extraction.
 081716 Council Meeting Approved Minutes.pdf,181,False,Review item 1360: weak or fallback extraction.
@@ -1210,9 +1300,14 @@ filename,meeting_id,needs_ocr,reason
 081716 Council Meeting Approved Minutes.pdf,181,False,Review item 1374: weak or fallback extraction.
 081716 Council Meeting Approved Minutes.pdf,181,False,Review item 1375: weak or fallback extraction.
 081716 Council Meeting Approved Minutes.pdf,181,False,Review item 1376: weak or fallback extraction.
+08222023 PZDB Minutes.pdf,182,False,Review item 1377: weak or fallback extraction.
 08222023 PZDB Minutes.pdf,182,False,Review item 1378: weak or fallback extraction.
+08222023 PZDB Minutes.pdf,182,False,Review item 1379: weak or fallback extraction.
 08222023 PZDB Minutes.pdf,182,False,Review item 1380: weak or fallback extraction.
 08222023 PZDB Minutes.pdf,182,False,Review item 1381: weak or fallback extraction.
+08222023 PZDB Minutes.pdf,182,False,Review item 1382: weak or fallback extraction.
+08242021 PZDB Minutes.pdf,183,False,Review item 1383: weak or fallback extraction.
+08242021 PZDB Minutes.pdf,183,False,Review item 1384: weak or fallback extraction.
 08242021 PZDB Minutes.pdf,183,False,Review item 1385: weak or fallback extraction.
 08242021 PZDB Minutes.pdf,183,False,Review item 1386: weak or fallback extraction.
 08292023 minutes.pdf,184,False,Review item 1387: weak or fallback extraction.
@@ -1268,6 +1363,8 @@ filename,meeting_id,needs_ocr,reason
 09072023 minutes.pdf,189,False,Review item 1440: weak or fallback extraction.
 09072023 minutes.pdf,189,False,Review item 1441: weak or fallback extraction.
 09072023 minutes.pdf,189,False,Review item 1442: weak or fallback extraction.
+09072023 minutes.pdf,189,False,Review item 1443: weak or fallback extraction.
+09072023 minutes.pdf,189,False,Review item 1444: weak or fallback extraction.
 09072023 minutes.pdf,189,False,Review item 1446: weak or fallback extraction.
 09072023 minutes.pdf,189,False,Review item 1448: weak or fallback extraction.
 09072023 minutes.pdf,189,False,Review item 1449: weak or fallback extraction.
@@ -1313,6 +1410,10 @@ filename,meeting_id,needs_ocr,reason
 09092025 PZDB Minutes.pdf,193,False,Review item 1496: weak or fallback extraction.
 09092025 PZDB Minutes.pdf,193,False,Review item 1497: weak or fallback extraction.
 09092025 PZDB Minutes.pdf,193,False,Review item 1498: weak or fallback extraction.
+09102024 PZDB Minutes.pdf,194,False,Review item 1499: weak or fallback extraction.
+09102024 PZDB Minutes.pdf,194,False,Review item 1500: weak or fallback extraction.
+09102024 PZDB Minutes.pdf,194,False,Review item 1501: weak or fallback extraction.
+09102024 PZDB Minutes.pdf,194,False,Review item 1502: weak or fallback extraction.
 09102024 PZDB Minutes.pdf,194,False,Review item 1503: weak or fallback extraction.
 09102024 PZDB Minutes.pdf,194,False,Review item 1504: weak or fallback extraction.
 09102025.pdf,195,False,Review item 1505: weak or fallback extraction.
@@ -1336,15 +1437,24 @@ filename,meeting_id,needs_ocr,reason
 09112024 minutes.pdf,196,False,Review item 1523: weak or fallback extraction.
 09112024 minutes.pdf,196,False,Review item 1524: weak or fallback extraction.
 09112024 minutes.pdf,196,False,Review item 1525: weak or fallback extraction.
+09122023 PZDB Minutes.pdf,197,False,Review item 1528: weak or fallback extraction.
+09122023 PZDB Minutes.pdf,197,False,Review item 1529: weak or fallback extraction.
 09122023 PZDB Minutes.pdf,197,False,Review item 1530: weak or fallback extraction.
 09122023 PZDB Minutes.pdf,197,False,Review item 1531: weak or fallback extraction.
 09122023 PZDB Minutes.pdf,197,False,Review item 1532: weak or fallback extraction.
+09122023 PZDB Minutes.pdf,197,False,Review item 1533: weak or fallback extraction.
 09122023 PZDB Minutes.pdf,197,False,Review item 1534: weak or fallback extraction.
+09122023 PZDB Minutes.pdf,197,False,Review item 1535: weak or fallback extraction.
 09132022 PZDB Minutes.pdf,198,False,Review item 1536: weak or fallback extraction.
+09132022 PZDB Minutes.pdf,198,False,Review item 1537: weak or fallback extraction.
+09132022 PZDB Minutes.pdf,198,False,Review item 1538: weak or fallback extraction.
 09132022 PZDB Minutes.pdf,198,False,Review item 1539: weak or fallback extraction.
+09132022 PZDB Minutes.pdf,198,False,Review item 1540: weak or fallback extraction.
 09132022 PZDB Minutes.pdf,198,False,Review item 1541: weak or fallback extraction.
+09132022 PZDB Minutes.pdf,198,False,Review item 1542: weak or fallback extraction.
 09142021 PZDB Minutes.pdf,199,False,Review item 1543: weak or fallback extraction.
 09142021 PZDB Minutes.pdf,199,False,Review item 1544: weak or fallback extraction.
+09142021 PZDB Minutes.pdf,199,False,Review item 1545: weak or fallback extraction.
 09142021 PZDB Minutes.pdf,199,False,Review item 1546: weak or fallback extraction.
 09142021 PZDB Minutes.pdf,199,False,Review item 1547: weak or fallback extraction.
 09142021 PZDB Minutes.pdf,199,False,Review item 1548: weak or fallback extraction.
@@ -1414,6 +1524,7 @@ filename,meeting_id,needs_ocr,reason
 09212022 minutes.pdf,206,False,Review item 1617: weak or fallback extraction.
 09212022 minutes.pdf,206,False,Review item 1618: weak or fallback extraction.
 09212022 minutes.pdf,206,False,Review item 1619: weak or fallback extraction.
+09212022 minutes.pdf,206,False,Review item 1621: weak or fallback extraction.
 09212022 minutes.pdf,206,False,Review item 1622: weak or fallback extraction.
 09222021 minutes.pdf,207,False,Review item 1624: weak or fallback extraction.
 09222021 minutes.pdf,207,False,Review item 1625: weak or fallback extraction.
@@ -1434,6 +1545,7 @@ filename,meeting_id,needs_ocr,reason
 09222023 minutes.pdf,208,False,Review item 1641: weak or fallback extraction.
 09222023 minutes.pdf,208,False,Review item 1642: weak or fallback extraction.
 09222023 minutes.pdf,208,False,Review item 1643: weak or fallback extraction.
+09222023 minutes.pdf,208,False,Review item 1644: weak or fallback extraction.
 09232015 minutes.pdf,209,False,Review item 1647: weak or fallback extraction.
 09232015 minutes.pdf,209,False,Review item 1648: weak or fallback extraction.
 09232015 minutes.pdf,209,False,Review item 1649: weak or fallback extraction.
@@ -1464,9 +1576,12 @@ filename,meeting_id,needs_ocr,reason
 09272022 PZDB cancellation.pdf,212,False,Review item 1675: weak or fallback extraction.
 09272022 minutes.pdf,213,False,Review item 1676: weak or fallback extraction.
 09272022 minutes.pdf,213,False,Review item 1677: weak or fallback extraction.
+09282021 PZDB Minutes.pdf,214,False,Review item 1678: weak or fallback extraction.
 09282021 PZDB Minutes.pdf,214,False,Review item 1679: weak or fallback extraction.
 09282021 PZDB Minutes.pdf,214,False,Review item 1680: weak or fallback extraction.
 09282021 PZDB Minutes.pdf,214,False,Review item 1681: weak or fallback extraction.
+09282021 PZDB Minutes.pdf,214,False,Review item 1682: weak or fallback extraction.
+09282021 PZDB Minutes.pdf,214,False,Review item 1683: weak or fallback extraction.
 10012025.pdf,215,False,Review item 1684: weak or fallback extraction.
 10012025.pdf,215,False,Review item 1685: weak or fallback extraction.
 10012025.pdf,215,False,Review item 1686: weak or fallback extraction.
@@ -1503,6 +1618,8 @@ filename,meeting_id,needs_ocr,reason
 100417 Council Meeting Approved Minutes.pdf,218,False,Review item 1717: weak or fallback extraction.
 10042023 minutes.pdf,219,False,Review item 1718: weak or fallback extraction.
 10042023 minutes.pdf,219,False,Review item 1719: weak or fallback extraction.
+10042023 minutes.pdf,219,False,Review item 1720: weak or fallback extraction.
+10042023 minutes.pdf,219,False,Review item 1721: weak or fallback extraction.
 10042023 minutes.pdf,219,False,Review item 1722: weak or fallback extraction.
 10042023 minutes.pdf,219,False,Review item 1723: weak or fallback extraction.
 10042023 minutes.pdf,219,False,Review item 1724: weak or fallback extraction.
@@ -1549,11 +1666,13 @@ filename,meeting_id,needs_ocr,reason
 10102023 PZDB Minutes.pdf,225,False,Review item 1764: weak or fallback extraction.
 10102023 PZDB Minutes.pdf,225,False,Review item 1765: weak or fallback extraction.
 10102023 PZDB Minutes.pdf,225,False,Review item 1766: weak or fallback extraction.
+10102023 PZDB Minutes.pdf,225,False,Review item 1767: weak or fallback extraction.
 10102023 PZDB Minutes.pdf,225,False,Review item 1769: weak or fallback extraction.
 10102023 PZDB Minutes.pdf,225,False,Review item 1770: weak or fallback extraction.
 10102023 PZDB Minutes.pdf,225,False,Review item 1771: weak or fallback extraction.
 10102023 PZDB Minutes.pdf,225,False,Review item 1772: weak or fallback extraction.
 10112022 PZDB cancellation.pdf,226,False,Review item 1773: weak or fallback extraction.
+10122021 PZDB Minutes.pdf,227,False,Review item 1774: weak or fallback extraction.
 10122021 PZDB Minutes.pdf,227,False,Review item 1775: weak or fallback extraction.
 10122021 PZDB Minutes.pdf,227,False,Review item 1776: weak or fallback extraction.
 10142025 PZDB Minutes.pdf,228,False,Review item 1777: weak or fallback extraction.
@@ -1641,9 +1760,15 @@ filename,meeting_id,needs_ocr,reason
 102517 Council Zoning Hearing and Comp Plan Workshop Approved Minutes.pdf,238,False,Review item 1861: weak or fallback extraction.
 102517 Council Zoning Hearing and Comp Plan Workshop Approved Minutes.pdf,238,False,Review item 1862: weak or fallback extraction.
 102517 Council Zoning Hearing and Comp Plan Workshop Approved Minutes.pdf,238,False,Review item 1863: weak or fallback extraction.
+10252022 PZDB Minutes.pdf,239,False,Review item 1864: weak or fallback extraction.
+10252022 PZDB Minutes.pdf,239,False,Review item 1865: weak or fallback extraction.
+10252022 PZDB Minutes.pdf,239,False,Review item 1866: weak or fallback extraction.
 10252022 PZDB Minutes.pdf,239,False,Review item 1867: weak or fallback extraction.
 10252022 PZDB Minutes.pdf,239,False,Review item 1868: weak or fallback extraction.
 10252022 PZDB Minutes.pdf,239,False,Review item 1869: weak or fallback extraction.
+10252022 PZDB Minutes.pdf,239,False,Review item 1870: weak or fallback extraction.
+10252022 PZDB Minutes.pdf,239,False,Review item 1871: weak or fallback extraction.
+10252022 PZDB Minutes.pdf,239,False,Review item 1872: weak or fallback extraction.
 10272021 minutes.pdf,240,False,Review item 1873: weak or fallback extraction.
 10272021 minutes.pdf,240,False,Review item 1874: weak or fallback extraction.
 10272021 minutes.pdf,240,False,Review item 1875: weak or fallback extraction.
@@ -1655,10 +1780,14 @@ filename,meeting_id,needs_ocr,reason
 102815 Workshop Approved Minutes.pdf,241,False,Review item 1881: weak or fallback extraction.
 102815 Workshop Approved Minutes.pdf,241,False,Review item 1882: weak or fallback extraction.
 10292024 PZDB Minutes.pdf,242,False,Review item 1883: weak or fallback extraction.
+10292024 PZDB Minutes.pdf,242,False,Review item 1884: weak or fallback extraction.
 10292024 PZDB Minutes.pdf,242,False,Review item 1885: weak or fallback extraction.
 10292024 PZDB Minutes.pdf,242,False,Review item 1886: weak or fallback extraction.
+10292024 PZDB Minutes.pdf,242,False,Review item 1887: weak or fallback extraction.
 10292024 PZDB Minutes.pdf,242,False,Review item 1888: weak or fallback extraction.
 10292024 PZDB Minutes.pdf,242,False,Review item 1889: weak or fallback extraction.
+10292024 PZDB Minutes.pdf,242,False,Review item 1890: weak or fallback extraction.
+10292024 PZDB Minutes.pdf,242,False,Review item 1891: weak or fallback extraction.
 110117 Council Meeting Approved Minutes.pdf,243,False,Review item 1892: weak or fallback extraction.
 110117 Council Meeting Approved Minutes.pdf,243,False,Review item 1893: weak or fallback extraction.
 110117 Council Meeting Approved Minutes.pdf,243,False,Review item 1894: weak or fallback extraction.
@@ -1729,6 +1858,7 @@ filename,meeting_id,needs_ocr,reason
 11062024 minutes.pdf,250,False,Review item 1964: weak or fallback extraction.
 11062024 minutes.pdf,250,False,Review item 1965: weak or fallback extraction.
 11062024 minutes.pdf,250,False,Review item 1966: weak or fallback extraction.
+11062024 minutes.pdf,250,False,Review item 1967: weak or fallback extraction.
 11062024 minutes.pdf,250,False,Review item 1968: weak or fallback extraction.
 11062024 minutes.pdf,250,False,Review item 1970: weak or fallback extraction.
 11062024 minutes.pdf,250,False,Review item 1971: weak or fallback extraction.
@@ -1737,8 +1867,13 @@ filename,meeting_id,needs_ocr,reason
 11082022 PZDB Minutes.pdf,251,False,Review item 1974: weak or fallback extraction.
 11082022 PZDB Minutes.pdf,251,False,Review item 1975: weak or fallback extraction.
 11082022 PZDB Minutes.pdf,251,False,Review item 1976: weak or fallback extraction.
+11082022 PZDB Minutes.pdf,251,False,Review item 1977: weak or fallback extraction.
+11082022 PZDB Minutes.pdf,251,False,Review item 1978: weak or fallback extraction.
 11082022 PZDB Minutes.pdf,251,False,Review item 1979: weak or fallback extraction.
+11092021 PZDB Minutes.pdf,252,False,Review item 1980: weak or fallback extraction.
+11092021 PZDB Minutes.pdf,252,False,Review item 1981: weak or fallback extraction.
 11092021 PZDB Minutes.pdf,252,False,Review item 1982: weak or fallback extraction.
+11092021 PZDB Minutes.pdf,252,False,Review item 1983: weak or fallback extraction.
 11092021 PZDB Minutes.pdf,252,False,Review item 1984: weak or fallback extraction.
 11092022 minutes.pdf,253,False,Review item 1985: weak or fallback extraction.
 11092022 minutes.pdf,253,False,Review item 1986: weak or fallback extraction.
@@ -1764,6 +1899,8 @@ filename,meeting_id,needs_ocr,reason
 11142023 PZDB Minutes.pdf,256,False,Review item 2006: weak or fallback extraction.
 11142023 PZDB Minutes.pdf,256,False,Review item 2007: weak or fallback extraction.
 11142023 PZDB Minutes.pdf,256,False,Review item 2008: weak or fallback extraction.
+11142023 PZDB Minutes.pdf,256,False,Review item 2009: weak or fallback extraction.
+11142023 PZDB Minutes.pdf,256,False,Review item 2010: weak or fallback extraction.
 111517 Council Meeting Approved Minutes.pdf,257,False,Review item 2011: weak or fallback extraction.
 111517 Council Meeting Approved Minutes.pdf,257,False,Review item 2012: weak or fallback extraction.
 111517 Council Meeting Approved Minutes.pdf,257,False,Review item 2013: weak or fallback extraction.
@@ -1825,8 +1962,10 @@ filename,meeting_id,needs_ocr,reason
 11182020 Council Meeting Minutes.pdf,264,False,Review item 2075: weak or fallback extraction.
 11182020 Council Meeting Minutes.pdf,264,False,Review item 2076: weak or fallback extraction.
 11182025 PZDB Minutes.pdf,265,False,Review item 2077: weak or fallback extraction.
+11182025 PZDB Minutes.pdf,265,False,Review item 2079: weak or fallback extraction.
 11182025 PZDB Minutes.pdf,265,False,Review item 2080: weak or fallback extraction.
 11182025 PZDB Minutes.pdf,265,False,Review item 2081: weak or fallback extraction.
+11182025 PZDB Minutes.pdf,265,False,Review item 2082: weak or fallback extraction.
 11192025.pdf,266,False,Review item 2083: weak or fallback extraction.
 11192025.pdf,266,False,Review item 2084: weak or fallback extraction.
 11192025.pdf,266,False,Review item 2085: weak or fallback extraction.
@@ -1935,6 +2074,7 @@ filename,meeting_id,needs_ocr,reason
 12072022 minutes.pdf,279,False,Review item 2193: weak or fallback extraction.
 12072022 minutes.pdf,279,False,Review item 2194: weak or fallback extraction.
 12072022 minutes.pdf,279,False,Review item 2195: weak or fallback extraction.
+12072022 minutes.pdf,279,False,Review item 2196: weak or fallback extraction.
 12072022 minutes.pdf,279,False,Review item 2197: weak or fallback extraction.
 12072022 minutes.pdf,279,False,Review item 2198: weak or fallback extraction.
 12072022 minutes.pdf,279,False,Review item 2199: weak or fallback extraction.
@@ -1954,6 +2094,9 @@ filename,meeting_id,needs_ocr,reason
 12092025 PZDB Minutes.pdf,281,False,No agenda/action items extracted.
 12102024 PZDB Minutes.pdf,282,False,Review item 2214: weak or fallback extraction.
 12102024 PZDB Minutes.pdf,282,False,Review item 2215: weak or fallback extraction.
+12102024 PZDB Minutes.pdf,282,False,Review item 2216: weak or fallback extraction.
+12102024 PZDB Minutes.pdf,282,False,Review item 2217: weak or fallback extraction.
+12102024 PZDB Minutes.pdf,282,False,Review item 2218: weak or fallback extraction.
 12102024 PZDB Minutes.pdf,282,False,Review item 2219: weak or fallback extraction.
 121115 Workshop Approved Minutes.pdf,283,False,Review item 2220: weak or fallback extraction.
 121115 Workshop Approved Minutes.pdf,283,False,Review item 2221: weak or fallback extraction.
@@ -1962,12 +2105,18 @@ filename,meeting_id,needs_ocr,reason
 12122023 PZDB Minutes.pdf,284,False,Review item 2224: weak or fallback extraction.
 12122023 PZDB Minutes.pdf,284,False,Review item 2225: weak or fallback extraction.
 12122023 PZDB Minutes.pdf,284,False,Review item 2226: weak or fallback extraction.
+12122023 PZDB Minutes.pdf,284,False,Review item 2227: weak or fallback extraction.
 12132022 PZDB Minutes.pdf,285,False,Review item 2228: weak or fallback extraction.
+12132022 PZDB Minutes.pdf,285,False,Review item 2229: weak or fallback extraction.
 12132022 PZDB Minutes.pdf,285,False,Review item 2230: weak or fallback extraction.
+12132022 PZDB Minutes.pdf,285,False,Review item 2231: weak or fallback extraction.
 12132022 PZDB Minutes.pdf,285,False,Review item 2232: weak or fallback extraction.
+12132022 PZDB Minutes.pdf,285,False,Review item 2233: weak or fallback extraction.
 12132022 PZDB Minutes.pdf,285,False,Review item 2234: weak or fallback extraction.
 12132023 minutes.pdf,286,False,Review item 2235: weak or fallback extraction.
+12142021 PZDB Minutes.pdf,287,False,Review item 2236: weak or fallback extraction.
 12142021 PZDB Minutes.pdf,287,False,Review item 2237: weak or fallback extraction.
+12142021 PZDB Minutes.pdf,287,False,Review item 2238: weak or fallback extraction.
 12152026 PZDB Minutes.pdf,288,False,No agenda/action items extracted.
 121615 Regular Meeting Approved Minutes.pdf,289,False,Review item 2239: weak or fallback extraction.
 121615 Regular Meeting Approved Minutes.pdf,289,False,Review item 2240: weak or fallback extraction.
@@ -2014,6 +2163,8 @@ filename,meeting_id,needs_ocr,reason
 2019-02-06 Council Meeting Approved Minutes.pdf,297,False,Review item 2285: weak or fallback extraction.
 2019-02-06 Council Meeting Approved Minutes.pdf,297,False,Review item 2286: weak or fallback extraction.
 2019-02-06 Council Meeting Approved Minutes.pdf,297,False,Review item 2287: weak or fallback extraction.
+2019-02-06 Council Meeting Approved Minutes.pdf,297,False,Review item 2288: weak or fallback extraction.
+2019-02-06 Council Meeting Approved Minutes.pdf,297,False,Review item 2289: weak or fallback extraction.
 2019-02-06 Council Meeting Approved Minutes.pdf,297,False,Review item 2290: weak or fallback extraction.
 2019-02-06 Council Meeting Approved Minutes.pdf,297,False,Review item 2291: weak or fallback extraction.
 2019-02-06 Council Meeting Approved Minutes.pdf,297,False,Review item 2292: weak or fallback extraction.
@@ -2212,6 +2363,7 @@ filename,meeting_id,needs_ocr,reason
 20191120 Council Meeting Approved Minutes.pdf,315,False,Review item 2492: weak or fallback extraction.
 20191204 Council Meeting Approved Minutes.pdf,316,False,Review item 2493: weak or fallback extraction.
 20191204 Council Meeting Approved Minutes.pdf,316,False,Review item 2494: weak or fallback extraction.
+20191204 Council Meeting Approved Minutes.pdf,316,False,Review item 2495: weak or fallback extraction.
 20191204 Council Meeting Approved Minutes.pdf,316,False,Review item 2496: weak or fallback extraction.
 20191204 Council Meeting Approved Minutes.pdf,316,False,Review item 2497: weak or fallback extraction.
 20191204 Council Meeting Approved Minutes.pdf,316,False,Review item 2498: weak or fallback extraction.
@@ -2253,6 +2405,7 @@ filename,meeting_id,needs_ocr,reason
 2020-02-05 Council Meeting Approved Minutes.pdf,321,False,Review item 2534: weak or fallback extraction.
 2020-02-05 Council Meeting Approved Minutes.pdf,321,False,Review item 2535: weak or fallback extraction.
 2020-02-05 Council Meeting Approved Minutes.pdf,321,False,Review item 2536: weak or fallback extraction.
+2020-02-05 Council Meeting Approved Minutes.pdf,321,False,Review item 2537: weak or fallback extraction.
 2020-02-05 Council Meeting Approved Minutes.pdf,321,False,Review item 2538: weak or fallback extraction.
 2020-02-05 Council Meeting Approved Minutes.pdf,321,False,Review item 2539: weak or fallback extraction.
 2020-02-05 Council Meeting Approved Minutes.pdf,321,False,Review item 2540: weak or fallback extraction.
@@ -2292,6 +2445,7 @@ filename,meeting_id,needs_ocr,reason
 2020-05-27 Council Meeting Minutes.pdf,326,False,Review item 2577: weak or fallback extraction.
 2020-05-27 Council Meeting Minutes.pdf,326,False,Review item 2578: weak or fallback extraction.
 2020-05-27 Council Meeting Minutes.pdf,326,False,Review item 2579: weak or fallback extraction.
+2020-05-27 Council Meeting Minutes.pdf,326,False,Review item 2584: weak or fallback extraction.
 2020-05-27 Council Meeting Minutes.pdf,326,False,Review item 2585: weak or fallback extraction.
 2020-05-27 Council Meeting Minutes.pdf,326,False,Review item 2586: weak or fallback extraction.
 2020-05-27 Council Meeting Minutes.pdf,326,False,Review item 2587: weak or fallback extraction.
@@ -2312,6 +2466,7 @@ filename,meeting_id,needs_ocr,reason
 3152023 minutes.pdf,328,False,Review item 2602: weak or fallback extraction.
 3152023 minutes.pdf,328,False,Review item 2603: weak or fallback extraction.
 3152023 minutes.pdf,328,False,Review item 2604: weak or fallback extraction.
+3152023 minutes.pdf,328,False,Review item 2605: weak or fallback extraction.
 3152023 minutes.pdf,328,False,Review item 2606: weak or fallback extraction.
 3152023 minutes.pdf,328,False,Review item 2607: weak or fallback extraction.
 Cancel 020316 Council Meeting.pdf,329,False,Review item 2608: weak or fallback extraction.
