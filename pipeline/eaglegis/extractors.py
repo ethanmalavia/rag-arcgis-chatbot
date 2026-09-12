@@ -698,6 +698,6 @@ def _merge_entries(a: AgendaEntry, b: AgendaEntry) -> AgendaEntry:
     )
 
 
-def raw_pdf_url(filename: str, repo: str = "EagleGIS-FGCU/EagleGIS", branch: str = "script") -> str:
+def raw_pdf_url(filename: str, repo: str = "ethanmalavia/rag-arcgis-chatbot", branch: str = "main") -> str:
     escaped = Path(filename).name.replace(" ", "%20")
     return f"https://raw.githubusercontent.com/{repo}/{branch}/pdfs/{escaped}"
