@@ -42,23 +42,18 @@ EXCLUDED_CATEGORY_SLUGS = {
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
 # MiniLM cross-encoder is ~5–10× faster on Cloud Run CPU than bge-reranker-base.
 RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
-# Collaborate: Gemini extracts project facts; Haiku writes the citizen summary
-# (Groq is the summary fallback when ANTHROPIC_API_KEY is unset).
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+# Single Claude call extracts matching project facts and writes the citizen
+# summary together (see rag_path.generate_answer).
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
-ENABLE_LLM_COLLABORATE = os.getenv("ENABLE_LLM_COLLABORATE", "true").lower() not in {"0", "false", "no"}
 # Skip LLM when keyword lookup returns a tight hit (app ID or ≤ N rows).
 KEYWORD_FAST_MAX_ROWS = int(os.getenv("KEYWORD_FAST_MAX_ROWS", "6"))
 ENABLE_KEYWORD_SHORTCUT = os.getenv("ENABLE_KEYWORD_SHORTCUT", "true").lower() not in {"0", "false", "no"}
-# Legacy name; collaborate path supersedes Gemini→Groq escalate.
-ENABLE_LLM_ESCALATE = os.getenv("ENABLE_LLM_ESCALATE", "true").lower() not in {"0", "false", "no"}
 
 DENSE_K = int(os.getenv("DENSE_K", "12"))
 SPARSE_K = int(os.getenv("SPARSE_K", "12"))
-RERANK_K = int(os.getenv("RERANK_K", "5"))
+RERANK_K = int(os.getenv("RERANK_K", "8"))
 # How many fused hits to score with the cross-encoder (biggest CPU cost).
-RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "8"))
+RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "12"))
 SCORE_THRESHOLD = float(os.getenv("SCORE_THRESHOLD", "0.25"))
 # One retrieve pass by default; set 2 to enable CRAG rewrite retry.
 CRAG_MAX_ITERS = int(os.getenv("CRAG_MAX_ITERS", "1"))

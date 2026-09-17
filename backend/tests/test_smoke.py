@@ -8,9 +8,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import pytest  # noqa: E402
+
 import app as backend_app  # noqa: E402
-from rag_path import parse_structured_answer  # noqa: E402
-from store import csv_hash  # noqa: E402
+import rag_path  # noqa: E402
+from store import DataStore, csv_hash  # noqa: E402
 
 
 def test_app_metadata():
@@ -42,52 +44,244 @@ def test_csv_hash_is_stable(tmp_path):
     assert first == second and len(first) == 32
 
 
-def test_parse_structured_answer_json():
-    raw = (
-        '{"summary":"Found one project.",'
-        '"projects":[{"title":"Wawa","id":"DOS2022-E016","location":"Estero",'
-        '"summary":"Approved with conditions.","status":"Approved",'
-        '"date":"8/22/2023","document_url":"https://example.com/doc.pdf"}]}'
+def _fake_store_with_board_row() -> DataStore:
+    import pandas as pd
+
+    df = pd.DataFrame(
+        [
+            {
+                "ApplicationID": "DOS2022-E016",
+                "ProjectName": "Wawa Convenience Food & Beverage Store",
+                "Location": "10081 Estero Town Commons Place",
+                "Outcome": "Approved with staff conditions",
+                "MeetingDate": "8/22/2023",
+                "Document_Link": "https://example.com/doc.pdf",
+                "Latitude": 26.4307,
+                "Longitude": -81.7852,
+            }
+        ]
     )
-    result = parse_structured_answer(raw)
-    assert result.summary == "- Found one project."
-    assert len(result.projects) == 1
-    assert result.projects[0].id == "DOS2022-E016"
+    return DataStore(dataframe=df)
 
 
-def test_parse_structured_answer_strips_markdown_fence():
-    raw = '```json\n{"summary":"No match.","projects":[]}\n```'
-    result = parse_structured_answer(raw)
-    assert result.summary == "- No match."
-    assert result.projects == []
-    assert result.meta.get("parse_ok") is True
+def test_build_cards_board_record_from_metadata():
+    from langchain_core.documents import Document
+
+    store = _fake_store_with_board_row()
+    doc = Document(
+        page_content="Wawa was approved with conditions.",
+        metadata={"application_id": "DOS2022-E016", "row_index": 0, "chunk_type": "action"},
+    )
+    cards = rag_path.build_cards(store, [(doc, 1.0)])
+    assert len(cards) == 1
+    assert cards[0].source_type == "board_record"
+    assert cards[0].id == "DOS2022-E016"
+    assert cards[0].status == "Approved"
+    assert cards[0].lat == pytest.approx(26.4307)
 
 
-def test_choose_llm_tier_collaborate_when_both_keys(monkeypatch):
-    from rag_path import choose_llm_tier, choose_summary_provider
+def test_build_cards_keeps_board_rows_without_application_id():
+    """Most Village Council agenda items (consent agenda, financial reports,
+    generic business) have no ApplicationID at all — most PZDB project
+    decisions do. Both must still produce a card, keyed by row_index when
+    there's no application_id to dedupe on."""
+    import pandas as pd
+    from langchain_core.documents import Document
 
-    monkeypatch.setenv("GEMINI_API_KEY", "g")
-    monkeypatch.setenv("GROQ_API_KEY", "q")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    assert choose_llm_tier("Explain RiverCreek") == "collaborate"
-    assert choose_summary_provider() == "groq"
+    df = pd.DataFrame(
+        [
+            {
+                "ApplicationID": None,
+                "ProjectTitle": "APPROVAL OF AGENDA, ADDITIONS, AND DELETIONS",
+                "Outcome": "Approved agenda",
+                "MeetingDate": "1/3/2024",
+                "Document_Link": "https://example.com/minutes.pdf",
+            }
+        ]
+    )
+    store = DataStore(dataframe=df)
+    doc = Document(
+        page_content="Approved agenda.",
+        metadata={"application_id": None, "row_index": 0, "chunk_type": "action"},
+    )
+    cards = rag_path.build_cards(store, [(doc, 1.0)])
+    assert len(cards) == 1
+    assert cards[0].source_type == "board_record"
+    assert cards[0].title == "APPROVAL OF AGENDA, ADDITIONS, AND DELETIONS"
 
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "a")
-    assert choose_llm_tier("Explain RiverCreek") == "collaborate"
-    assert choose_summary_provider() == "anthropic"
 
-    monkeypatch.delenv("GROQ_API_KEY", raising=False)
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    assert choose_llm_tier("Corkscrew Road") == "gemini"
+def test_build_cards_article_from_metadata():
+    from langchain_core.documents import Document
+
+    store = _fake_store_with_board_row()
+    doc = Document(
+        page_content=(
+            "DATE: 2025-08-14\nSOURCE_TYPE: website_article\nTITLE: Wawa opens\n\n"
+            "The new Wawa opened this month with 12 fueling pumps."
+        ),
+        metadata={
+            "source_type": "website_article",
+            "record_id": "abc123",
+            "title": "Wawa opens",
+            "url": "https://esterotoday.com/wawa-opens/",
+            "publish_date": "2025-08-14",
+            "category": "Development",
+        },
+    )
+    cards = rag_path.build_cards(store, [(doc, 1.0)])
+    assert len(cards) == 1
+    card = cards[0]
+    assert card.source_type == "website_article"
+    assert card.article_url == "https://esterotoday.com/wawa-opens/"
+    assert card.category == "Development"
+    assert "DATE:" not in card.summary
+    assert "fueling pumps" in card.summary
 
 
-def test_format_summary_bullets():
-    from rag_path import format_summary_bullets
+def test_build_cards_prefers_latest_row_for_same_application_id():
+    """Same application_id can span two dataframe rows (one per meeting it came
+    before) — build_cards must keep the row with the latest meeting_date, not
+    whichever ranked highest in retrieval."""
+    import pandas as pd
+    from langchain_core.documents import Document
 
-    out = format_summary_bullets("Project A was approved. Project B was continued.")
-    assert out.startswith("- ")
-    assert "\n- " in out
-    assert format_summary_bullets("- One thing.\n- Two thing.") == "- One thing.\n- Two thing."
+    df = pd.DataFrame(
+        [
+            {
+                "ApplicationID": "DOS2022-E016",
+                "ProjectName": "Wawa Convenience Food & Beverage Store",
+                "Location": "10081 Estero Town Commons Place",
+                "Outcome": "No decision recorded",
+                "MeetingDate": "7/25/2023",
+                "Document_Link": "https://example.com/0725.pdf",
+            },
+            {
+                "ApplicationID": "DOS2022-E016",
+                "ProjectName": "Wawa Convenience Food & Beverage Store",
+                "Location": "10081 Estero Town Commons Place",
+                "Outcome": "Approved with staff conditions",
+                "MeetingDate": "8/22/2023",
+                "Document_Link": "https://example.com/0822.pdf",
+            },
+        ]
+    )
+    store = DataStore(dataframe=df)
+    earlier = Document(
+        page_content="Design review, no action taken.",
+        metadata={"application_id": "DOS2022-E016", "row_index": 0, "chunk_type": "action"},
+    )
+    later = Document(
+        page_content="Approved with conditions.",
+        metadata={"application_id": "DOS2022-E016", "row_index": 1, "chunk_type": "action"},
+    )
+    # Retrieval ranked the earlier (non-final) row first, as actually happened.
+    cards = rag_path.build_cards(store, [(earlier, 1.0), (later, 0.9)])
+    assert len(cards) == 1
+    assert cards[0].status == "Approved"
+    assert cards[0].date == "8/22/2023"
+
+
+def test_build_cards_dedupes_and_skips_unciteable_hits():
+    from langchain_core.documents import Document
+
+    store = _fake_store_with_board_row()
+    doc = Document(
+        page_content="Wawa was approved.",
+        metadata={"application_id": "DOS2022-E016", "row_index": 0, "chunk_type": "meta"},
+    )
+    no_url_article = Document(
+        page_content="No link for this one.",
+        metadata={"source_type": "website_article", "record_id": "x", "title": "No URL"},
+    )
+    cards = rag_path.build_cards(store, [(doc, 1.0), (doc, 0.9), (no_url_article, 0.5)])
+    assert len(cards) == 1  # deduped board record; article without a URL dropped
+
+
+def test_answer_rag_keeps_both_board_and_article_cards_even_without_keyword_overlap(monkeypatch):
+    """Regression: a card whose clipped ~220-char blurb doesn't literally repeat
+    the query's words must still survive — it came from a hit the retrieval/
+    rerank pipeline already vetted as relevant. Only sorting/recency should be
+    applied to deterministic cards, never the entity-overlap drop."""
+    from langchain_core.documents import Document
+
+    store = _fake_store_with_board_row()
+    board_hit = Document(
+        page_content="Wawa was approved.",
+        metadata={"application_id": "DOS2022-E016", "row_index": 0, "chunk_type": "action"},
+    )
+    article_hit = Document(
+        page_content="A Summary of Recent and New Developments Planned in Greater Estero.",
+        metadata={
+            "source_type": "website_article",
+            "record_id": "abc",
+            "title": "A Summary of Recent and New Developments Planned in Greater Estero",
+            "url": "https://esterotoday.com/summary/",
+            "publish_date": "2026-01-01",
+        },
+    )
+    monkeypatch.setattr(rag_path, "retrieve_with_crag", lambda s, q: ("ctx", {}, [(board_hit, 1.0), (article_hit, 0.9)]))
+    monkeypatch.setattr(rag_path, "generate_answer", lambda q, ctx: "Some prose answer.")
+
+    result = rag_path.answer_rag(store, "What happened with the Wawa development project?")
+
+    source_types = {p.source_type for p in result.projects}
+    assert source_types == {"board_record", "website_article"}
+
+
+class _FakeLLMResult:
+    def __init__(self, text: str):
+        self.text = text
+
+
+def _ensure_llm_provider_importable(monkeypatch):
+    """llm_provider validates ANTHROPIC_API_KEY at import time — set a fake
+    one so this still works in CI with no real key configured. A no-op if
+    it's already been imported successfully elsewhere in this process."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-for-unit-tests")
+    import llm_provider
+
+    return llm_provider
+
+
+def test_generate_answer_returns_prose_via_llm_provider(monkeypatch):
+    llm_provider = _ensure_llm_provider_importable(monkeypatch)
+    prose = "**Wawa** (DOS2022-E016) was approved with staff conditions on August 22, 2023."
+    monkeypatch.setattr(llm_provider, "generate", lambda **kwargs: _FakeLLMResult(prose))
+
+    result = rag_path.generate_answer("What happened with the Wawa project?", "some retrieved context")
+
+    assert result == prose
+
+
+def test_generate_answer_strips_stray_json_fence(monkeypatch):
+    llm_provider = _ensure_llm_provider_importable(monkeypatch)
+    monkeypatch.setattr(
+        llm_provider, "generate", lambda **kwargs: _FakeLLMResult('Some prose.\n```json\n{"a":1}\n```')
+    )
+
+    result = rag_path.generate_answer("Any question", "some context")
+
+    assert "```" not in result
+    assert result.startswith("Some prose.")
+
+
+def test_generate_answer_falls_back_when_empty(monkeypatch):
+    llm_provider = _ensure_llm_provider_importable(monkeypatch)
+    monkeypatch.setattr(llm_provider, "generate", lambda **kwargs: _FakeLLMResult("   "))
+
+    result = rag_path.generate_answer("Any question", "some context")
+
+    assert result == "I don't have records on that."
+
+
+def test_finalize_prose_trims_trailing_fragment():
+    from rag_path import finalize_prose
+
+    assert finalize_prose("This is a complete sentence.") == "This is a complete sentence."
+    assert finalize_prose("Short") == "Short"
+    assert finalize_prose("A long enough fragment with no ending punct") == (
+        "A long enough fragment with no ending punct."
+    )
 
 
 def test_stale_source_notice_when_older_than_five_years():
@@ -166,15 +360,33 @@ def test_keyword_shortcut_for_app_id():
     assert not is_strong_keyword_hit(miss, "Corkscrew Road")
 
 
+def test_narrative_phrasing_with_multiple_hits_skips_keyword_shortcut():
+    """'What is happening at Wawa' reads as a narrative question, not a tight
+    lookup — with several matching rows it must fall through to RAG (a real
+    synthesized answer with articles + records) rather than dumping raw rows
+    with a generic 'Found N records' one-liner and no prose."""
+    from keyword_path import is_strong_keyword_hit
+    from models import ChatResponse, ProjectOut
+
+    hit = ChatResponse(
+        summary="Found 6 records matching your search.",
+        projects=[ProjectOut(title=f"Wawa item {i}", id=f"X{i}") for i in range(6)],
+        answer="Found 6 records matching your search.",
+        meta={"matched_rows": 6},
+    )
+    assert not is_strong_keyword_hit(hit, "What is happening at Wawa")
+    assert not is_strong_keyword_hit(hit, "What's happening with Wawa?")
+
+
 def test_prompt_loader_default_and_concise():
     from prompt_loader import clear_prompt_cache, load_prompt
 
     clear_prompt_cache()
-    solo = load_prompt("solo", "default")
-    assert "{context}" in solo and "{question}" in solo
-    concise = load_prompt("summary", "concise")
-    assert "{projects_json}" in concise
-    assert "2–3" in concise or "2-3" in concise
+    default_answer = load_prompt("answer", "default")
+    assert "Never output a JSON block" in default_answer
+    concise_answer = load_prompt("answer", "concise")
+    assert "Never output a JSON block" in concise_answer
+    assert default_answer != concise_answer
 
 
 def test_feedback_endpoint_writes_jsonl(tmp_path, monkeypatch):
@@ -266,48 +478,18 @@ def test_recency_intent_follows_original_not_rewrite_years():
     assert [d.metadata["chunk_id"] for d, _ in ranked] == ["y2025"]
 
 
-def test_rewrite_query_avoids_bare_years():
-    from rag_path import rewrite_query
+def test_rewrite_query_avoids_bare_years(monkeypatch):
+    import rag_path
 
-    rewritten = rewrite_query("What are the recent developments?")
+    # Force the deterministic rule-based fallback — a real ANTHROPIC_API_KEY
+    # may be configured in this environment, which would otherwise make this
+    # test depend on a live, non-deterministic model response.
+    monkeypatch.setattr(rag_path, "_haiku_rewrite_query", lambda question: None)
+
+    rewritten = rag_path.rewrite_query("What are the recent developments?")
     assert "recent planning meetings" in rewritten
     assert "2026" not in rewritten
     assert "2025" not in rewritten
-
-
-def test_filter_projects_for_query_drops_offtopic_new_evidence():
-    from models import ProjectOut
-    from rag_path import filter_projects_for_query
-
-    wawa = ProjectOut(
-        title="Wawa Convenience Food & Beverage Store with Gas",
-        id="DOS2022-E016",
-        location="10081 Estero Town Commons Place",
-    )
-    ordinance = ProjectOut(
-        title="Ordinance No. 2022-10 Estero Town Center (Wawa) Zoning Amendment",
-        id="Ordinance No. 2022-10",
-        location="Estero Town Center Commercial",
-    )
-    junk = ProjectOut(
-        title="Discussion regarding the requirement related to the petitioner providing any new evidence",
-        id="Section 13",
-        location="Village Council meeting",
-        summary="Petitioners must provide new evidence seven days prior.",
-    )
-    kept = filter_projects_for_query("are there any new wawas?", [wawa, ordinance, junk])
-    assert [p.id for p in kept] == ["DOS2022-E016", "Ordinance No. 2022-10"]
-
-
-def test_filter_projects_for_query_keeps_all_when_vague():
-    from models import ProjectOut
-    from rag_path import filter_projects_for_query
-
-    projects = [
-        ProjectOut(title="Some Road Work", id="A1"),
-        ProjectOut(title="Other Item", id="B2"),
-    ]
-    assert filter_projects_for_query("what was approved?", projects) == projects
 
 
 def test_filter_projects_for_recency_drops_2017():
@@ -430,6 +612,77 @@ def test_hits_meta_includes_meeting_dates():
     assert meta["retrieved"] == 1
     assert meta["meeting_dates"] == ["2025-03-01"]
     assert meta["chunk_ids"] == ["c1"]
+
+
+def test_reserve_by_bucket_keeps_both_source_types():
+    """Regression: for a broad topic where one source type (articles) simply
+    scores higher across the board, the final result must still reserve a
+    couple of slots for the other source type (board records) rather than
+    letting the dominant type fill every slot."""
+    from langchain_core.documents import Document
+    from retrieval import _reserve_by_bucket
+
+    articles = [
+        (Document(page_content="a", metadata={"source_type": "website_article"}), 9.0 - i)
+        for i in range(6)
+    ]
+    board = [
+        (Document(page_content="b", metadata={"application_id": f"X{i}"}), 3.0 - i)
+        for i in range(2)
+    ]
+    # Articles dominate every score — without reservation they'd fill the cap.
+    items = sorted(articles + board, key=lambda t: -t[1])
+    result = _reserve_by_bucket(items, min_per_bucket=2, cap=8)
+    board_count = sum(1 for d, _ in result if d.metadata.get("application_id"))
+    article_count = sum(1 for d, _ in result if d.metadata.get("source_type"))
+    assert board_count == 2
+    assert article_count == 6
+
+
+def test_recent_topup_splits_across_source_type_buckets():
+    """Regression: articles publish far more often than board meetings happen
+    — a naive global newest-N would be filled entirely by articles, leaving
+    board records with no recency representation at all."""
+    from langchain_core.documents import Document
+    from retrieval import _recent_topup
+    from store import DataStore
+
+    articles = [
+        Document(page_content="a", metadata={"source_type": "website_article", "publish_date": f"2026-09-{10+i:02d}"})
+        for i in range(5)
+    ]
+    board = [
+        Document(page_content="b", metadata={"application_id": f"X{i}", "meeting_date": f"2024-0{i+1}-01"})
+        for i in range(2)
+    ]
+    store = DataStore(documents=articles + board)
+    topup = _recent_topup(store, 4)
+    board_count = sum(1 for d in topup if d.metadata.get("application_id"))
+    article_count = sum(1 for d in topup if d.metadata.get("source_type"))
+    assert board_count == 2  # both available board docs reserved despite being much older
+    assert article_count == 2
+
+
+def test_reserve_recent_bypasses_threshold_for_newest_per_bucket():
+    """Regression: the objectively newest board record and newest article
+    must survive into the final pool even if the cross-encoder scored near-
+    identical old boilerplate text higher — SCORE_THRESHOLD alone would have
+    dropped them (this reproduces the exact bug found testing 'recent agenda
+    items approved', which returned nothing newer than 2022 pre-fix)."""
+    from langchain_core.documents import Document
+    from retrieval import _reserve_recent
+
+    old_board = (Document(page_content="old", metadata={"application_id": "OLD", "meeting_date": "2017-01-01"}), 6.0)
+    new_board = (Document(page_content="new", metadata={"application_id": "NEW", "meeting_date": "2026-06-17"}), -9.0)
+    new_article = (
+        Document(page_content="art", metadata={"source_type": "website_article", "publish_date": "2026-09-11"}),
+        -9.5,
+    )
+    ranked = [old_board, new_board, new_article]
+    pool = [old_board]  # only the old, high-scoring item cleared SCORE_THRESHOLD
+    result = _reserve_recent(ranked, pool, n=4)
+    ids = {d.metadata.get("application_id") or d.metadata.get("source_type") for d, _ in result}
+    assert ids == {"OLD", "NEW", "website_article"}
 
 
 def test_bm25_tokenize_stems_wawas_and_drops_stopwords():

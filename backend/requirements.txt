@@ -20,12 +20,11 @@ faiss-cpu==1.14.3
 # HuggingFace Hub
 huggingface-hub==0.23.4
 
-# LLM providers — Anthropic is the default (see backend/llm_provider.py);
-# Groq remains available as a selectable fallback (LLM_PROVIDER=groq).
+# LLM provider — Claude by default (see backend/llm_provider.py, LLM_PROVIDER
+# env var). groq stays installed because llm_provider.py imports it
+# unconditionally even when unused, as a selectable fallback (LLM_PROVIDER=groq).
 anthropic==0.121.0
 groq==0.37.1
-langchain-groq>=0.1.0
-langchain-google-genai==1.0.10
 langchain-huggingface>=0.0.2
 
 # Data

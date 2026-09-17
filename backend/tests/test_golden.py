@@ -1,4 +1,4 @@
-"""Golden Q&A and router tests (no Groq API key required)."""
+"""Golden Q&A and router tests (no LLM API key required)."""
 from __future__ import annotations
 
 import json

@@ -9,23 +9,15 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from config import ENABLE_LLM_COLLABORATE, GEMINI_MODEL
+from config import PROMPT_VARIANT
 from events_path import answer_upcoming_events, is_events_question
 from keyword_path import answer_keyword, is_strong_keyword_hit
 from models import ChatResponse, RouteKind
 from rag_path import (
     answer_rag,
-    choose_llm_tier,
-    choose_summary_provider,
-    finalize_prose,
-    format_summary_bullets,
-    gemini_available,
-    gemini_extract_projects,
+    build_cards,
+    filter_projects_for_recency,
     generate_answer,
-    summary_backend_available,
-    summary_model_name,
-    stream_summary,
-    write_summary,
     retrieve_with_crag,
 )
 from router import route_question
@@ -65,7 +57,7 @@ def answer_question(question: str) -> ChatResponse:
         raise HTTPException(503, "No dataset loaded. Use Load CSV in the UI first.")
 
     t0 = time.perf_counter()
-    if is_events_question(question):
+    if is_events_question(question, store.dataframe):
         result = answer_upcoming_events(question)
         result.meta["latency_ms"] = round((time.perf_counter() - t0) * 1000)
         attach_coords(result.projects, store.dataframe)
@@ -106,14 +98,14 @@ def answer_question(question: str) -> ChatResponse:
 
 
 def stream_answer(question: str) -> Iterator[str]:
-    """SSE: meta → (collaborate: extract then summary tokens) → done."""
+    """SSE: meta → generate (single Claude call, streamed as one token) → done."""
     store = get_store()
     if store is None or not store.is_ready():
         yield _sse({"type": "error", "detail": "No dataset loaded"})
         return
 
     t0 = time.perf_counter()
-    if is_events_question(question):
+    if is_events_question(question, store.dataframe):
         result = answer_upcoming_events(question)
         result.meta["latency_ms"] = round((time.perf_counter() - t0) * 1000)
         yield _sse({"type": "meta", "route": RouteKind.EVENTS.value})
@@ -142,87 +134,38 @@ def stream_answer(question: str) -> Iterator[str]:
         return
 
     t_retrieve = time.perf_counter()
-    context, crag_meta = retrieve_with_crag(store, question)
+    context, crag_meta, hits = retrieve_with_crag(store, question)
     retrieve_ms = round((time.perf_counter() - t_retrieve) * 1000)
     crag_meta["retrieve_ms"] = retrieve_ms
 
-    use_collab = (
-        gemini_available()
-        and summary_backend_available()
-        and ENABLE_LLM_COLLABORATE
-    )
-    mode = choose_llm_tier(question, crag_meta)
     yield _sse({
         "type": "meta",
         "route": RouteKind.RAG.value,
-        "llm_mode": mode,
+        "llm_mode": "claude",
         **crag_meta,
     })
 
     t_gen = time.perf_counter()
     first_token_ms: int | None = None
 
-    if use_collab:
-        try:
-            yield _sse({"type": "meta", "phase": "extract", "provider": "gemini", "model": GEMINI_MODEL})
-            t_ex = time.perf_counter()
-            projects = gemini_extract_projects(question, context)
-            extract_ms = round((time.perf_counter() - t_ex) * 1000)
-
-            summary_provider = choose_summary_provider()
-            summary_model = summary_model_name(summary_provider)
-            yield _sse({
-                "type": "meta",
-                "phase": "summary",
-                "provider": summary_provider,
-                "model": summary_model,
-            })
-            buffer = ""
-            t_sum = time.perf_counter()
-            for token in stream_summary(question, projects):
-                if first_token_ms is None:
-                    first_token_ms = round((time.perf_counter() - t0) * 1000)
-                buffer += token
-                yield _sse({"type": "token", "text": token})
-            summary = format_summary_bullets(buffer) or write_summary(question, projects)
-            projects = projects[:3]
-            for p in projects:
-                p.summary = finalize_prose(p.summary)
-            summary_ms = round((time.perf_counter() - t_sum) * 1000)
-
-            result = ChatResponse(
-                summary=summary,
-                projects=projects,
-                answer=summary,
-                route=RouteKind.RAG.value,
-                meta={
-                    **crag_meta,
-                    "parse_ok": True,
-                    "llm_mode": "collaborate",
-                    "llm_providers": ["gemini", summary_provider],
-                    "llm_models": {"extract": GEMINI_MODEL, "summary": summary_model},
-                    "extract_ms": extract_ms,
-                    "summary_ms": summary_ms,
-                    "generate_ms": round((time.perf_counter() - t_gen) * 1000),
-                    "ttft_ms": first_token_ms,
-                    "latency_ms": round((time.perf_counter() - t0) * 1000),
-                },
-            )
-            attach_coords(result.projects, store.dataframe)
-            attach_stale_source_notice(result)
-            yield _sse({"type": "done", **result.model_dump()})
-            return
-        except Exception as e:
-            logger.warning("Collaborate stream failed (%s); solo fallback", e)
-
-    # Solo fallback: generate full answer (optional token stream from one provider).
-    result = generate_answer(question, context, crag_meta=crag_meta)
-    # If we already have a complete result, stream the summary as tokens for UX.
-    summary = result.summary or result.answer or ""
-    if summary and first_token_ms is None:
+    # Single Claude call: writes free-form prose grounded in the retrieved
+    # context, then streams it as one token. Cards are never LLM-authored —
+    # built deterministically from the same hits' metadata (build_cards).
+    prose = generate_answer(question, context)
+    # Sort/recency-cutoff only — see rag_path.answer_rag for why the
+    # entity-overlap filter is skipped for deterministic cards.
+    cards = filter_projects_for_recency(question, build_cards(store, hits))
+    if prose:
         first_token_ms = round((time.perf_counter() - t0) * 1000)
-        yield _sse({"type": "token", "text": summary})
-    result.meta.update(crag_meta)
+        yield _sse({"type": "token", "text": prose})
+    crag_meta.update({"llm_provider": "anthropic", "prompt_variant": PROMPT_VARIANT})
+    result = ChatResponse(
+        summary=prose,
+        projects=cards,
+        answer=prose,
+        route=RouteKind.RAG.value,
+        meta=crag_meta,
+    )
     result.meta["generate_ms"] = round((time.perf_counter() - t_gen) * 1000)
     result.meta["ttft_ms"] = first_token_ms
     result.meta["latency_ms"] = round((time.perf_counter() - t0) * 1000)

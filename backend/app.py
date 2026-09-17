@@ -56,47 +56,29 @@ _SAFE_CSV_NAME = re.compile(r"^[\w.\- ]+\.csv$", re.IGNORECASE)
 
 
 def _warm_models() -> dict[str, bool]:
-    """Load reranker + LLMs and run one retrieve so the first user question is warm."""
-    from rag_path import anthropic_available, gemini_available, get_llm, groq_available
+    """Load reranker + LLM provider and run one retrieve so the first user question is warm."""
     from retrieval import get_reranker, hybrid_retrieve
 
     store = get_store()
     ready = store is not None and store.is_ready()
     reranker_ok = False
-    llm_gemini_ok = False
-    llm_groq_ok = False
-    llm_anthropic_ok = False
+    llm_ok = False
     retrieve_ok = False
     if ready:
         get_reranker()
         reranker_ok = True
         hybrid_retrieve(store, "Estero planning zoning")
         retrieve_ok = True
-        if gemini_available():
-            try:
-                get_llm("gemini")
-                llm_gemini_ok = True
-            except Exception as e:
-                logger.warning("Gemini warmup skipped: %s", e)
-        if anthropic_available():
-            try:
-                get_llm("anthropic")
-                llm_anthropic_ok = True
-            except Exception as e:
-                logger.warning("Anthropic warmup skipped: %s", e)
-        if groq_available():
-            try:
-                get_llm("groq")
-                llm_groq_ok = True
-            except Exception as e:
-                logger.warning("Groq warmup skipped: %s", e)
+        try:
+            import llm_provider  # noqa: F401 — import validates the client/key
+
+            llm_ok = True
+        except Exception as e:
+            logger.warning("LLM provider warmup skipped: %s", e)
     return {
         "chain_ready": ready,
         "reranker": reranker_ok,
-        "llm": llm_gemini_ok or llm_groq_ok or llm_anthropic_ok,
-        "llm_gemini": llm_gemini_ok,
-        "llm_anthropic": llm_anthropic_ok,
-        "llm_groq": llm_groq_ok,
+        "llm": llm_ok,
         "retrieve": retrieve_ok,
     }
 

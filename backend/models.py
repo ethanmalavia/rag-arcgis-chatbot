@@ -28,6 +28,15 @@ class ProjectOut(BaseModel):
     # location string. Null when the record was never geocoded.
     lat: float | None = None
     lng: float | None = None
+    # "board_record" | "website_article" | "website_page" | "event" | "document".
+    # Drives which card component the frontend renders (ArticleCard vs
+    # VillageCouncilCard vs ProjectCard) — see frontend-react/src/lib/parseAnswer.ts.
+    source_type: str = ""
+    # Populated instead of document_url for non-board sources so the frontend's
+    # isArticle() heuristic (sourceType check, or articleUrl-without-documentUrl)
+    # routes these to ArticleCard.
+    article_url: str = ""
+    category: str = ""
 
 
 class ChatResponse(BaseModel):

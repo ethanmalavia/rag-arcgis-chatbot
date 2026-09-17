@@ -5,7 +5,7 @@ Router-first Q&A for Estero planning & zoning records: structured filters, keywo
 ## What you need
 
 - Python 3.11 **or** Docker Desktop
-- Groq API key (`GROQ_API_KEY`); Gemini optional for collaborate mode
+- Anthropic API key (`ANTHROPIC_API_KEY`) — sole LLM provider
 - Optional: `ADMIN_API_KEY` for `/admin` and CSV `/load`
 - Optional: GCP account for Cloud Run deploy
 - Pipeline rebuild: Tesseract OCR (`apt install tesseract-ocr` on Linux)
@@ -15,7 +15,7 @@ Router-first Q&A for Estero planning & zoning records: structured filters, keywo
 
 ```powershell
 cd T:\eagleGIS\rag-arcgis-chatbot
-copy backend\.env.example backend\.env   # add GROQ_API_KEY (and ADMIN_API_KEY)
+copy backend\.env.example backend\.env   # add ANTHROPIC_API_KEY (and ADMIN_API_KEY)
 docker compose up --build
 ```
 
@@ -36,7 +36,7 @@ cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-copy .env.example .env   # add GROQ_API_KEY (and ADMIN_API_KEY)
+copy .env.example .env   # add ANTHROPIC_API_KEY (and ADMIN_API_KEY)
 uvicorn app:app --reload --port 8000
 ```
 
@@ -59,7 +59,7 @@ Question → Router
   ├─ structured  → pandas filters (counts, year, status, location)
   ├─ keyword     → ApplicationID / minutes / token search
   ├─ mixed       → keyword first, else RAG
-  └─ rag         → BM25 + FAISS (RRF) → reranker → CRAG → Gemini/Groq JSON
+  └─ rag         → BM25 + FAISS (RRF) → reranker → CRAG → Claude JSON
 ```
 
 | Component | Default |
@@ -180,7 +180,7 @@ duplicated). Adding a source means one `SourceSpec` plus one fetch function — 
 
 ## CI
 
-- **ci.yml** — ruff + backend router/golden/smoke/admin tests (no Groq key required)
+- **ci.yml** — ruff + backend router/golden/smoke/admin tests (no LLM key required)
 - **pipeline-ci.yml** — pipeline pytest + deliverables up-to-date guard
 - **pipeline-refresh.yml** — weekly data refresh from source PDFs
 - **sync-engage-estero.yml** — weekly sync of site posts/pages/events/documents

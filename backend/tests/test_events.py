@@ -175,6 +175,20 @@ def test_is_events_question(question, expected):
     assert is_events_question(question) is expected
 
 
+def test_is_events_question_vetoed_by_dataset_keyword_hit():
+    """PLANNING_SIGNAL_RE only catches street-suffix/zoning jargon — a bare
+    named project ("What is happening at Wawa") has neither, so without a
+    dataset check it would wrongly take the generic events shortcut."""
+    import pandas as pd
+
+    df = pd.DataFrame(
+        [{"ProjectName": "Wawa Convenience Food & Beverage Store", "ApplicationID": "DOS2022-E016"}]
+    )
+    assert is_events_question("What is happening at Wawa", df) is False
+    # A real events question with no dataset hit still takes the shortcut.
+    assert is_events_question("What's happening this weekend?", df) is True
+
+
 def test_answer_upcoming_events_formats_bullets(monkeypatch):
     from events_path import answer_upcoming_events
 
