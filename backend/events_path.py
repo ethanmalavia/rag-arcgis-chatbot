@@ -4,6 +4,8 @@ from __future__ import annotations
 import re
 from datetime import date, datetime, timedelta
 
+import pandas as pd
+
 from events import list_upcoming_events
 from models import ChatResponse, RouteKind
 
@@ -48,12 +50,48 @@ PLANNING_SIGNAL_RE = re.compile(
 )
 
 
-def is_events_question(question: str) -> bool:
+_EVENTS_VETO_STOPWORDS = frozenset(
+    {"the", "and", "for", "what", "show", "minutes", "meeting", "estero", "village",
+     "happening", "going", "with", "about", "this", "that", "there", "any"}
+)
+
+
+def _matches_named_record(df: pd.DataFrame, question: str) -> bool:
+    """True only when a content token from the question literally appears in
+    a project/location/id column — never "everything matches" on no tokens.
+
+    Deliberately not keyword_path.answer_keyword(): that function falls back
+    to returning the *entire* dataframe when no token matches anything (a
+    reasonable UX default for its own keyword-shortcut route), which would
+    make this veto fire on every question once the dataset is non-empty.
+    """
+    from schema_aliases import search_columns
+
+    tokens = [t for t in re.findall(r"[a-z0-9]{3,}", question.lower()) if t not in _EVENTS_VETO_STOPWORDS]
+    if not tokens:
+        return False
+    for col in search_columns(df):
+        series = df[col].astype(str)
+        if any(series.str.contains(tok, case=False, na=False).any() for tok in tokens):
+            return True
+    return False
+
+
+def is_events_question(question: str, df: pd.DataFrame | None = None) -> bool:
     q = question or ""
     if not EVENTS_INTENT_RE.search(q):
         return False
     # Planning language wins: fall through to the router and RAG.
-    return not PLANNING_SIGNAL_RE.search(q)
+    if PLANNING_SIGNAL_RE.search(q):
+        return False
+    # PLANNING_SIGNAL_RE only catches street-suffix/zoning jargon — a bare
+    # named project/business ("What is happening at Wawa") has neither, so it
+    # would otherwise short-circuit here and answer with the generic upcoming
+    # events list. If the dataset actually names the thing being asked about,
+    # it's a specific record, not the community calendar.
+    if df is not None and not df.empty and _matches_named_record(df, q):
+        return False
+    return True
 
 
 def _parse_day(start: str) -> date | None:

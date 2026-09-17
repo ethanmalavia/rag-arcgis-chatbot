@@ -1,28 +1,23 @@
-"""Corrective RAG path: Gemini extracts facts; Haiku (or Groq) writes the summary."""
+"""Corrective RAG path: hybrid retrieval, grading, rewrite, single Claude call for generation.
+
+Cards are built deterministically from retrieved-document metadata (never
+LLM-authored) — see build_cards(). The LLM only writes the free-form prose
+answer; it never re-extracts title/id/location/status/date/url itself, so a
+source's type (board record vs. news article/page/event) can't be lost or
+miscategorized, and the answer isn't capped to a fixed bullet count.
+"""
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
 import time
-from collections.abc import Iterator
 from datetime import date, timedelta
-from typing import Any, Literal
+from typing import Any
 
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
 
-from config import (
-    ANTHROPIC_MODEL,
-    CRAG_MAX_ITERS,
-    ENABLE_LLM_COLLABORATE,
-    GEMINI_MODEL,
-    GROQ_MODEL,
-    SCORE_THRESHOLD,
-)
+from config import CRAG_MAX_ITERS, SCORE_THRESHOLD
 from models import ChatResponse, ProjectOut, RouteKind
 from prompt_loader import load_prompt
 from config import RECENT_QUERY_MAX_AGE_YEARS
@@ -36,13 +31,12 @@ from retrieval import (
 )
 from stale_sources import parse_source_date
 from store import DataStore
+from structured_path import _clip_at_sentence, _row_to_project
 
 logger = logging.getLogger(__name__)
 
-Provider = Literal["gemini", "groq", "anthropic"]
-SummaryProvider = Literal["anthropic", "groq"]
-_llms: dict[str, Any] = {}
-_anthropic_client: Any = None
+_STRAY_FENCE_RE = re.compile(r"```(?:json)?[\s\S]*?```", re.IGNORECASE)
+_HEADER_LINE_RE = re.compile(r"^(?:DATE|SOURCE_TYPE|TITLE|SEARCH|TRUE_URL|venue|location|category):", re.IGNORECASE)
 
 
 def _prompt(name: str) -> str:
@@ -57,113 +51,20 @@ def _variant_name() -> str:
     return cfg.PROMPT_VARIANT
 
 
-def gemini_available() -> bool:
-    return bool(os.getenv("GEMINI_API_KEY"))
-
-
-def groq_available() -> bool:
-    return bool(os.getenv("GROQ_API_KEY"))
-
-
-def anthropic_available() -> bool:
-    return bool(os.getenv("ANTHROPIC_API_KEY"))
-
-
-def summary_backend_available() -> bool:
-    return anthropic_available() or groq_available()
-
-
-def choose_summary_provider() -> SummaryProvider:
-    """Prefer Claude Haiku for the resident summary; Groq is the fallback."""
-    if anthropic_available():
-        return "anthropic"
-    if groq_available():
-        return "groq"
-    raise RuntimeError("No summary LLM key set (need ANTHROPIC_API_KEY or GROQ_API_KEY)")
-
-
-def summary_model_name(provider: SummaryProvider | None = None) -> str:
-    provider = provider or choose_summary_provider()
-    return ANTHROPIC_MODEL if provider == "anthropic" else GROQ_MODEL
-
-
-def get_anthropic_client():
-    """Lazy Anthropic client (Haiku) — avoids import-time hard fail when key unset."""
-    global _anthropic_client
-    if not anthropic_available():
-        raise RuntimeError("ANTHROPIC_API_KEY is not set")
-    if _anthropic_client is None:
-        import anthropic
-
-        _anthropic_client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-        logger.info("Initialized Anthropic LLM model=%s", ANTHROPIC_MODEL)
-    return _anthropic_client
-
-
-def get_llm(provider: Provider):
-    """Return a cached chat model for gemini or groq (LangChain)."""
-    if provider == "anthropic":
-        # Anthropic is used via the SDK for summary streaming; warmup just
-        # constructs the client.
-        return get_anthropic_client()
-
-    if provider == "gemini":
-        if not gemini_available():
-            raise RuntimeError("GEMINI_API_KEY is not set")
-        cache_key = f"gemini:{GEMINI_MODEL}"
-        if cache_key not in _llms:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-
-            _llms[cache_key] = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,
-                google_api_key=os.environ["GEMINI_API_KEY"],
-                temperature=0,
-                max_output_tokens=1600,
-            )
-            logger.info("Initialized Gemini LLM model=%s", GEMINI_MODEL)
-        return _llms[cache_key]
-
-    if not groq_available():
-        raise RuntimeError("GROQ_API_KEY is not set")
-    cache_key = f"groq:{GROQ_MODEL}"
-    if cache_key not in _llms:
-        from langchain_groq import ChatGroq
-
-        _llms[cache_key] = ChatGroq(
-            model=GROQ_MODEL,
-            groq_api_key=os.environ["GROQ_API_KEY"],
-            temperature=0.0,
-            max_tokens=450,
-            timeout=90,
-            max_retries=1,
-        )
-        logger.info("Initialized Groq LLM model=%s", GROQ_MODEL)
-    return _llms[cache_key]
-
-
-# Back-compat for warmup / older callers that used tier names.
-def choose_llm_tier(question: str, crag_meta: dict[str, Any] | None = None) -> str:
-    _ = question, crag_meta
-    if gemini_available() and summary_backend_available() and ENABLE_LLM_COLLABORATE:
-        return "collaborate"
-    if gemini_available():
-        return "gemini"
-    if anthropic_available():
-        return "anthropic"
-    return "groq"
-
-
-def _extract_json(text: str) -> dict[str, Any]:
-    cleaned = text.strip()
-    cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
-    cleaned = re.sub(r"\s*```$", "", cleaned)
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
-        match = re.search(r"\{[\s\S]*\}", cleaned)
-        if match:
-            return json.loads(match.group(0))
-        raise
+def _strip_header_lines(text: str) -> str:
+    """Drop the DATE:/SOURCE_TYPE:/TITLE:/SEARCH:/TRUE_URL: header block and
+    venue:/location:/category: body lines baked into supplemental-source chunk
+    text (see sources/documents.py) — those are retrieval aids, not prose."""
+    lines = [ln for ln in text.splitlines() if not _HEADER_LINE_RE.match(ln.strip())]
+    text = "\n".join(lines).strip()
+    # A mid-corpus chunk often opens mid-sentence (a leading ". Foo bar...").
+    # If it doesn't start with an uppercase letter/quote, drop the fragment
+    # before the first sentence boundary so card blurbs read cleanly.
+    if text and not (text[0].isupper() or text[0] in "\"'“"):
+        m = re.search(r"[.!?]\s+", text[:120])
+        if m:
+            text = text[m.end():]
+    return text.strip()
 
 
 def finalize_prose(text: str) -> str:
@@ -179,180 +80,6 @@ def finalize_prose(text: str) -> str:
     if len(text.split()) >= 6:
         return text.rstrip(",;:- ") + "."
     return text
-
-
-def format_summary_bullets(text: str) -> str:
-    """Normalize a summary into markdown '- ' bullet lines."""
-    text = (text or "").strip().strip('"').strip("'").strip()
-    if not text:
-        return text
-    empty = "I don't have records on that."
-    if text.lower().rstrip(".") == empty.lower().rstrip("."):
-        return empty
-
-    bullets: list[str] = []
-    # Already bullet-ish
-    if re.search(r"(?m)^(?:[-*•]|\d+\.)\s+", text):
-        for raw_line in text.splitlines():
-            line = raw_line.strip()
-            if not line:
-                continue
-            line = re.sub(r"^(?:[-*•]|\d+\.)\s+", "", line).strip()
-            line = finalize_prose(line)
-            if line:
-                bullets.append(f"- {line}")
-    else:
-        # Split prose into sentence bullets
-        parts = re.split(r"(?<=[.!?])\s+", text)
-        for part in parts:
-            line = finalize_prose(part.strip())
-            if line:
-                bullets.append(f"- {line}")
-
-    if not bullets:
-        return empty
-    # Keep the answer scannable (concise pack asks for 2–3; never dump a wall of text)
-    limit = 3 if (_variant_name() or "").lower() == "concise" else 5
-    return "\n".join(bullets[:limit])
-
-
-def parse_structured_answer(raw: str, route: str = RouteKind.RAG.value) -> ChatResponse:
-    try:
-        payload = _extract_json(raw)
-        projects = [ProjectOut.model_validate(p) for p in payload.get("projects", [])]
-        for p in projects:
-            p.summary = finalize_prose(p.summary)
-            p.title = (p.title or "").strip()
-        summary = format_summary_bullets(str(payload.get("summary", "")).strip())
-        if not summary and not projects:
-            summary = "I don't have records on that."
-        result = ChatResponse(summary=summary, projects=projects[:3], answer=summary, route=route)
-        result.meta["parse_ok"] = True
-        return result
-    except Exception:
-        result = ChatResponse(summary=raw.strip(), projects=[], answer=raw.strip(), route=route)
-        result.meta["parse_ok"] = False
-        return result
-
-
-def parse_projects_only(raw: str) -> list[ProjectOut]:
-    try:
-        payload = _extract_json(raw)
-        projects = [ProjectOut.model_validate(p) for p in payload.get("projects", [])]
-        for p in projects:
-            p.summary = finalize_prose(p.summary)
-        return projects[:3]
-    except Exception:
-        logger.warning("Gemini extract JSON parse failed")
-        return []
-
-
-_QUERY_STOP = frozenset(
-    {
-        "are",
-        "is",
-        "was",
-        "were",
-        "there",
-        "any",
-        "new",
-        "the",
-        "and",
-        "for",
-        "what",
-        "show",
-        "about",
-        "have",
-        "has",
-        "had",
-        "with",
-        "from",
-        "that",
-        "this",
-        "these",
-        "those",
-        "minutes",
-        "meeting",
-        "estero",
-        "village",
-        "please",
-        "tell",
-        "me",
-        "you",
-        "how",
-        "many",
-        "when",
-        "where",
-        "which",
-        "who",
-        "why",
-        "did",
-        "does",
-        "do",
-        "can",
-        "could",
-        "would",
-        "should",
-        "latest",
-        "recent",
-        "recently",
-        "find",
-        "list",
-        "all",
-        "developments",
-        "development",
-        "projects",
-        "project",
-        "updates",
-        "update",
-        "happening",
-        "going",
-        "on",
-    }
-)
-
-
-def _content_tokens(text: str) -> set[str]:
-    """Content tokens for query↔project overlap (light plural stemming)."""
-    toks = re.findall(r"[a-z0-9]{3,}", (text or "").lower())
-    out: set[str] = set()
-    for t in toks:
-        if t in _QUERY_STOP:
-            continue
-        out.add(t)
-        if len(t) > 4 and t.endswith("s") and not t.endswith("ss"):
-            out.add(t[:-1])
-    return out
-
-
-def filter_projects_for_query(question: str, projects: list[ProjectOut]) -> list[ProjectOut]:
-    """Drop extracted cards that share no content tokens with the question.
-
-    Prevents BM25/LLM false positives like a 2017 "any new evidence" discussion
-    matching "are there any new wawas?".
-
-    If the question has no content tokens, or overlap would drop every card
-    (e.g. "what was approved?" vs titles that omit that word), keep the
-    original list so vague status questions still work.
-    """
-    q = _content_tokens(question)
-    if not q:
-        return projects
-    kept: list[ProjectOut] = []
-    for p in projects:
-        hay = _content_tokens(" ".join([p.title, p.id, p.location, p.summary]))
-        if q & hay:
-            kept.append(p)
-    if not kept:
-        return projects
-    if kept != projects:
-        logger.info(
-            "filter_projects_for_query dropped %s/%s projects for %r",
-            len(projects) - len(kept),
-            len(projects),
-            question[:80],
-        )
-    return kept
 
 
 def filter_projects_for_recency(question: str, projects: list[ProjectOut]) -> list[ProjectOut]:
@@ -401,11 +128,6 @@ def filter_projects_for_recency(question: str, projects: list[ProjectOut]) -> li
             question[:80],
         )
     return result
-
-
-def refine_projects_for_question(question: str, projects: list[ProjectOut]) -> list[ProjectOut]:
-    """Apply entity overlap then recency filters to extracted project cards."""
-    return filter_projects_for_recency(question, filter_projects_for_query(question, projects))
 
 
 def grade_context(hits: list[tuple[Document, float]]) -> str:
@@ -478,7 +200,9 @@ def _haiku_rewrite_query(question: str) -> str | None:
         return None
 
 
-def retrieve_with_crag(store: DataStore, question: str) -> tuple[str, dict[str, Any]]:
+def retrieve_with_crag(
+    store: DataStore, question: str
+) -> tuple[str, dict[str, Any], list[tuple[Document, float]]]:
     query = question
     meta: dict[str, Any] = {"crag_iters": 0, "rewrites": []}
     hits: list[tuple[Document, float]] = []
@@ -497,238 +221,118 @@ def retrieve_with_crag(store: DataStore, question: str) -> tuple[str, dict[str, 
     if len(scoped) != len(hits):
         meta["project_scoped"] = len(scoped)
     meta.update(hits_meta(scoped))
-    return format_docs(scoped), meta
+    return format_docs(scoped), meta, scoped
 
 
-def _invoke_solo(question: str, context: str, provider: Provider, route: str) -> ChatResponse:
-    prompt = PromptTemplate(template=_prompt("solo"), input_variables=["context", "question"])
-    chain = (
-        {"context": lambda _: context, "question": RunnablePassthrough()}
-        | prompt
-        | get_llm(provider)
-        | StrOutputParser()
-    )
-    raw = chain.invoke(question)
-    result = parse_structured_answer(raw, route=route)
-    result.projects = refine_projects_for_question(question, result.projects)
-    result.meta["llm_provider"] = provider
-    result.meta["llm_model"] = GEMINI_MODEL if provider == "gemini" else GROQ_MODEL
-    result.meta["llm_mode"] = "solo"
-    result.meta["prompt_variant"] = _variant_name()
-    return result
+def build_cards(store: DataStore, hits: list[tuple[Document, float]]) -> list[ProjectOut]:
+    """Cards built deterministically from retrieved-document metadata.
+
+    Supplemental sources (articles/pages/events/PDFs) already carry a
+    source_type plus title/date/url/location on doc.metadata (see
+    sources/documents.py) — used directly. Meeting/board chunks only carry
+    application_id/row_index, so those are joined back to store.dataframe and
+    built the same way the STRUCTURED route already does (_row_to_project).
+
+    The same application_id can appear as a separate dataframe row per
+    meeting it came before (e.g. a design review, then a later approval) —
+    so board records are deduped by keeping the row with the latest
+    meeting_date per application_id, not just the first one retrieval
+    happened to rank highest.
+    """
+    seen_articles: set[tuple[str, str]] = set()
+    articles: list[ProjectOut] = []
+    board_by_id: dict[str, ProjectOut] = {}
+    for doc, _score in hits:
+        md = doc.metadata
+        source_type = md.get("source_type")
+        if source_type:
+            record_id = md.get("record_id") or ""
+            url = md.get("url") or md.get("document_url") or ""
+            if not url:
+                continue
+            key = (source_type, record_id or url)
+            if key in seen_articles:
+                continue
+            seen_articles.add(key)
+            articles.append(
+                ProjectOut(
+                    title=(md.get("title") or "").strip(),
+                    id=record_id,
+                    location=md.get("location") or md.get("venue") or "",
+                    summary=_clip_at_sentence(_strip_header_lines(doc.page_content), 220),
+                    status="",
+                    date=md.get("publish_date") or md.get("date") or "",
+                    article_url=url,
+                    source_type=source_type,
+                    category=md.get("category") or "",
+                )
+            )
+        else:
+            row_index = md.get("row_index")
+            if row_index is None:
+                continue
+            # Most PZDB project decisions have an ApplicationID; most Village
+            # Council agenda items (consent agenda, financial reports, generic
+            # business) do not — those still need a stable per-row dedupe key
+            # so they aren't silently dropped.
+            app_id = str(md.get("application_id") or "").strip()
+            dedupe_key = app_id or f"row-{row_index}"
+            try:
+                row = store.dataframe.iloc[int(row_index)].to_dict()
+            except (IndexError, ValueError, TypeError):
+                continue
+            card = _row_to_project(row)
+            card.source_type = "board_record"
+            existing = board_by_id.get(dedupe_key)
+            if existing is None or (parse_source_date(card.date) or date.min) >= (
+                parse_source_date(existing.date) or date.min
+            ):
+                board_by_id[dedupe_key] = card
+    return (list(board_by_id.values()) + articles)[:8]
 
 
-def gemini_extract_projects(question: str, context: str) -> list[ProjectOut]:
-    prompt = PromptTemplate(template=_prompt("extract"), input_variables=["context", "question"])
-    chain = (
-        {"context": lambda _: context, "question": RunnablePassthrough()}
-        | prompt
-        | get_llm("gemini")
-        | StrOutputParser()
-    )
-    raw = chain.invoke(question)
-    return refine_projects_for_question(question, parse_projects_only(raw))
+def generate_answer(question: str, context: str) -> str:
+    """One Claude call via llm_provider — free-form prose grounded in context.
 
+    llm_provider is imported lazily (not at module top) because it constructs
+    and validates its LLM client at import time, raising if ANTHROPIC_API_KEY
+    is unset — matching this module's existing lazy-import convention so
+    importing rag_path never hard-fails when no key is configured yet.
+    """
+    import llm_provider
 
-def _summary_prompt_text(question: str, projects: list[ProjectOut]) -> str:
-    projects_json = json.dumps([p.model_dump() for p in projects[:3]], ensure_ascii=False)
-    return _prompt("summary").format(question=question, projects_json=projects_json)
-
-
-def _fallback_summary_from_projects(projects: list[ProjectOut]) -> str:
-    if projects:
-        titles = [p.title for p in projects[:3] if p.title]
-        bullets = [f"- Related record: {t}." for t in titles] or [
-            f"- Records show {len(projects)} related item{'s' if len(projects) != 1 else ''}."
-        ]
-        return "\n".join(bullets)
-    return "I don't have records on that."
-
-
-def _haiku_write_summary(question: str, projects: list[ProjectOut]) -> str:
-    client = get_anthropic_client()
-    user = _summary_prompt_text(question, projects)
-    response = client.messages.create(
-        model=ANTHROPIC_MODEL,
-        max_tokens=450,
-        temperature=0,
-        messages=[{"role": "user", "content": user}],
-    )
-    text = "".join(b.text for b in response.content if getattr(b, "type", None) == "text")
-    text = format_summary_bullets(text)
-    return text or _fallback_summary_from_projects(projects)
-
-
-def _stream_haiku_summary(question: str, projects: list[ProjectOut]) -> Iterator[str]:
-    client = get_anthropic_client()
-    user = _summary_prompt_text(question, projects)
-    with client.messages.stream(
-        model=ANTHROPIC_MODEL,
-        max_tokens=450,
-        temperature=0,
-        messages=[{"role": "user", "content": user}],
-    ) as stream:
-        for chunk in stream.text_stream:
-            if chunk:
-                yield chunk
-
-
-def groq_write_summary(question: str, projects: list[ProjectOut]) -> str:
-    projects_json = json.dumps([p.model_dump() for p in projects[:3]], ensure_ascii=False)
-    prompt = PromptTemplate(template=_prompt("summary"), input_variables=["question", "projects_json"])
-    chain = prompt | get_llm("groq") | StrOutputParser()
-    text = chain.invoke({"question": question, "projects_json": projects_json})
-    text = format_summary_bullets(text)
-    return text or _fallback_summary_from_projects(projects)
-
-
-def stream_groq_summary(question: str, projects: list[ProjectOut]) -> Iterator[str]:
-    projects_json = json.dumps([p.model_dump() for p in projects[:3]], ensure_ascii=False)
-    prompt = PromptTemplate(template=_prompt("summary"), input_variables=["question", "projects_json"])
-    chain = prompt | get_llm("groq") | StrOutputParser()
-    for chunk in chain.stream({"question": question, "projects_json": projects_json}):
-        if chunk:
-            yield chunk
-
-
-def write_summary(question: str, projects: list[ProjectOut]) -> str:
-    """Citizen summary via Haiku when available, otherwise Groq."""
-    provider = choose_summary_provider()
-    if provider == "anthropic":
-        try:
-            return _haiku_write_summary(question, projects)
-        except Exception as e:
-            logger.warning("Haiku summary failed (%s); falling back to Groq", e)
-            if not groq_available():
-                raise
-    return groq_write_summary(question, projects)
-
-
-def stream_summary(question: str, projects: list[ProjectOut]) -> Iterator[str]:
-    """Stream citizen summary tokens (Haiku preferred, Groq fallback)."""
-    provider = choose_summary_provider()
-    if provider == "anthropic":
-        try:
-            yield from _stream_haiku_summary(question, projects)
-            return
-        except Exception as e:
-            logger.warning("Haiku stream failed (%s); falling back to Groq", e)
-            if not groq_available():
-                raise
-    yield from stream_groq_summary(question, projects)
-
-
-def generate_collaborative(
-    question: str,
-    context: str,
-    route: str = RouteKind.RAG.value,
-) -> ChatResponse:
-    """Gemini extracts projects; Haiku (or Groq) writes the closing summary."""
-    t_extract = time.perf_counter()
-    projects = gemini_extract_projects(question, context)
-    extract_ms = round((time.perf_counter() - t_extract) * 1000)
-
-    summary_provider = choose_summary_provider()
-    t_summary = time.perf_counter()
-    summary = write_summary(question, projects)
-    summary_ms = round((time.perf_counter() - t_summary) * 1000)
-    projects = projects[:3]
-
-    result = ChatResponse(
-        summary=summary,
-        projects=projects,
-        answer=summary,
-        route=route,
-        meta={
-            "parse_ok": True,
-            "llm_mode": "collaborate",
-            "llm_providers": ["gemini", summary_provider],
-            "llm_models": {
-                "extract": GEMINI_MODEL,
-                "summary": summary_model_name(summary_provider),
-            },
-            "prompt_variant": _variant_name(),
-            "extract_ms": extract_ms,
-            "summary_ms": summary_ms,
-        },
-    )
-    logger.info(
-        "collaborate extract_ms=%s summary_ms=%s summary_provider=%s projects=%s",
-        extract_ms,
-        summary_ms,
-        summary_provider,
-        len(projects),
-    )
-    return result
-
-
-def generate_answer(
-    question: str,
-    context: str,
-    route: str = RouteKind.RAG.value,
-    crag_meta: dict[str, Any] | None = None,
-) -> ChatResponse:
-    _ = crag_meta
-    both = gemini_available() and summary_backend_available() and ENABLE_LLM_COLLABORATE
-    if both:
-        try:
-            return generate_collaborative(question, context, route=route)
-        except Exception as e:
-            logger.warning("Collaborate failed (%s); falling back to solo", e)
-
-    if gemini_available():
-        try:
-            return _invoke_solo(question, context, "gemini", route)
-        except Exception as e:
-            logger.warning("Gemini solo failed (%s)", e)
-            if groq_available():
-                result = _invoke_solo(question, context, "groq", route)
-                result.meta["escalated_from"] = "gemini_error"
-                return result
-            raise
-
-    if groq_available():
-        return _invoke_solo(question, context, "groq", route)
-
-    raise RuntimeError(
-        "No LLM API key set (need GEMINI_API_KEY plus ANTHROPIC_API_KEY and/or GROQ_API_KEY)"
-    )
+    system = _prompt("answer")
+    user = f"Resident question: {question}\n\nContext blocks:\n{context}"
+    result = llm_provider.generate(system=system, user=user, max_tokens=1200)
+    prose = result.text.strip()
+    prose = _STRAY_FENCE_RE.sub("", prose).strip()
+    return finalize_prose(prose) or "I don't have records on that."
 
 
 def answer_rag(store: DataStore, question: str) -> ChatResponse:
     t0 = time.perf_counter()
-    context, crag_meta = retrieve_with_crag(store, question)
+    context, crag_meta, hits = retrieve_with_crag(store, question)
     crag_meta["retrieve_ms"] = round((time.perf_counter() - t0) * 1000)
     t1 = time.perf_counter()
-    result = generate_answer(question, context, crag_meta=crag_meta)
+    prose = generate_answer(question, context)
     crag_meta["generate_ms"] = round((time.perf_counter() - t1) * 1000)
-    result.route = RouteKind.RAG.value
-    result.meta.update(crag_meta)
-    return result
-
-
-# Legacy aliases used by orchestrator / warmup
-def invoke_llm(question: str, context: str, tier: str = "fast", route: str = RouteKind.RAG.value) -> ChatResponse:
-    provider: Provider = "gemini" if tier in {"fast", "gemini"} and gemini_available() else "groq"
-    return _invoke_solo(question, context, provider, route)
-
-
-def stream_llm_tokens(question: str, context: str, tier: str = "fast") -> Iterator[str]:
-    """Solo-stream full JSON (fallback when collaborate streaming is not used)."""
-    provider: Provider = "gemini" if tier in {"fast", "gemini"} and gemini_available() else "groq"
-    prompt = PromptTemplate(template=_prompt("solo"), input_variables=["context", "question"])
-    chain = (
-        {"context": lambda _: context, "question": RunnablePassthrough()}
-        | prompt
-        | get_llm(provider)
-        | StrOutputParser()
+    # Sort/recency-cutoff only — NOT filter_projects_for_query's entity-overlap
+    # drop, which was built for LLM-invented project lists. These cards come
+    # from hits the retrieval/rerank/CRAG pipeline already vetted for
+    # relevance; a card's clipped ~220-char blurb may just not happen to
+    # repeat the query's literal words even though the full chunk matched,
+    # and wrongly dropping it hides real articles/records from the answer.
+    cards = filter_projects_for_recency(question, build_cards(store, hits))
+    crag_meta.update(
+        {
+            "llm_provider": "anthropic",
+            "prompt_variant": _variant_name(),
+        }
     )
-    for chunk in chain.stream(question):
-        if chunk:
-            yield chunk
-
-
-def should_escalate(result: ChatResponse, crag_meta: dict[str, Any] | None = None) -> bool:
-    """Kept for import compatibility; collaborate replaces escalate."""
-    _ = result, crag_meta
-    return False
+    return ChatResponse(
+        summary=prose,
+        projects=cards,
+        answer=prose,
+        route=RouteKind.RAG.value,
+        meta=crag_meta,
+    )

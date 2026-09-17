@@ -241,6 +241,98 @@ def prefer_recent_hits(
     return []
 
 
+def _is_board_doc(doc: Document) -> bool:
+    """True for meeting/board chunks (chunking.py) — the only source lacking a
+    source_type tag; supplemental sources (articles/pages/events/PDFs) all
+    carry one (see sources/documents.py)."""
+    return not doc.metadata.get("source_type")
+
+
+# Per source-type "bucket" (board records vs. supplemental sources), how many
+# top-fused-rank candidates are guaranteed a shot at the reranker, and how
+# many top-reranked-and-boosted results are reserved in the final cap — so a
+# broad topic where one source type dominates the raw ranking (e.g. several
+# comprehensive news articles vs. scattered single-purpose board contracts)
+# doesn't crowd the other source type out entirely when both are relevant.
+_MIN_BUCKET_CANDIDATES = 3
+_MIN_BUCKET_RESULTS = 2
+
+
+def _reserve_by_bucket(
+    items: list[tuple[Document, float]], min_per_bucket: int, cap: int
+) -> list[tuple[Document, float]]:
+    board = [t for t in items if _is_board_doc(t[0])]
+    supplemental = [t for t in items if not _is_board_doc(t[0])]
+    reserved = board[:min_per_bucket] + supplemental[:min_per_bucket]
+    reserved_ids = {id(d) for d, _ in reserved}
+    fill = [t for t in items if id(t[0]) not in reserved_ids][: max(cap - len(reserved), 0)]
+    combined = reserved + fill
+    combined.sort(key=lambda t: -t[1])
+    return combined[:cap]
+
+
+# How many objectively-newest-dated documents to reserve a candidate slot for
+# when a query wants "recent" items.
+_RECENCY_TOPUP = 4
+
+
+def _recent_topup(store: DataStore, n: int) -> list[Document]:
+    """The n most-recently-dated documents in the corpus, split evenly across
+    source-type buckets (board records vs. supplemental).
+
+    Dense/BM25 candidate selection is purely semantic/keyword — it can't tell
+    this month's "agenda approved" boilerplate from five years ago's, since
+    that line is nearly identical every time. Without this, "recent" queries
+    can end up reranking whichever arbitrary instances happened to embed
+    closest to the query text, which has no relationship to which ones are
+    actually recent. This guarantees the true newest records at least reach
+    the reranker/recency-boost stage, which already know how to prefer them.
+
+    Split by bucket because supplemental sources (news articles) publish far
+    more often than board meetings happen — a global newest-N would be filled
+    entirely by articles, leaving board records with no recency reservation
+    at all.
+    """
+    half = max(n // 2, 1)
+    board_docs = [d for d in store.documents if _is_board_doc(d)]
+    supplemental_docs = [d for d in store.documents if not _is_board_doc(d)]
+    out: list[Document] = []
+    for bucket in (board_docs, supplemental_docs):
+        dated = [(d, document_meeting_date(d)) for d in bucket]
+        dated_only = [(d, dt) for d, dt in dated if dt is not None]
+        dated_only.sort(key=lambda t: t[1], reverse=True)
+        out.extend(d for d, _ in dated_only[:half])
+    return out
+
+
+def _reserve_recent(
+    ranked: list[tuple[Document, float]], pool: list[tuple[Document, float]], n: int
+) -> list[tuple[Document, float]]:
+    """Union the n most-recently-dated items from the full reranked list into
+    pool (split per source-type bucket — see _recent_topup), bypassing
+    SCORE_THRESHOLD for just those.
+
+    Without this, a genuinely-recent-but-only-tangentially-on-topic candidate
+    (reserved by _recent_topup specifically for its date) can score too low
+    on the cross-encoder to survive the relevance filter — even though the
+    downstream recency logic (apply_recency_boost / prefer_recent_hits) would
+    correctly recognize it as fresh once given the chance.
+    """
+    half = max(n // 2, 1)
+
+    def _top_recent(pred) -> list[tuple[Document, float]]:
+        dated = sorted(
+            (t for t in ranked if pred(t[0]) and document_meeting_date(t[0]) is not None),
+            key=lambda t: document_meeting_date(t[0]),
+            reverse=True,
+        )
+        return dated[:half]
+
+    extra = _top_recent(_is_board_doc) + _top_recent(lambda d: not _is_board_doc(d))
+    pool_ids = {id(d) for d, _ in pool}
+    return pool + [t for t in extra if id(t[0]) not in pool_ids]
+
+
 def hybrid_retrieve(
     store: DataStore,
     query: str,
@@ -264,11 +356,28 @@ def hybrid_retrieve(
 
     fused = reciprocal_rank_fusion([dense_ranking, sparse_ranking])
     doc_map = store.doc_by_id()
+    fused_docs = [doc_map[doc_id] for doc_id, _ in fused if doc_id in doc_map]
 
-    candidates: list[Document] = []
-    for doc_id, _ in fused[:RERANK_CANDIDATES]:
-        if doc_id in doc_map:
-            candidates.append(doc_map[doc_id])
+    # Guarantee both source-type buckets reach the reranker, instead of
+    # candidates being whichever RERANK_CANDIDATES docs the raw fusion rank
+    # happened to favor (which can be 100% one source type — see
+    # _reserve_by_bucket for why that's also re-checked after reranking).
+    board_bucket = [d for d in fused_docs if _is_board_doc(d)][:_MIN_BUCKET_CANDIDATES]
+    supplemental_bucket = [d for d in fused_docs if not _is_board_doc(d)][:_MIN_BUCKET_CANDIDATES]
+    reserved_docs = board_bucket + supplemental_bucket
+
+    # "Recent" queries need a genuine recency top-up — see _recent_topup.
+    if query_wants_recent(intent):
+        reserved_ids_so_far = {id(d) for d in reserved_docs}
+        reserved_docs += [
+            d for d in _recent_topup(store, _RECENCY_TOPUP) if id(d) not in reserved_ids_so_far
+        ]
+
+    reserved_ids = {id(d) for d in reserved_docs}
+    fill_docs = [d for d in fused_docs if id(d) not in reserved_ids][
+        : max(RERANK_CANDIDATES - len(reserved_docs), 0)
+    ]
+    candidates = reserved_docs + fill_docs
 
     if not candidates:
         return apply_recency_boost(
@@ -279,7 +388,10 @@ def hybrid_retrieve(
 
     if not ENABLE_RERANKER:
         ranked = [(d, 1.0 - (i * 0.05)) for i, d in enumerate(candidates[: max(RERANK_K * 2, RERANK_K)])]
-        return apply_recency_boost(ranked, query, intent_query=intent)[:RERANK_K]
+        if query_wants_recent(intent):
+            ranked = _reserve_recent(ranked, ranked, _RECENCY_TOPUP)
+        boosted = apply_recency_boost(ranked, query, intent_query=intent)
+        return _reserve_by_bucket(boosted, _MIN_BUCKET_RESULTS, RERANK_K)
 
     reranker = get_reranker()
     pairs = [(query, (d.page_content or "")[:_MAX_CHARS_PER_DOC]) for d in candidates]
@@ -288,7 +400,12 @@ def hybrid_retrieve(
     ranked = [(d, float(s)) for d, s in sorted(zip(candidates, scores), key=lambda x: -float(x[1]))]
     filtered = [(d, s) for d, s in ranked if s >= SCORE_THRESHOLD]
     pool = filtered or ranked
-    return apply_recency_boost(pool, query, intent_query=intent)[:RERANK_K]
+    if query_wants_recent(intent):
+        # Bypass SCORE_THRESHOLD for the objectively most-recent candidates —
+        # see _reserve_recent.
+        pool = _reserve_recent(ranked, pool, _RECENCY_TOPUP)
+    boosted = apply_recency_boost(pool, query, intent_query=intent)
+    return _reserve_by_bucket(boosted, _MIN_BUCKET_RESULTS, RERANK_K)
 
 
 def _project_id(doc: Document) -> str:

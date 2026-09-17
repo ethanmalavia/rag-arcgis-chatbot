@@ -7,12 +7,12 @@ from pathlib import Path
 from config import BACKEND_DIR, PROMPT_VARIANT
 
 PROMPTS_DIR = Path(BACKEND_DIR) / "prompts"
-_VALID_NAMES = frozenset({"solo", "extract", "summary"})
+_VALID_NAMES = frozenset({"answer"})
 
 
 @functools.lru_cache(maxsize=16)
 def load_prompt(name: str, variant: str | None = None) -> str:
-    """Return template text for solo|extract|summary under prompts/<variant>/."""
+    """Return template text for a name under prompts/<variant>/."""
     if name not in _VALID_NAMES:
         raise ValueError(f"Unknown prompt name: {name}")
     chosen = (variant or PROMPT_VARIANT or "default").strip() or "default"

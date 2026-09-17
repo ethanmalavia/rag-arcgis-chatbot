@@ -125,5 +125,5 @@ def load_documents(base_dir: str = ENGAGE_ESTERO_DIR) -> list["Document"]:
             continue
         source_docs = records_to_documents(records)
         docs.extend(source_docs)
-        print(f"  {spec.label}: {len(records)} records → {len(source_docs)} chunks")
+        print(f"  {spec.label}: {len(records)} records -> {len(source_docs)} chunks")
     return docs

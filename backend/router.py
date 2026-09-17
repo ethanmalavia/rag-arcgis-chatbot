@@ -12,7 +12,9 @@ AGGREGATE_RE = re.compile(
     re.IGNORECASE,
 )
 NARRATIVE_RE = re.compile(
-    r"\b(what happened|why|conditions|summary|decide|decision|explain|tell me about)\b",
+    r"\b(what happened|what'?s\s+happening|what\s+is\s+happening|whats\s+happening|"
+    r"why|conditions|summary|decide|decision|"
+    r"explain|tell me about|going on|update on)\b",
     re.IGNORECASE,
 )
 NAV_RE = re.compile(

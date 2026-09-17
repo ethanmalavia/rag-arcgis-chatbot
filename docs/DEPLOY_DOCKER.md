@@ -10,7 +10,7 @@ for the RAG chatbot.
 ### Prerequisites
 
 - [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) (Windows)
-- Groq API key: https://console.groq.com/keys
+- Anthropic API key: https://console.anthropic.com/
 
 ### One-command stack
 
@@ -19,7 +19,7 @@ cd T:\eagleGIS\rag-arcgis-chatbot
 
 # 1. Create env file (once)
 copy backend\.env.example backend\.env
-# Edit backend\.env → set GROQ_API_KEY=gsk_...
+# Edit backend\.env → set ANTHROPIC_API_KEY=sk-ant-...
 
 # 2. Build and run (first time: 15–25 min)
 docker compose up --build
@@ -48,7 +48,7 @@ docker compose build --no-cache api   # force full rebuild
 | Issue | Fix |
 |-------|-----|
 | Build runs out of memory | Docker Desktop → Settings → Resources → **8 GB+ RAM** |
-| `GROQ_API_KEY` missing | Set in `backend/.env` |
+| `ANTHROPIC_API_KEY` missing | Set in `backend/.env` |
 | `/ready` fails on startup | Wait 1–2 min; index loads at container start |
 | Frontend can't reach API | Confirm compose build arg `VITE_API_BASE=http://localhost:8080` |
 
@@ -141,7 +141,7 @@ gcloud run deploy rag-arcgis-chatbot `
   --min-instances 0 `
   --max-instances 3 `
   --timeout 300 `
-  --set-env-vars "GROQ_API_KEY=YOUR_GROQ_KEY,SERVE_FRONTEND=false"
+  --set-env-vars "ANTHROPIC_API_KEY=YOUR_ANTHROPIC_KEY,SERVE_FRONTEND=false"
 ```
 
 Save the **Service URL** from the output, e.g.:
@@ -288,7 +288,7 @@ pre-bakes the FAISS index to keep this as fast as possible.
 
 ## Checklist
 
-- [ ] `backend/.env` with `GROQ_API_KEY` (and `ADMIN_API_KEY` for admin)
+- [ ] `backend/.env` with `ANTHROPIC_API_KEY` (and `ADMIN_API_KEY` for admin)
 - [ ] `docker compose up --build` works locally
 - [ ] GCP project + billing + APIs enabled
 - [ ] Image pushed to Artifact Registry
