@@ -1,19 +1,21 @@
 """Incrementally sync backend/data/esterotoday_content.csv from esterotoday.com.
 
-Reads the site's post-sitemap.xml (linked from robots.txt — the site allows
-crawling everything), scrapes any article URL not already present in the
-CSV, and appends new rows. Existing rows are never modified, re-scraped, or
-removed — this only adds articles published since the CSV was last synced.
+Discovers article URLs from:
+1. Yoast `sitemap_index.xml` → each `post-sitemap*.xml` (soft-fail per child —
+   some shards intermittently 500)
+2. WordPress REST `/wp-json/wp/v2/posts` (reliable for newest posts when the
+   primary Yoast shards are down)
+
+Scrapes any article URL not already present in the CSV and appends new rows.
+Existing rows are never modified, re-scraped, or removed.
 
 Per-article extraction uses the page's own Yoast SEO JSON-LD `Article` node
-(headline / datePublished / articleSection) plus the `.entry-content` text —
-both verified byte-for-byte against several existing CSV rows before this
-script was written (see the sync workflow / PR description for details).
+(headline / datePublished / articleSection) plus the `.entry-content` text.
 
 Usage:
-    backend/venv/Scripts/python.exe backend/scripts/sync_esterotoday.py
-    backend/venv/Scripts/python.exe backend/scripts/sync_esterotoday.py --dry-run
-    backend/venv/Scripts/python.exe backend/scripts/sync_esterotoday.py --limit 5
+    python backend/scripts/sync_esterotoday.py
+    python backend/scripts/sync_esterotoday.py --dry-run
+    python backend/scripts/sync_esterotoday.py --limit 5
 
 Run in CI: see .github/workflows/sync-esterotoday.yml
 """
@@ -32,7 +34,8 @@ import requests
 from bs4 import BeautifulSoup
 
 SITE = "https://esterotoday.com"
-SITEMAP_URL = f"{SITE}/post-sitemap.xml"
+SITEMAP_INDEX_URL = f"{SITE}/sitemap_index.xml"
+WP_POSTS_API = f"{SITE}/wp-json/wp/v2/posts"
 CSV_PATH = Path(__file__).resolve().parent.parent / "data" / "esterotoday_content.csv"
 CSV_FIELDS = ["source_type", "title", "category", "publish_date", "url", "content"]
 USER_AGENT = (
@@ -43,14 +46,119 @@ USER_AGENT = (
 REQUEST_DELAY_SECONDS = 0.75
 REQUEST_TIMEOUT = 20
 
-_LD_JSON_RE = re.compile(r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', re.DOTALL)
+_LD_JSON_RE = re.compile(
+    r'<script[^>]*type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',
+    re.DOTALL,
+)
 _SITEMAP_LOC_RE = re.compile(r"<loc>(.*?)</loc>")
 
 
-def fetch_sitemap_urls() -> list[str]:
-    resp = requests.get(SITEMAP_URL, headers={"User-Agent": USER_AGENT}, timeout=REQUEST_TIMEOUT)
-    resp.raise_for_status()
-    return _SITEMAP_LOC_RE.findall(resp.text)
+def _get(url: str, **params) -> requests.Response:
+    return requests.get(
+        url,
+        params=params or None,
+        headers={"User-Agent": USER_AGENT},
+        timeout=REQUEST_TIMEOUT,
+    )
+
+
+def fetch_sitemap_post_urls() -> list[str]:
+    """Collect post URLs from Yoast post-sitemap shards listed in sitemap_index.
+
+    Soft-fails individual shards (EsteroToday's post-sitemap1/2 often 500).
+    """
+    try:
+        resp = _get(SITEMAP_INDEX_URL)
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"  warn: sitemap_index failed: {exc}")
+        return []
+
+    child_sitemaps = [
+        loc
+        for loc in _SITEMAP_LOC_RE.findall(resp.text)
+        if "/post-sitemap" in loc
+    ]
+    print(f"  sitemap_index lists {len(child_sitemaps)} post-sitemap shard(s)")
+
+    urls: list[str] = []
+    for sm_url in child_sitemaps:
+        try:
+            child = _get(sm_url)
+            if not child.ok:
+                print(f"  warn: skip {sm_url} (HTTP {child.status_code})")
+                continue
+            ctype = (child.headers.get("content-type") or "").lower()
+            if "xml" not in ctype and "<urlset" not in child.text[:800]:
+                print(f"  warn: skip {sm_url} (non-XML response)")
+                continue
+            found = _SITEMAP_LOC_RE.findall(child.text)
+            print(f"  ok {sm_url} → {len(found)} URL(s)")
+            urls.extend(found)
+        except requests.RequestException as exc:
+            print(f"  warn: skip {sm_url}: {exc}")
+        time.sleep(0.25)
+    return urls
+
+
+def fetch_wp_rest_post_urls(*, max_pages: int = 20) -> list[str]:
+    """Paginate WP REST posts (newest first). Covers shards Yoast fails on."""
+    urls: list[str] = []
+    page = 1
+    total_pages = 1
+    while page <= max_pages and page <= total_pages:
+        try:
+            resp = _get(
+                WP_POSTS_API,
+                per_page=100,
+                page=page,
+                orderby="date",
+                order="desc",
+                _fields="link",
+            )
+        except requests.RequestException as exc:
+            print(f"  warn: WP REST page {page} failed: {exc}")
+            break
+        if resp.status_code in {400, 404}:
+            break
+        if not resp.ok:
+            print(f"  warn: WP REST page {page} HTTP {resp.status_code}")
+            break
+        try:
+            total_pages = int(resp.headers.get("X-WP-TotalPages") or page)
+        except ValueError:
+            total_pages = page
+        batch = resp.json()
+        if not isinstance(batch, list) or not batch:
+            break
+        page_urls = [p.get("link") for p in batch if isinstance(p, dict) and p.get("link")]
+        urls.extend(page_urls)
+        print(f"  ok WP REST page {page}/{total_pages} → {len(page_urls)} URL(s)")
+        page += 1
+        if page <= total_pages:
+            time.sleep(REQUEST_DELAY_SECONDS)
+    return urls
+
+
+def fetch_post_urls() -> list[str]:
+    """Union of sitemap + REST discovery, newest-first preference preserved."""
+    print(f"Fetching sitemap index: {SITEMAP_INDEX_URL}")
+    sitemap_urls = fetch_sitemap_post_urls()
+    print(f"Fetching WP REST posts: {WP_POSTS_API}")
+    rest_urls = fetch_wp_rest_post_urls()
+
+    merged: list[str] = []
+    seen: set[str] = set()
+    # REST first so newest candidates appear at the top for --limit / scraping order.
+    for url in rest_urls + sitemap_urls:
+        if url and url not in seen:
+            seen.add(url)
+            merged.append(url)
+    print(
+        f"  discovery: sitemap={len(sitemap_urls)} rest={len(rest_urls)} "
+        f"unique={len(merged)}"
+    )
+    return merged
 
 
 def load_existing_rows() -> tuple[list[dict], set[str]]:
@@ -78,7 +186,7 @@ def _extract_article_node(page_html: str) -> dict | None:
 
 
 def scrape_article(url: str) -> dict | None:
-    resp = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=REQUEST_TIMEOUT)
+    resp = _get(url)
     if not resp.ok:
         print(f"  skip (HTTP {resp.status_code}): {url}")
         return None
@@ -93,8 +201,7 @@ def scrape_article(url: str) -> dict | None:
     # Yoast's JSON-LD embeds these fields HTML-entity-encoded (e.g. "&#8217;"
     # for a right single quote) even though it's a JSON string value, not
     # HTML — unescape so the CSV stores the actual character, matching the
-    # existing rows (verified against several: they hold the real Unicode
-    # apostrophe, not the literal entity text).
+    # existing rows.
     title = html.unescape((article.get("headline") or "").strip())
     if not title:
         print(f"  skip (no headline): {url}")
@@ -134,14 +241,16 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=None, help="Only process the first N new URLs (for testing).")
     args = parser.parse_args()
 
-    print(f"Fetching sitemap: {SITEMAP_URL}")
-    sitemap_urls = fetch_sitemap_urls()
-    print(f"  {len(sitemap_urls)} URLs in sitemap")
+    discovered = fetch_post_urls()
+    if not discovered:
+        print("ERROR: no post URLs discovered from sitemap or WP REST.", file=sys.stderr)
+        return 1
+    print(f"  {len(discovered)} URLs discovered")
 
     existing_rows, known_urls = load_existing_rows()
     print(f"  {len(known_urls)} articles already in {CSV_PATH.name}")
 
-    new_urls = [u for u in sitemap_urls if u not in known_urls]
+    new_urls = [u for u in discovered if u not in known_urls]
     if args.limit is not None:
         new_urls = new_urls[: args.limit]
     print(f"  {len(new_urls)} candidate new URL(s) to scrape")
