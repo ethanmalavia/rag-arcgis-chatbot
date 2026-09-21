@@ -9,7 +9,7 @@ import { setMapView } from "../../lib/mapViewStore";
 // no-ops safely when there's no live MapView (setMapView is never called
 // here), so "Show on map" on a chat card still switches to this tab, it just
 // can't zoom to the specific coordinates inside an opaque cross-origin iframe.
-const INSTANT_APP_ID = "90d68fdd2de841b295cc1c3cfd6df524";
+const INSTANT_APP_ID = "4bd1bf488ac943d7966af9f3ccd22302";
 const INSTANT_APP_URL = `https://eccl-swfl-safety.maps.arcgis.com/apps/instant/nearby/index.html?appid=${INSTANT_APP_ID}`;
 
 // The app's underlying feature layer is public on its own, so the record
