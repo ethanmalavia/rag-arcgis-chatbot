@@ -44,8 +44,24 @@ PLANNING_SIGNAL_RE = re.compile(
     r"council|board|commission|hearing|agenda|minutes|"
     r"permit|development|developer|parcel|strap|district|"
     r"annexation|setback|density|acreage|subdivision|"
+    r"interstate|i-?\s?75|us-?\s?41|sr-?\s?82|bridge|interchange|expansion|"
+    r"widening|construction|traffic|infrastructure|"
     r"\d{4}"
     r")\b",
+    re.IGNORECASE,
+)
+
+# A bare "what is happening" followed by "to/at/on/with <topic>" asks about that
+# topic ("What is happening to I-75"), not about the community calendar — unless
+# the rest of the question is itself calendar-shaped ("…at the park this weekend").
+_TOPIC_HAPPENING_RE = re.compile(
+    r"\bwhat(?:'?s|\s+is|\s+are)?\s+happening\s+(?:to|at|on|with|about|near|regarding)\s+\S+",
+    re.IGNORECASE,
+)
+_CALENDAR_WORDS_RE = re.compile(
+    r"\b(today|tonight|tomorrow|weekend|week|month|this\s+\w+day|monday|tuesday|wednesday|"
+    r"thursday|friday|saturday|sunday|events?|calendar|schedule|festival|market|concert|"
+    r"game|show|music|fair)\b",
     re.IGNORECASE,
 )
 
@@ -83,6 +99,8 @@ def is_events_question(question: str, df: pd.DataFrame | None = None) -> bool:
         return False
     # Planning language wins: fall through to the router and RAG.
     if PLANNING_SIGNAL_RE.search(q):
+        return False
+    if _TOPIC_HAPPENING_RE.search(q) and not _CALENDAR_WORDS_RE.search(q):
         return False
     # PLANNING_SIGNAL_RE only catches street-suffix/zoning jargon — a bare
     # named project/business ("What is happening at Wawa") has neither, so it

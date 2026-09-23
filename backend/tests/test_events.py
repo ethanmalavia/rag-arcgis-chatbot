@@ -169,6 +169,11 @@ def test_dedupe_by_title_date_venue():
         ("upcoming events for the zoning board hearing", False),
         ("DOS2024-E001", False),
         ("How many records were approved in 2023?", False),
+        # Topic questions that merely open with "what is happening" are RAG, not the calendar.
+        ("What is happening to I-75", False),
+        ("What is happening with the interstate expansion", False),
+        ("What's happening in Estero?", True),
+        ("what's happening at the park this weekend", True),
     ],
 )
 def test_is_events_question(question, expected):

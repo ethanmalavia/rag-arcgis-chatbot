@@ -25,9 +25,10 @@ from retrieval import (
     best_score,
     format_docs,
     hits_meta,
-    hybrid_retrieve,
+    hybrid_retrieve_multi,
     query_wants_recent,
     scope_hits_to_project,
+    topic_queries,
 )
 from stale_sources import parse_source_date
 from store import DataStore
@@ -203,20 +204,21 @@ def _haiku_rewrite_query(question: str) -> str | None:
 def retrieve_with_crag(
     store: DataStore, question: str
 ) -> tuple[str, dict[str, Any], list[tuple[Document, float]]]:
-    query = question
-    meta: dict[str, Any] = {"crag_iters": 0, "rewrites": []}
+    # Retrieve on the topic only; recency/history intent still reads `question`.
+    queries = topic_queries(question)
+    meta: dict[str, Any] = {"crag_iters": 0, "rewrites": [], "queries": queries}
     hits: list[tuple[Document, float]] = []
     for i in range(CRAG_MAX_ITERS):
         meta["crag_iters"] = i + 1
         # Recency intent always follows the original citizen question.
-        hits = hybrid_retrieve(store, query, intent_query=question)
+        hits = hybrid_retrieve_multi(store, queries, intent_query=question)
         verdict = grade_context(hits)
         meta["last_verdict"] = verdict
         if verdict == "correct":
             break
         if verdict in {"incorrect", "ambiguous"} and i < CRAG_MAX_ITERS - 1:
-            query = rewrite_query(question)
-            meta["rewrites"].append(query)
+            queries = [rewrite_query(question)]
+            meta["rewrites"].append(queries[0])
     scoped = scope_hits_to_project(store, hits)
     if len(scoped) != len(hits):
         meta["project_scoped"] = len(scoped)
@@ -303,7 +305,7 @@ def generate_answer(question: str, context: str) -> str:
 
     system = _prompt("answer")
     user = f"Resident question: {question}\n\nContext blocks:\n{context}"
-    result = llm_provider.generate(system=system, user=user, max_tokens=1200)
+    result = llm_provider.generate(system=system, user=user, max_tokens=1800)
     prose = result.text.strip()
     prose = _STRAY_FENCE_RE.sub("", prose).strip()
     return finalize_prose(prose) or "I don't have records on that."

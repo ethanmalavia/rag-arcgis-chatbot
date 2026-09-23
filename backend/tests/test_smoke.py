@@ -694,3 +694,62 @@ def test_bm25_tokenize_stems_wawas_and_drops_stopwords():
     assert "any" not in toks
     assert "are" not in toks
     assert "there" not in toks
+
+
+def test_history_intent_disables_recent_only_cutoff():
+    """'history and latest information X' wants the whole timeline, so it must
+    not trigger the recent-only hard filter that drops every older record."""
+    from retrieval import query_wants_history, query_wants_recent
+
+    q = "Give me the history and latest information Coconut point"
+    assert query_wants_history(q)
+    assert not query_wants_recent(q)
+    assert query_wants_recent("latest on Coconut Point")
+
+
+def test_focus_query_strips_filler_but_keeps_topic():
+    from retrieval import focus_query, topic_queries
+
+    assert focus_query("Give me the history and latest information Coconut point") == "Coconut point"
+    assert focus_query("latest zoning decisions") == "zoning decisions"
+    # Nothing left after stripping -> fall back to the original question.
+    assert focus_query("What are the recent developments?") == "What are the recent developments?"
+    # 'what is happening' is kept by default and stripped in the second variant.
+    assert topic_queries("what is happening at estero parkway") == [
+        "what is happening at estero parkway",
+        "estero parkway",
+    ]
+
+
+def test_reserve_recent_skips_off_topic_newest_docs_for_specific_query():
+    """Regression: 'latest on Coconut Point' got the corpus-wide newest docs
+    (I-75, personnel policy) reserved, and prefer_recent_hits then discarded
+    every relevant-but-older Coconut Point record in their favour."""
+    from langchain_core.documents import Document
+    from retrieval import _reserve_recent
+
+    on_topic = (
+        Document(page_content="Coconut Point plat", metadata={"application_id": "A", "meeting_date": "2019-01-01"}),
+        5.0,
+    )
+    off_topic = (
+        Document(page_content="I-75 expansion impacts", metadata={"source_type": "website_article", "publish_date": "2026-09-15"}),
+        -10.0,
+    )
+    result = _reserve_recent([on_topic, off_topic], [on_topic], n=4, query="Coconut Point")
+    assert [d.page_content for d, _ in result] == ["Coconut Point plat"]
+    # Generic query with no topic terms keeps the original bypass behaviour.
+    result = _reserve_recent([on_topic, off_topic], [on_topic], n=4, query=None)
+    assert len(result) == 2
+
+
+def test_cap_per_record_limits_chunks_from_one_article():
+    from langchain_core.documents import Document
+    from retrieval import _cap_per_record
+
+    def chunk(i, rec):
+        return (Document(page_content=str(i), metadata={"source_type": "website_article", "record_id": rec, "chunk_id": f"{rec}-{i}"}), 1.0 - i * 0.1)
+
+    items = [chunk(0, "a"), chunk(1, "a"), chunk(2, "a"), chunk(3, "a"), chunk(4, "b")]
+    kept = _cap_per_record(items, 3)
+    assert [d.page_content for d, _ in kept] == ["0", "1", "2", "4"]
