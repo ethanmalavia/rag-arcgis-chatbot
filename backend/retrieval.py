@@ -48,12 +48,107 @@ _RECENT_QUERY_RE = re.compile(
 )
 
 
+# "history and latest info on X" wants the whole timeline, not just the newest
+# slice — history intent overrides the recent-only hard cutoff.
+_HISTORY_QUERY_RE = re.compile(
+    r"\b(history|historical|background|timeline|backstory|over\s+the\s+years|"
+    r"origins?|originally|evolution)\b",
+    re.IGNORECASE,
+)
+
+
+def query_wants_history(query: str) -> bool:
+    return bool(_HISTORY_QUERY_RE.search(query or ""))
+
+
 def query_wants_recent(query: str) -> bool:
-    """True when the question asks for recent/new/latest (and names no year)."""
+    """True when the question asks for recent/new/latest (and names no year).
+
+    False when the question also asks for history: the resident wants the full
+    timeline ending in the latest state, so old records must not be dropped.
+    """
     q = (query or "").strip()
-    if not q or _YEAR_RE.search(q):
+    if not q or _YEAR_RE.search(q) or query_wants_history(q):
         return False
     return bool(_RECENT_QUERY_RE.search(q))
+
+
+# Conversational scaffolding that says nothing about the topic. Left in the
+# retrieval query it drags in whatever merely shares those words — e.g.
+# "history and latest information Coconut Point" matched generic history/news
+# pages instead of the named place. "what is happening" is deliberately kept:
+# article titles like "What Development is Happening along East Corkscrew Road"
+# are exactly the sources that answer such questions.
+_FOCUS_FILLER_RES = [
+    re.compile(r"\b(?:can|could|would)\s+you\b", re.IGNORECASE),
+    re.compile(r"\b(?:please|give\s+me|show\s+me|tell\s+me\s+about|tell\s+me|get\s+me)\b", re.IGNORECASE),
+    re.compile(r"\b(?:the\s+)?(?:history|background|timeline|backstory)\b(?:\s+of)?", re.IGNORECASE),
+    re.compile(
+        r"\b(?:the\s+)?(?:latest|newest|recent|current)\s+"
+        r"(?:information|info|news|updates?|developments?|status)?\b(?:\s+(?:on|about|for|regarding|of))?",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\b(?:information|info|details|updates?|news)\s+(?:on|about|regarding)\b", re.IGNORECASE),
+]
+_FOCUS_EDGE_RE = re.compile(r"^(?:and|the|of|on|about|for|to)\s+|\s+(?:and|the|of|on|about|for|to)$", re.IGNORECASE)
+
+
+_QUESTION_STOPWORDS = frozenset(
+    {"what", "are", "was", "were", "the", "and", "any", "for", "with", "about", "there",
+     "this", "that", "how", "why", "who", "when", "where", "does", "did", "has", "have",
+     "happening", "going", "new"}
+)
+_HAPPENING_FILLER_RE = re.compile(
+    r"\bwhat(?:'?s|\s+is|\s+are)?\s+(?:currently\s+|now\s+)?"
+    r"(?:happening|going\s+on|new)\b(?:\s+(?:to|at|on|with|in|near|around|about|for))?",
+    re.IGNORECASE,
+)
+
+
+def focus_query(question: str, *, strip_happening: bool = False) -> str:
+    """The topic of *question* with conversational filler removed.
+
+    Used only for candidate retrieval/reranking; recency/history intent and the
+    LLM prompt still use the original question. Falls back to the original when
+    stripping leaves no content word (e.g. "What are the recent developments?").
+
+    strip_happening also removes "what is happening at/on/to" — see
+    topic_queries for why that variant is searched alongside the default one.
+    """
+    q = (question or "").strip()
+    text = q
+    filler = _FOCUS_FILLER_RES + ([_HAPPENING_FILLER_RE] if strip_happening else [])
+    for rx in filler:
+        text = rx.sub(" ", text)
+    text = re.sub(r"[?!.,;:]+", " ", text)
+    text = " ".join(text.split())
+    prev = None
+    while prev != text:
+        prev = text
+        text = _FOCUS_EDGE_RE.sub("", text).strip()
+    content = [
+        t for t in re.findall(r"[a-z0-9]+", text.lower())
+        if len(t) >= 3 and t not in _QUESTION_STOPWORDS
+    ]
+    if not content:
+        return q
+    return text
+
+
+def topic_queries(question: str) -> list[str]:
+    """Distinct retrieval queries for *question*: with and without "what is happening".
+
+    Keeping the phrase surfaces articles titled "What Development is Happening
+    along East Corkscrew Road"; dropping it surfaces records about the named
+    place itself ("what is happening at Estero Parkway" otherwise returns only
+    the East Corkscrew "What's happening" article). Neither variant wins for
+    every question, so both are searched and merged by score.
+    """
+    seen: list[str] = []
+    for q in (focus_query(question), focus_query(question, strip_happening=True)):
+        if q and q not in seen:
+            seen.append(q)
+    return seen
 
 
 def get_reranker() -> CrossEncoder:
@@ -258,6 +353,35 @@ _MIN_BUCKET_CANDIDATES = 3
 _MIN_BUCKET_RESULTS = 2
 
 
+# Max chunks from one source record (article / board row) in the final hits, so
+# a single long article can't fill every slot and crowd out other records.
+_MAX_CHUNKS_PER_RECORD = 3
+_MAX_CHUNKS_PER_RECORD_HISTORY = 2
+# History questions need a wider window to span the timeline.
+_HISTORY_EXTRA_RESULTS = 4
+
+
+def _record_key(doc: Document) -> str:
+    md = doc.metadata
+    if md.get("source_type"):
+        return f"{md['source_type']}:{md.get('record_id') or md.get('url') or md.get('chunk_id')}"
+    return f"board:{md.get('row_index', md.get('chunk_id'))}"
+
+
+def _cap_per_record(
+    items: list[tuple[Document, float]], per_record: int
+) -> list[tuple[Document, float]]:
+    """Keep the best *per_record* chunks of each source record (input order = rank)."""
+    counts: dict[str, int] = {}
+    out: list[tuple[Document, float]] = []
+    for item in items:
+        key = _record_key(item[0])
+        counts[key] = counts.get(key, 0) + 1
+        if counts[key] <= per_record:
+            out.append(item)
+    return out
+
+
 def _reserve_by_bucket(
     items: list[tuple[Document, float]], min_per_bucket: int, cap: int
 ) -> list[tuple[Document, float]]:
@@ -306,7 +430,10 @@ def _recent_topup(store: DataStore, n: int) -> list[Document]:
 
 
 def _reserve_recent(
-    ranked: list[tuple[Document, float]], pool: list[tuple[Document, float]], n: int
+    ranked: list[tuple[Document, float]],
+    pool: list[tuple[Document, float]],
+    n: int,
+    query: str | None = None,
 ) -> list[tuple[Document, float]]:
     """Union the n most-recently-dated items from the full reranked list into
     pool (split per source-type bucket — see _recent_topup), bypassing
@@ -317,12 +444,26 @@ def _reserve_recent(
     on the cross-encoder to survive the relevance filter — even though the
     downstream recency logic (apply_recency_boost / prefer_recent_hits) would
     correctly recognize it as fresh once given the chance.
+
+    When *query* is given, a reserved item must share at least one topic term
+    with it. Otherwise a specific question ("latest on Coconut Point") gets the
+    corpus-wide newest documents (unrelated I-75 / personnel-policy items) as
+    its only "fresh" hits, and prefer_recent_hits then discards every genuinely
+    relevant but older record in their favour.
     """
     half = max(n // 2, 1)
+    topic_terms = set(_tokenize(focus_query(query))) if query else set()
+
+    def _on_topic(doc: Document) -> bool:
+        return not topic_terms or bool(topic_terms & set(_tokenize(doc.page_content)))
 
     def _top_recent(pred) -> list[tuple[Document, float]]:
         dated = sorted(
-            (t for t in ranked if pred(t[0]) and document_meeting_date(t[0]) is not None),
+            (
+                t
+                for t in ranked
+                if pred(t[0]) and document_meeting_date(t[0]) is not None and _on_topic(t[0])
+            ),
             key=lambda t: document_meeting_date(t[0]),
             reverse=True,
         )
@@ -331,6 +472,17 @@ def _reserve_recent(
     extra = _top_recent(_is_board_doc) + _top_recent(lambda d: not _is_board_doc(d))
     pool_ids = {id(d) for d, _ in pool}
     return pool + [t for t in extra if id(t[0]) not in pool_ids]
+
+
+def _finalize(
+    boosted: list[tuple[Document, float]], intent: str
+) -> list[tuple[Document, float]]:
+    history = query_wants_history(intent)
+    capped = _cap_per_record(
+        boosted, _MAX_CHUNKS_PER_RECORD_HISTORY if history else _MAX_CHUNKS_PER_RECORD
+    )
+    cap = RERANK_K + (_HISTORY_EXTRA_RESULTS if history else 0)
+    return _reserve_by_bucket(capped, _MIN_BUCKET_RESULTS, cap)
 
 
 def hybrid_retrieve(
@@ -375,7 +527,7 @@ def hybrid_retrieve(
 
     reserved_ids = {id(d) for d in reserved_docs}
     fill_docs = [d for d in fused_docs if id(d) not in reserved_ids][
-        : max(RERANK_CANDIDATES - len(reserved_docs), 0)
+        : max(RERANK_CANDIDATES + (8 if query_wants_history(intent) else 0) - len(reserved_docs), 0)
     ]
     candidates = reserved_docs + fill_docs
 
@@ -389,9 +541,9 @@ def hybrid_retrieve(
     if not ENABLE_RERANKER:
         ranked = [(d, 1.0 - (i * 0.05)) for i, d in enumerate(candidates[: max(RERANK_K * 2, RERANK_K)])]
         if query_wants_recent(intent):
-            ranked = _reserve_recent(ranked, ranked, _RECENCY_TOPUP)
+            ranked = _reserve_recent(ranked, ranked, _RECENCY_TOPUP, query=query)
         boosted = apply_recency_boost(ranked, query, intent_query=intent)
-        return _reserve_by_bucket(boosted, _MIN_BUCKET_RESULTS, RERANK_K)
+        return _finalize(boosted, intent)
 
     reranker = get_reranker()
     pairs = [(query, (d.page_content or "")[:_MAX_CHARS_PER_DOC]) for d in candidates]
@@ -403,9 +555,28 @@ def hybrid_retrieve(
     if query_wants_recent(intent):
         # Bypass SCORE_THRESHOLD for the objectively most-recent candidates —
         # see _reserve_recent.
-        pool = _reserve_recent(ranked, pool, _RECENCY_TOPUP)
+        pool = _reserve_recent(ranked, pool, _RECENCY_TOPUP, query=query)
     boosted = apply_recency_boost(pool, query, intent_query=intent)
-    return _reserve_by_bucket(boosted, _MIN_BUCKET_RESULTS, RERANK_K)
+    return _finalize(boosted, intent)
+
+
+def hybrid_retrieve_multi(
+    store: DataStore,
+    queries: list[str],
+    *,
+    intent_query: str | None = None,
+) -> list[tuple[Document, float]]:
+    """hybrid_retrieve over several query phrasings, merged by best score per chunk."""
+    if len(queries) == 1:
+        return hybrid_retrieve(store, queries[0], intent_query=intent_query)
+    best: dict[str, tuple[Document, float]] = {}
+    for q in queries:
+        for doc, score in hybrid_retrieve(store, q, intent_query=intent_query):
+            key = doc.metadata.get("chunk_id") or str(id(doc))
+            if key not in best or score > best[key][1]:
+                best[key] = (doc, score)
+    merged = sorted(best.values(), key=lambda t: -t[1])
+    return _finalize(merged, intent_query if intent_query is not None else queries[0])
 
 
 def _project_id(doc: Document) -> str:
