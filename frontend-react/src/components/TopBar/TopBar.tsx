@@ -32,7 +32,11 @@ export default function TopBar({
         <button type="button" className="topbar-btn" onClick={onNewChat}>
           + New chat
         </button>
-        <a className="topbar-btn" href="/admin.html" title="Administrator console">
+        <a
+          className="topbar-btn"
+          href={`${import.meta.env.BASE_URL}admin.html`}
+          title="Administrator console"
+        >
           Admin
         </a>
         <div id="live-badge">
