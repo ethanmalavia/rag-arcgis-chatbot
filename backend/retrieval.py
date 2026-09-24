@@ -39,9 +39,12 @@ _ISO_RE = re.compile(r"(\d{4}-\d{2}-\d{2})")
 # Explicit years are handled separately as historical intent.
 _RECENT_QUERY_RE = re.compile(
     r"\b("
-    r"recent(?:ly)?|latest|newest|lately|nowadays|"
-    r"this\s+year|last\s+year|past\s+(?:year|few\s+years?|months?)|"
-    r"last\s+(?:few\s+)?(?:years?|months?)|"
+    r"recent(?:ly)?|latest|newest|newly|freshly|lately|nowadays|"
+    r"just\s+(?:approved|passed|announced|voted|adopted|opened|added)|"
+    r"these\s+days|right\s+now|as\s+of\s+(?:now|today)|"
+    r"this\s+(?:year|month|week)|last\s+(?:year|week)|"
+    r"past\s+(?:year|months?|weeks?|few\s+(?:years?|months?|weeks?))|"
+    r"last\s+(?:few\s+)?(?:years?|months?|weeks?)|"
     r"new(?:er)?|current(?:ly)?"
     r")\b",
     re.IGNORECASE,
@@ -452,7 +455,7 @@ def _reserve_recent(
     relevant but older record in their favour.
     """
     half = max(n // 2, 1)
-    topic_terms = set(_tokenize(focus_query(query))) if query else set()
+    topic_terms = (set(_tokenize(focus_query(query))) - _GENERIC_QUERY_TERMS) if query else set()
 
     def _on_topic(doc: Document) -> bool:
         return not topic_terms or bool(topic_terms & set(_tokenize(doc.page_content)))
@@ -483,6 +486,98 @@ def _finalize(
     )
     cap = RERANK_K + (_HISTORY_EXTRA_RESULTS if history else 0)
     return _reserve_by_bucket(capped, _MIN_BUCKET_RESULTS, cap)
+
+
+_DEV_APPROVAL_RE = re.compile(r"\b(?:approved?|approvals?|approving|green-?lit|okay(?:ed)?)\b", re.IGNORECASE)
+_DEV_TOPIC_RE = re.compile(
+    r"\b(?:developments?|developers?|projects?|"
+    r"new\s+(?:businesses|stores|buildings|homes|restaurants))\b",
+    re.IGNORECASE,
+)
+_DEV_CATEGORIES = frozenset({"commercial_mixed_use_development", "residential_development"})
+_DEV_APP_TYPES = frozenset({"dos", "dci", "ldo", "add", "cpa"})
+_DEV_EXCLUDED_TYPES = frozenset({"resolution", "ordinance"})
+_DEV_EXCLUDED_FACTS = frozenset({"consent_agenda", "administrative", "contract_approval"})
+_DEV_APPROVAL_LIMIT = 8
+
+
+# Words that carry no named subject. If anything else is left after removing
+# them ("was the Wawa project approved?"), the question is about a specific
+# thing and normal retrieval — not the generic newest-approvals list — applies.
+_DEV_GENERIC_TERMS = frozenset(
+    {"tell", "about", "show", "give", "list", "what", "which", "any", "all", "some", "were", "was",
+     "are", "the", "and", "for", "have", "has", "been", "got", "get", "there", "estero", "village",
+     "recent", "recently", "latest", "newest", "newly", "new", "lately", "just", "current",
+     "currently", "past", "last", "this", "year", "years", "month", "months", "week", "weeks",
+     "now", "these", "days", "today", "few", "approved", "approve", "approval", "approvals",
+     "approving", "okayed", "greenlit", "development", "developments", "developer", "developers",
+     "project", "projects",
+     "businesses", "stores", "buildings", "homes", "restaurants", "with", "that", "does", "did",
+     "can", "you", "please", "town", "area", "local", "board", "council", "planning", "zoning"}
+)
+
+
+# Question/recency scaffolding that isn't a topic — used so the recent-docs
+# top-up doesn't treat "approved", "newly", "happened" … as subject words.
+_GENERIC_QUERY_TERMS = _DEV_GENERIC_TERMS | _QUESTION_STOPWORDS | frozenset(
+    {"happened", "happen", "happens", "anything", "news", "update", "updates", "info",
+     "information", "upcoming", "most", "fresh", "freshly", "than", "into", "from"}
+)
+
+
+def query_wants_development_approvals(query: str) -> bool:
+    """Generic 'recently approved developments' / 'recent developments' questions.
+
+    Needs a development word plus an approval or recency word, and no other
+    subject (a road, project name, company…): those use normal retrieval.
+    """
+    q = query or ""
+    if not _DEV_TOPIC_RE.search(q):
+        return False
+    if not (_DEV_APPROVAL_RE.search(q) or _RECENT_QUERY_RE.search(q)):
+        return False
+    leftovers = [
+        t for t in re.findall(r"[a-z0-9]+", _YEAR_RE.sub(" ", q).lower())
+        if t not in _DEV_GENERIC_TERMS and len(t) > 2
+    ]
+    return not leftovers
+
+
+def _development_approval_docs(
+    store: DataStore,
+    n: int = _DEV_APPROVAL_LIMIT,
+    year: int | None = None,
+    approved_only: bool = True,
+) -> list[Document]:
+    """Canonical 'meta' chunks of the n newest development items (approved only
+    unless the question didn't ask about approvals — "recent developments").
+
+    A development item is a land-use application (DOS/DCI/LDO/ADD/CPA) or a
+    commercial/residential-category item that isn't a resolution, ordinance,
+    consent-agenda, administrative or contract row.
+    """
+    df = store.dataframe
+    needed = {"Status", "MeetingDate", "ApplicationType", "LandUseCategory", "FactCategory"}
+    if df is None or df.empty or not needed <= set(df.columns):
+        return []
+    status = df["Status"].astype(str).str.lower()
+    app_type = df["ApplicationType"].astype(str).str.lower()
+    category = df["LandUseCategory"].astype(str)
+    fact = df["FactCategory"].astype(str)
+    is_dev = app_type.isin(_DEV_APP_TYPES) | (
+        category.isin(_DEV_CATEGORIES)
+        & ~app_type.isin(_DEV_EXCLUDED_TYPES)
+        & ~fact.isin(_DEV_EXCLUDED_FACTS)
+    )
+    keep = is_dev & (status.str.contains("approv", na=False) if approved_only else True)
+    if year is not None:
+        keep &= df["MeetingDate"].astype(str).str.startswith(str(year))
+    rows = df[keep].sort_values("MeetingDate", ascending=False)
+    wanted = [int(i) for i in rows.index[:n]]
+    meta_by_row = {
+        d.metadata.get("row_index"): d for d in store.documents if d.metadata.get("chunk_type") == "meta"
+    }
+    return [meta_by_row[i] for i in wanted if i in meta_by_row]
 
 
 def hybrid_retrieve(
@@ -531,6 +626,23 @@ def hybrid_retrieve(
     ]
     candidates = reserved_docs + fill_docs
 
+    # "recently approved developments": the indexed chunk text has no notion of
+    # "development", while "approved" matches every agenda-approval/resolution
+    # row — so select the newest approved development items from the data itself.
+    year_m = _YEAR_RE.search(intent or "")
+    dev_docs = (
+        _development_approval_docs(
+            store,
+            year=int(year_m.group(1)) if year_m else None,
+            approved_only=bool(_DEV_APPROVAL_RE.search(intent or "")),
+        )
+        if query_wants_development_approvals(intent)
+        else []
+    )
+    dev_ids = {id(d) for d in dev_docs}
+    if dev_docs:
+        candidates += [d for d in dev_docs if id(d) not in {id(c) for c in candidates}]
+
     if not candidates:
         return apply_recency_boost(
             [(d, float(s)) for d, s in dense_hits[:RERANK_K]],
@@ -540,7 +652,10 @@ def hybrid_retrieve(
 
     if not ENABLE_RERANKER:
         ranked = [(d, 1.0 - (i * 0.05)) for i, d in enumerate(candidates[: max(RERANK_K * 2, RERANK_K)])]
-        if query_wants_recent(intent):
+        if dev_docs:
+            ranked = [(d, s) for d, s in ranked if not _is_board_doc(d) or id(d) in dev_ids]
+            ranked += [(d, 1.0) for d in dev_docs if id(d) not in {id(r[0]) for r in ranked}]
+        if query_wants_recent(intent) and not dev_docs:
             ranked = _reserve_recent(ranked, ranked, _RECENCY_TOPUP, query=query)
         boosted = apply_recency_boost(ranked, query, intent_query=intent)
         return _finalize(boosted, intent)
@@ -552,7 +667,13 @@ def hybrid_retrieve(
     ranked = [(d, float(s)) for d, s in sorted(zip(candidates, scores), key=lambda x: -float(x[1]))]
     filtered = [(d, s) for d, s in ranked if s >= SCORE_THRESHOLD]
     pool = filtered or ranked
-    if query_wants_recent(intent):
+    if dev_docs:
+        # Curated approvals bypass SCORE_THRESHOLD; unrelated board rows (agenda
+        # approval, personnel policy…) that only matched "approved" are dropped.
+        floor = max(SCORE_THRESHOLD, 0.0)
+        curated = [(d, max(s, floor)) for d, s in ranked if id(d) in dev_ids]
+        pool = curated + [(d, s) for d, s in filtered if not _is_board_doc(d)]
+    if query_wants_recent(intent) and not dev_docs:
         # Bypass SCORE_THRESHOLD for the objectively most-recent candidates —
         # see _reserve_recent.
         pool = _reserve_recent(ranked, pool, _RECENCY_TOPUP, query=query)

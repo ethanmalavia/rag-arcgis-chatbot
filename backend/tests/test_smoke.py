@@ -753,3 +753,40 @@ def test_cap_per_record_limits_chunks_from_one_article():
     items = [chunk(0, "a"), chunk(1, "a"), chunk(2, "a"), chunk(3, "a"), chunk(4, "b")]
     kept = _cap_per_record(items, 3)
     assert [d.page_content for d, _ in kept] == ["0", "1", "2", "4"]
+
+
+def test_development_approval_intent_and_curated_docs():
+    """Regression: 'recently approved developments' returned only agenda-approval
+    and personnel-policy rows, because the indexed text has no 'development'
+    concept while 'approved' matches every procedural row."""
+    import pandas as pd
+    from langchain_core.documents import Document
+    from retrieval import _development_approval_docs, query_wants_development_approvals
+    from store import DataStore
+
+    assert query_wants_development_approvals("Tell me about recently approved developments")
+    assert query_wants_development_approvals("what projects were approved in 2025")
+    assert not query_wants_development_approvals("What is happening on Corkscrew Road")
+    # Recency alone is enough for a generic development question…
+    assert query_wants_development_approvals("What are the recent developments?")
+    # …but any named subject means normal retrieval.
+    assert not query_wants_development_approvals("Was the Wawa project approved?")
+    assert not query_wants_development_approvals("recent developments on Corkscrew Road")
+    assert not query_wants_development_approvals("approved rezoning")
+    assert not query_wants_development_approvals("latest news")
+
+    rows = [
+        dict(Status="Approved", MeetingDate="2026-01-14", ApplicationType="add", LandUseCategory="commercial_mixed_use_development", FactCategory="vote"),
+        dict(Status="Approved", MeetingDate="2026-06-17", ApplicationType="resolution", LandUseCategory="commercial_mixed_use_development", FactCategory="resolution"),
+        dict(Status="Approved", MeetingDate="2026-06-17", ApplicationType="", LandUseCategory="meetings_records_public_input", FactCategory="consent_agenda"),
+        dict(Status="No Action", MeetingDate="2026-03-10", ApplicationType="dos", LandUseCategory="commercial_mixed_use_development", FactCategory="vote"),
+        dict(Status="Approved", MeetingDate="2025-09-09", ApplicationType="dos", LandUseCategory="residential_development", FactCategory="vote"),
+    ]
+    docs = [
+        Document(page_content=f"row {i}", metadata={"row_index": i, "chunk_type": "meta"}) for i in range(len(rows))
+    ]
+    store = DataStore(dataframe=pd.DataFrame(rows), documents=docs)
+    assert [d.metadata["row_index"] for d in _development_approval_docs(store)] == [0, 4]
+    assert [d.metadata["row_index"] for d in _development_approval_docs(store, year=2025)] == [4]
+    # Not asking about approvals: newest development items of any status (row 3 is "No Action").
+    assert [d.metadata["row_index"] for d in _development_approval_docs(store, approved_only=False)] == [3, 0, 4]
