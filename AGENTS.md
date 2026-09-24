@@ -27,6 +27,6 @@ Shared state lives in `agent-sync/` (git). Commit after MCP updates so teammates
 ## Hard constraints
 
 - Events chat must not hijack planning/zoning questions.
-- Soft-fail third-party event scrapers; do not add brittle Hertz/Amerant scrapers.
+- Soft-fail third-party event scrapers; Hertz uses the public upcoming-events page only — do not add brittle Amerant scrapers.
 - Prefer `langchain_core.documents.Document` over `langchain.schema`.
 - Only commit/push when the human asks.

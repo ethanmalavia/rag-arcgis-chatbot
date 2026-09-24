@@ -1,4 +1,4 @@
-"""Merge EsteroToday + FGCU + Visit Fort Myers + Lee County Parks + manual."""
+"""Merge EsteroToday + FGCU + Hertz + Visit Fort Myers + Lee County Parks + manual."""
 from __future__ import annotations
 
 import logging
@@ -6,6 +6,7 @@ from typing import Any
 
 from events_sources.esterotoday import fetch_esterotoday_events
 from events_sources.fgcu import fetch_fgcu_events
+from events_sources.hertz import fetch_hertz_events
 from events_sources.lee_county import fetch_lee_county_events
 from events_sources.manual import fetch_manual_events
 from events_sources.normalize import dedupe_events, sanitize_category
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Soft caps keep one noisy feed from burying Village / community listings.
 _SOURCE_CAPS = {
     "esterotoday": 40,
-    "venue": 15,
+    "venue": 30,  # FGCU athletics + Hertz Arena share this bucket
     "manual": 40,
     "lee_county": 25,
 }
@@ -37,9 +38,13 @@ def collect_upcoming_events() -> list[dict[str, Any]]:
         logger.warning("EsteroToday source failed: %s", exc)
 
     try:
-        merged.extend(_cap_source(fetch_fgcu_events(), "venue"))
+        venue_batch: list[dict[str, Any]] = []
+        venue_batch.extend(fetch_fgcu_events())
+        venue_batch.extend(fetch_hertz_events())
+        venue_batch.sort(key=lambda ev: ev.get("start") or "")
+        merged.extend(_cap_source(venue_batch, "venue"))
     except Exception as exc:  # noqa: BLE001
-        logger.warning("FGCU source failed: %s", exc)
+        logger.warning("Venue sources (FGCU / Hertz) failed: %s", exc)
 
     try:
         # Tourism + parks both use source=lee_county for Pulse provenance.

@@ -3,6 +3,7 @@
 Sources (see backend/events_sources/):
 - EsteroToday The Events Calendar REST API (all categories)
 - FGCU Athletics ICS (local Fort Myers / FGCU games)
+- Hertz Arena upcoming-events listing (HTML)
 - Lee County Parks & Recreation calendar (HTML)
 - Visit Fort Myers tourism RSS + event detail pages
 - frontend-react/public/community-events.json manual fallback
