@@ -360,3 +360,82 @@ def test_aggregate_merges_lee_and_vfm(monkeypatch):
     merged = aggregate.collect_upcoming_events()
     assert len(merged) == 2
     assert {e["title"] for e in merged} == {"Lakes Park Walk", "Fort Myers Show"}
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "upcoming events this week",
+        "events this week",
+        "any events today?",
+        "events tonight",
+        "events tomorrow",
+        "events next week",
+        "events this month",
+        "events next month",
+        "events in October",
+        "events on Saturday",
+        "events this Friday",
+        "events next weekend",
+        "are there any events this weekend",
+        "what events are happening this weekend",
+        "Show me events for the next two weeks",
+        "events on October 12",
+        "events this year",
+        "things to do tomorrow",
+        "FGCU sports events this week",
+        "events in the next 30 days",
+    ],
+)
+def test_events_with_time_period_always_show_events(question):
+    """Regression: 'upcoming events this week' fell through to RAG because the
+    named-record veto matched 'upcoming'/'events'/'week' inside old meeting
+    summaries. Event and time words must never count as a named record."""
+    import pandas as pd
+
+    df = pd.DataFrame(
+        [{"ProjectName": "Weekly events update", "Summary": "upcoming events this week were discussed"}]
+    )
+    assert is_events_question(question, df) is True
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "events ordinance this week",
+        "what does the agenda say for the events center",
+        "upcoming events for the zoning board hearing",
+        "Tell me about recently approved developments",
+    ],
+)
+def test_events_word_with_record_vocabulary_is_not_calendar(question):
+    assert is_events_question(question) is False
+
+
+def test_events_window_understands_time_periods(monkeypatch):
+    from datetime import date
+
+    import events_path
+
+    class FrozenDate(date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 9, 24)  # a Thursday
+
+    monkeypatch.setattr(events_path, "date", FrozenDate)
+    w = events_path._window_for_question
+    d = date
+    assert w("events today") == (d(2026, 9, 24), d(2026, 9, 24))
+    assert w("events tomorrow") == (d(2026, 9, 25), d(2026, 9, 25))
+    assert w("events this weekend") == (d(2026, 9, 26), d(2026, 9, 27))
+    assert w("events next weekend") == (d(2026, 10, 3), d(2026, 10, 4))
+    assert w("events next week") == (d(2026, 9, 28), d(2026, 10, 4))
+    assert w("events this month") == (d(2026, 9, 24), d(2026, 9, 30))
+    assert w("events next month") == (d(2026, 10, 1), d(2026, 10, 31))
+    assert w("events in October") == (d(2026, 10, 1), d(2026, 10, 31))
+    assert w("events in February") == (d(2027, 2, 1), d(2027, 2, 28))
+    assert w("events on October 12") == (d(2026, 10, 12), d(2026, 10, 12))
+    assert w("events on Saturday") == (d(2026, 9, 26), d(2026, 9, 26))
+    assert w("events for the next two weeks") == (d(2026, 9, 24), d(2026, 10, 8))
+    assert w("events in the next 30 days") == (d(2026, 9, 24), d(2026, 10, 24))
+    assert w("events this year") == (d(2026, 9, 24), d(2026, 12, 31))

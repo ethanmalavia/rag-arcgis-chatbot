@@ -1,6 +1,7 @@
 """Structured answers for upcoming community-event questions."""
 from __future__ import annotations
 
+import calendar
 import re
 from datetime import date, datetime, timedelta
 
@@ -66,9 +67,42 @@ _CALENDAR_WORDS_RE = re.compile(
 )
 
 
+_MONTHS = (
+    "january|february|march|april|may|june|july|august|september|october|november|december"
+)
+_WEEKDAYS = "monday|tuesday|wednesday|thursday|friday|saturday|sunday"
+
+# "events" (or "things to do") plus any time period is a calendar question no
+# matter how it is phrased — "events in October", "any events tomorrow",
+# "events next week", "events on Saturday".
+_EVENT_WORD_RE = re.compile(r"\b(?:events?|things\s+to\s+do)\b", re.IGNORECASE)
+_TIME_PERIOD_RE = re.compile(
+    r"\b(?:today|tonight|tomorrow|weekends?|"
+    r"(?:this|next|the\s+coming|the\s+upcoming|coming|upcoming)\s+"
+    r"(?:week|weekend|month|evening|afternoon|morning|few\s+days|few\s+weeks|days|weeks)|"
+    r"next\s+(?:" + _WEEKDAYS + r")|(?:on|this)\s+(?:" + _WEEKDAYS + r")s?|"
+    r"(?:in|during|for)\s+(?:" + _MONTHS + r")|(?:" + _MONTHS + r")\s+\d{1,2}|"
+    r"(?:(?:in|over|within|for)\s+)?the\s+next\s+\w+\s+(?:days?|weeks?|months?)|"
+    r"this\s+year|"
+    r"this\s+(?:coming\s+)?(?:" + _WEEKDAYS + r"))\b",
+    re.IGNORECASE,
+)
+# Even with a time period, zoning-record vocabulary means a records question.
+_STRICT_PLANNING_RE = re.compile(
+    r"\b(?:zoning|rezon\w*|ordinance|resolution|variance|hearing|agenda|minutes|"
+    r"comprehensive\s+plan|development\s+order|plat|easement)\b",
+    re.IGNORECASE,
+)
+
+# Event/time words say nothing about *which* record a question names — they
+# just happen to appear in old meeting summaries ("upcoming events", "weekly").
 _EVENTS_VETO_STOPWORDS = frozenset(
     {"the", "and", "for", "what", "show", "minutes", "meeting", "estero", "village",
-     "happening", "going", "with", "about", "this", "that", "there", "any"}
+     "happening", "going", "with", "about", "this", "that", "there", "any",
+     "upcoming", "events", "event", "week", "weekend", "weekends", "month", "today",
+     "tonight", "tomorrow", "next", "coming", "days", "evening", "afternoon", "morning",
+     "things", "are", "there", "have", "has", "list", "show", "tell", "give", "please"}
+    | set(_MONTHS.split("|")) | set(_WEEKDAYS.split("|"))
 )
 
 
@@ -95,6 +129,8 @@ def _matches_named_record(df: pd.DataFrame, question: str) -> bool:
 
 def is_events_question(question: str, df: pd.DataFrame | None = None) -> bool:
     q = question or ""
+    if _EVENT_WORD_RE.search(q) and _TIME_PERIOD_RE.search(q) and not _STRICT_PLANNING_RE.search(q):
+        return True
     if not EVENTS_INTENT_RE.search(q):
         return False
     # Planning language wins: fall through to the router and RAG.
@@ -135,8 +171,62 @@ def _format_when(ev: dict) -> str:
         return label
 
 
+_NUM_WORDS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "ten": 10, "a": 1, "one": 1}
+_MONTH_NUM = {m: i for i, m in enumerate(_MONTHS.split("|"), start=1)}
+_WEEKDAY_NUM = {d: i for i, d in enumerate(_WEEKDAYS.split("|"))}
+_MONTH_NAME_RE = re.compile(r"\b(" + _MONTHS + r")\b", re.IGNORECASE)
+_WEEKDAY_NAME_RE = re.compile(r"\b(" + _WEEKDAYS + r")s?\b", re.IGNORECASE)
+
+
+def _month_bounds(year: int, month: int) -> tuple[date, date]:
+    return date(year, month, 1), date(year, month, calendar.monthrange(year, month)[1])
+
+
 def _window_for_question(question: str) -> tuple[date, date]:
     today = date.today()
+    q = (question or "").lower()
+    if re.search(r"\b(?:today|tonight)\b", q):
+        return today, today
+    if re.search(r"\btomorrow\b", q):
+        return today + timedelta(days=1), today + timedelta(days=1)
+    m = _WEEKDAY_NAME_RE.search(q)
+    if m and re.search(r"\b(?:on|this|next)\s+" + m.group(1), q):
+        ahead = (_WEEKDAY_NUM[m.group(1).lower()] - today.weekday()) % 7
+        if re.search(r"\bnext\s+" + m.group(1), q) and ahead < 7:
+            ahead += 7 if ahead == 0 else 0
+        day = today + timedelta(days=ahead)
+        return day, day
+    if re.search(r"\bnext\s+month\b", q):
+        y, mo = (today.year + 1, 1) if today.month == 12 else (today.year, today.month + 1)
+        return _month_bounds(y, mo)
+    if re.search(r"\bthis\s+month\b", q):
+        return today, _month_bounds(today.year, today.month)[1]
+    m = _MONTH_NAME_RE.search(q)
+    if m:
+        mo = _MONTH_NUM[m.group(1).lower()]
+        year = today.year if mo >= today.month else today.year + 1
+        dm = re.search(m.group(1) + r"\s+(\d{1,2})\b", q)
+        if dm:
+            try:
+                day = date(year, mo, int(dm.group(1)))
+                return day, day
+            except ValueError:
+                pass
+        if re.search(r"\b(?:in|during|for)\s+" + m.group(1), q):
+            first, last = _month_bounds(year, mo)
+            return max(first, today), last
+    if re.search(r"\bnext\s+weekend\b", q):
+        wd = today.weekday()
+        sat = today + timedelta(days=(5 - wd) % 7)
+        start = sat if wd == 6 else sat + timedelta(days=7)
+        return start, start + timedelta(days=1)
+    if re.search(r"\bthis\s+year\b", q):
+        return today, date(today.year, 12, 31)
+    nm = re.search(r"\bnext\s+(\d+|" + "|".join(_NUM_WORDS) + r")\s+(days?|weeks?|months?)\b", q)
+    if nm:
+        n = int(nm.group(1)) if nm.group(1).isdigit() else _NUM_WORDS[nm.group(1)]
+        unit = {"d": 1, "w": 7, "m": 30}[nm.group(2)[0]]
+        return today, today + timedelta(days=n * unit)
     if _WEEKEND_RE.search(question):
         weekday = today.weekday()  # Mon=0 … Sun=6
         if weekday == 5:
@@ -146,6 +236,9 @@ def _window_for_question(question: str) -> tuple[date, date]:
         days_until_sat = 5 - weekday
         start = today + timedelta(days=days_until_sat)
         return start, start + timedelta(days=1)
+    if re.search(r"\bnext\s+week\b", q):
+        start = today + timedelta(days=7 - today.weekday())
+        return start, start + timedelta(days=6)
     if _WEEK_RE.search(question):
         return today, today + timedelta(days=7)
     return today, today + timedelta(days=21)

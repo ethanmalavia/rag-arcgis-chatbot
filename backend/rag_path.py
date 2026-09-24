@@ -26,6 +26,7 @@ from retrieval import (
     format_docs,
     hits_meta,
     hybrid_retrieve_multi,
+    query_wants_development_approvals,
     query_wants_recent,
     scope_hits_to_project,
     topic_queries,
@@ -219,7 +220,9 @@ def retrieve_with_crag(
         if verdict in {"incorrect", "ambiguous"} and i < CRAG_MAX_ITERS - 1:
             queries = [rewrite_query(question)]
             meta["rewrites"].append(queries[0])
-    scoped = scope_hits_to_project(store, hits)
+    # A generic list of developments spans many projects; narrowing to the one
+    # project two hits happen to share would hide the rest.
+    scoped = hits if query_wants_development_approvals(question) else scope_hits_to_project(store, hits)
     if len(scoped) != len(hits):
         meta["project_scoped"] = len(scoped)
     meta.update(hits_meta(scoped))
