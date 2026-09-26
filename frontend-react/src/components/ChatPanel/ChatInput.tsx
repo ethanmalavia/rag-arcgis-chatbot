@@ -10,6 +10,7 @@ interface ChatInputProps {
 export default function ChatInput({ onSend, disabled }: ChatInputProps) {
   const [value, setValue] = useState("");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [justSent, setJustSent] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const autoResize = () => {
@@ -25,6 +26,8 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
     onSend(q);
     setValue("");
     requestAnimationFrame(autoResize);
+    setJustSent(true);
+    window.setTimeout(() => setJustSent(false), 320);
   };
 
   const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -62,13 +65,21 @@ export default function ChatInput({ onSend, disabled }: ChatInputProps) {
           }}
           onKeyDown={handleKey}
         />
-        <button type="button" id="send-btn" onClick={submit} title="Send" aria-label="Send message" disabled={disabled}>
+        <button
+          type="button"
+          id="send-btn"
+          className={justSent ? "send-pulse" : ""}
+          onClick={submit}
+          title="Send"
+          aria-label="Send message"
+          disabled={disabled}
+        >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M2 21l21-9L2 3v7l15 2-15 2z" />
           </svg>
         </button>
       </div>
-      <div id="input-footer">Data: Village of Estero Planning, Zoning &amp; Design Board · Built by Engage Estero</div>
+      <div id="input-footer">Data: Village of Estero · Built by Engage Estero</div>
       <PromptHelpDialog
         open={helpOpen}
         onClose={() => setHelpOpen(false)}

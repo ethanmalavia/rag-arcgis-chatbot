@@ -1,4 +1,4 @@
-import type { NormalizedCard, SourceType } from "../types";
+import type { AnswerSourceType, NormalizedCard, RelatedRecord, SourceType, TimelineEntry } from "../types";
 
 // ─────────────────────────────────────────────
 // Null-safety helpers
@@ -207,17 +207,65 @@ export function liveProse(text: string): string {
   return cleanProse(trimmed);
 }
 
-// Given a structured {projects, articles, summary} response, normalize into cards + prose.
+export function normalizeTimeline(items: unknown[] | undefined): TimelineEntry[] {
+  if (!items) return [];
+  return items
+    .filter((it): it is Record<string, unknown> => !!it && typeof it === "object")
+    .map((it) => ({
+      date: nullsafe(it.date),
+      event: nullsafe(it.event),
+      status: nullsafe(it.status) || "No decision recorded",
+      recordId: nullsafe(it.record_id ?? it.recordId),
+    }));
+}
+
+export function normalizeRelated(items: unknown[] | undefined): RelatedRecord[] {
+  if (!items) return [];
+  return items
+    .filter((it): it is Record<string, unknown> => !!it && typeof it === "object")
+    .map((it) => ({
+      recordId: nullsafe(it.record_id ?? it.recordId),
+      oneLine: nullsafe(it.one_line ?? it.oneLine),
+    }));
+}
+
+// Given a structured backend response, normalize into cards + prose + the
+// timeline/related/used-record-ids/follow-ups/source-type fields (see
+// backend/models.py ChatResponse and rag_path.generate_answer's JSON
+// contract — answer_markdown flows into `prose` here, rendered as real
+// markdown by Message.tsx, not stripped to plain text).
 export function parseStructuredResponse(data: {
   projects?: unknown[];
   articles?: unknown[];
   summary?: string;
   answer?: string;
-}): { prose: string; cards: NormalizedCard[] } {
+  timeline?: unknown[];
+  related?: unknown[];
+  used_record_ids?: string[];
+  follow_ups?: string[];
+  source_type?: AnswerSourceType;
+}): {
+  prose: string;
+  cards: NormalizedCard[];
+  timeline: TimelineEntry[];
+  related: RelatedRecord[];
+  usedRecordIds: string[];
+  followUps: string[];
+  sourceType: AnswerSourceType;
+} {
   const cards = ((data.projects || []) as unknown[])
     .concat((data.articles || []) as unknown[])
     .map(normalizeProject)
     .filter((c): c is NormalizedCard => !!c);
   const prose = cleanProse((data.summary || data.answer || "").trim());
-  return { prose, cards };
+  return {
+    prose,
+    cards,
+    timeline: normalizeTimeline(data.timeline),
+    related: normalizeRelated(data.related),
+    usedRecordIds: (data.used_record_ids || []).filter((id): id is string => !!id),
+    followUps: (data.follow_ups || []).filter((q): q is string => !!q),
+    // See useChat.ts: only "general" when the backend explicitly says so.
+    sourceType: data.source_type || "records",
+  };
 }

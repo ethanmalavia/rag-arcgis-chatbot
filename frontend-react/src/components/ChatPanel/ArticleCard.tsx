@@ -1,12 +1,13 @@
 import type { NormalizedCard } from "../../types";
 import { firstCategory } from "../../lib/parseAnswer";
 import { openDirections } from "../../lib/mapViewStore";
+import { recordDomId } from "../../lib/recordScroll";
 
 export default function ArticleCard({ card }: { card: NormalizedCard }) {
   const category = firstCategory(card.category);
 
   return (
-    <div className="proj-card article-card">
+    <div className="proj-card article-card" id={card.id ? recordDomId(card.id) : undefined}>
       <div className="card-tag card-tag-article">📰 EsteroToday Article</div>
       <div className="proj-title">{card.title || "Article"}</div>
       {(category || card.publishDate) && (

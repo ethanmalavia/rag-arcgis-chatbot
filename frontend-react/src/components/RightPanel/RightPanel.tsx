@@ -46,6 +46,7 @@ export default function RightPanel({ expanded, onToggleExpand, mobileVisible, on
   return (
     <div id="right-panel" className={mobileVisible ? "mobile-show" : ""}>
       <div className="right-tabs" role="tablist" aria-label="Map and Community Pulse">
+        <span className={`right-tab-indicator right-tab-indicator-${activeTab}`} aria-hidden="true" />
         <button
           type="button"
           role="tab"
@@ -67,11 +68,19 @@ export default function RightPanel({ expanded, onToggleExpand, mobileVisible, on
         </button>
       </div>
 
-      <div className="right-tab-content" style={{ display: activeTab === "map" ? "flex" : "none" }}>
-        <MapPanel expanded={expanded} onToggleExpand={onToggleExpand} onRecordCount={onRecordCount} />
-      </div>
-      <div className="right-tab-content right-tab-content-scroll" style={{ display: activeTab === "pulse" ? "flex" : "none" }}>
-        <Dashboard meetings={meetings} meetingsLoading={meetingsLoading} meetingsError={meetingsError} onSend={onSend} />
+      {/* Both panes stay mounted at all times (never unmounted) — re-initializing
+          the map iframe is expensive and loses pan/zoom state (see the file-level
+          comment above). Visibility is opacity/pointer-events, not display:none,
+          so the two panes can crossfade instead of hard-swapping. */}
+      <div className="right-tab-panes">
+        <div className={`right-tab-content right-tab-pane ${activeTab === "map" ? "active" : ""}`}>
+          <MapPanel expanded={expanded} onToggleExpand={onToggleExpand} onRecordCount={onRecordCount} />
+        </div>
+        <div
+          className={`right-tab-content right-tab-content-scroll right-tab-pane ${activeTab === "pulse" ? "active" : ""}`}
+        >
+          <Dashboard meetings={meetings} meetingsLoading={meetingsLoading} meetingsError={meetingsError} onSend={onSend} />
+        </div>
       </div>
     </div>
   );

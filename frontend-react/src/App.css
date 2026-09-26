@@ -107,7 +107,10 @@
   grid-template-columns: 46% 1fr;
   height: 100vh;
   padding-top: 64px;
-  transition: grid-template-columns 0.3s ease;
+  transition: grid-template-columns 0.2s ease-out;
+}
+#app.dragging {
+  transition: none;
 }
 #app.map-expanded {
   grid-template-columns: 1fr;
@@ -115,14 +118,171 @@
 #app.map-expanded #chat-panel {
   display: none;
 }
+#app.right-collapsed #right-panel,
+#app.right-collapsed .split-divider {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* SPLIT DIVIDER */
+.split-divider {
+  position: relative;
+  cursor: col-resize;
+  background: var(--border);
+  transition: background 0.15s;
+  z-index: 3;
+}
+.split-divider:hover,
+.split-divider:focus-visible,
+.split-divider.dragging {
+  background: var(--gold);
+  outline: none;
+}
+.split-grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+.split-grip span {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.split-divider:hover .split-grip span,
+.split-divider.dragging .split-grip span {
+  background: #fff;
+}
+.split-collapse-btn {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+.split-collapse-btn:hover {
+  background: var(--navy);
+  color: #fff;
+  border-color: var(--navy);
+}
+.split-reopen-tab {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 8px 0 0 8px;
+  padding: 14px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  animation: slideInRight 0.2s ease-out;
+}
+.split-reopen-tab:hover {
+  background: var(--navy-dark);
+}
+@keyframes slideInRight {
+  from {
+    transform: translate(100%, -50%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(0, -50%);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 /* LEFT PANEL */
 #chat-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
+  min-width: 0;
   background: var(--white);
   border-right: 1px solid var(--border);
   overflow: hidden;
+}
+.new-chat-pill {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.1s;
+  animation: fadeInUp 0.2s ease-out;
+}
+.new-chat-pill:hover {
+  background: var(--navy-light);
+  border-color: var(--navy);
+}
+.new-chat-pill:active {
+  transform: scale(0.96);
+}
+.new-chat-pill svg {
+  width: 13px;
+  height: 13px;
+}
+.chat-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+.chat-clearing {
+  opacity: 0;
 }
 
 /* HERO */
@@ -144,6 +304,15 @@
   background-size: cover;
   background-position: center 60%;
   filter: brightness(0.38);
+  animation: heroKenBurns 20s ease-in-out infinite alternate;
+}
+@keyframes heroKenBurns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
 }
 #hero-content {
   position: relative;
@@ -151,6 +320,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  animation: fadeInUp 0.6s ease-out both;
 }
 #hero-logo {
   height: 64px;
@@ -181,12 +351,28 @@
   padding: 24px 20px 8px;
   scroll-behavior: smooth;
   background: var(--bg);
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+#messages:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+#messages::-webkit-scrollbar {
+  width: 6px;
+}
+#messages::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+#messages:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
 }
 #messages.visible {
   display: block;
 }
 .msg-row {
   margin-bottom: 20px;
+  animation: fadeInUp 0.25s ease-out both;
 }
 /* user bubble */
 .msg-user {
@@ -304,6 +490,20 @@
 .prose {
   line-height: 1.65;
 }
+/* Plays once when the prose block first mounts (i.e. the moment the typing
+   indicator hands off to real text) — later token patches update the same
+   node's text content in place and don't replay it. */
+.prose-reveal {
+  animation: fadeIn 0.15s ease-out;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .prose p {
   margin: 0 0 10px;
 }
@@ -312,7 +512,7 @@
 }
 .prose strong {
   font-weight: 700;
-  color: #1a2535;
+  color: var(--navy);
 }
 .prose ol,
 .prose ul {
@@ -574,6 +774,175 @@
   transform: translateY(0);
 }
 
+/* Answer timeline */
+/* Answer source-type badge (general fallback) + mixed-source divider */
+.answer-source-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  margin-bottom: 10px;
+}
+.answer-source-badge-general {
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.answer-context-divider {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 12px 0 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+/* Bottom-line highlight box */
+.answer-bottom-line {
+  background: var(--navy-light);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.answer-bottom-line p {
+  margin: 0;
+}
+
+.answer-timeline {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.answer-timeline-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.answer-timeline-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+.answer-timeline-dot.status-approved {
+  background: var(--success);
+}
+.answer-timeline-dot.status-denied {
+  background: var(--denied);
+}
+.answer-timeline-dot.status-continued {
+  background: var(--warning);
+}
+.answer-timeline-body {
+  flex: 1;
+  min-width: 0;
+}
+.answer-timeline-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+.answer-timeline-date {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.answer-timeline-event {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 0;
+}
+
+/* Clickable record-ID citation (inline in prose, timeline, related list) */
+.record-id-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--navy);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.record-id-link:hover {
+  color: var(--gold);
+}
+@keyframes recordFlash {
+  0%,
+  100% {
+    box-shadow: none;
+  }
+  30% {
+    box-shadow: 0 0 0 3px rgba(201, 151, 58, 0.45);
+  }
+}
+.record-flash {
+  animation: recordFlash 1.2s ease-out;
+}
+
+/* Related records (collapsed) */
+.related-records {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.related-records summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.related-records ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.related-records li {
+  line-height: 1.4;
+}
+
+/* Follow-up chips */
+.follow-up-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.follow-up-chip {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--navy);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.follow-up-chip:hover {
+  border-color: var(--navy);
+  background: var(--navy-light);
+}
+
 /* Sources */
 .sources-list {
   margin-top: 10px;
@@ -647,10 +1016,13 @@
   border: 1.5px solid rgba(22, 163, 74, 0.35);
   border-radius: 28px;
   padding: 10px 12px 10px 18px;
-  transition: border-color 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 #input-wrap:focus-within {
   border-color: var(--success);
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.12);
 }
 #question {
   flex: 1;
@@ -690,6 +1062,20 @@
 #send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+#send-btn.send-pulse {
+  animation: sendPulse 0.3s ease-out;
+}
+@keyframes sendPulse {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  40% {
+    transform: scale(1.15) rotate(-10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 #send-btn svg {
   width: 16px;
@@ -922,19 +1308,36 @@
 #right-panel {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   overflow: hidden;
 }
 .right-tabs {
+  position: relative;
   display: flex;
   background: var(--navy);
   flex-shrink: 0;
+}
+.right-tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  height: 3px;
+  background: #4ade80;
+  transition: transform 0.2s ease-out;
+  pointer-events: none;
+}
+.right-tab-indicator-pulse {
+  transform: translateX(100%);
 }
 .right-tab {
   flex: 1;
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
-  color: rgba(74, 222, 128, 0.65);
+  /* muted/neutral when inactive; the sliding indicator + active color below
+     are what make the active tab obvious, per the UI cleanup pass */
+  color: rgba(255, 255, 255, 0.5);
   font-size: 13px;
   font-weight: 600;
   font-family: var(--font);
@@ -954,7 +1357,6 @@
 }
 .right-tab.active {
   color: #4ade80;
-  border-bottom-color: #4ade80;
   background: rgba(255, 255, 255, 0.04);
 }
 .pulse-notify-dot {
@@ -965,6 +1367,25 @@
   box-shadow: 0 0 0 2px rgba(201, 151, 58, 0.35);
   animation: pulse 2s infinite;
 }
+.right-tab-panes {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.right-tab-pane {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-out;
+}
+.right-tab-pane.active {
+  opacity: 1;
+  pointer-events: auto;
+}
 .right-tab-content {
   flex: 1;
   min-height: 0;
@@ -972,6 +1393,21 @@
 }
 .right-tab-content-scroll {
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+.right-tab-content-scroll:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+.right-tab-content-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.right-tab-content-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+}
+.right-tab-content-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* ═══════════════════════════════════════════════
@@ -991,6 +1427,29 @@
   border-radius: 10px;
   padding: 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.15s ease-out,
+    box-shadow 0.15s ease-out;
+}
+.pulse-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+/* Stagger in on load, ~50ms apart. Dashboard's widgets stay mounted for the
+   app's lifetime (see RightPanel.tsx), so this plays once on first load, not
+   on every Map/Pulse tab switch. */
+#pulse-dashboard > .pulse-widget {
+  opacity: 0;
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+#pulse-dashboard > .pulse-widget:nth-child(1) {
+  animation-delay: 0ms;
+}
+#pulse-dashboard > .pulse-widget:nth-child(2) {
+  animation-delay: 50ms;
+}
+#pulse-dashboard > .pulse-widget:nth-child(3) {
+  animation-delay: 100ms;
 }
 .pulse-widget-navy {
   border-left: 3px solid var(--navy);
@@ -1083,6 +1542,10 @@ a.meeting-row-link:hover .meeting-name {
   flex-direction: column;
   border: 1px solid var(--border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease-out;
+}
+.meeting-row:hover .date-leaf {
+  transform: scale(1.08);
 }
 .date-leaf-month {
   background: var(--navy);
@@ -1415,10 +1878,16 @@ a.meeting-row-link:hover .meeting-name {
   letter-spacing: 0.3px;
   text-transform: uppercase;
   cursor: pointer;
+  transition:
+    transform 0.15s ease-out,
+    background 0.2s ease-out,
+    color 0.2s ease-out,
+    border-color 0.2s ease-out;
 }
 .events-cat-chip:hover {
   border-color: var(--navy);
   color: var(--navy);
+  transform: scale(1.06);
 }
 .events-cat-chip-active {
   background: var(--navy);
@@ -1722,6 +2191,42 @@ a.meeting-row-link:hover .meeting-name {
   color: var(--denied);
 }
 
+/* DISCLAIMER MODAL */
+.disclaimer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(18, 36, 64, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.disclaimer-dialog {
+  background: var(--white);
+  border-radius: 14px;
+  width: min(420px, 100%);
+  padding: 22px 24px 20px;
+  color: var(--text);
+  font-family: var(--font);
+}
+.disclaimer-dialog h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 10px;
+}
+.disclaimer-dialog p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+.disclaimer-ack-btn {
+  width: 100%;
+  justify-content: center;
+}
+
 /* PROMPT HELP DIALOG */
 .prompt-help-backdrop {
   position: fixed;
@@ -1858,4 +2363,18 @@ a.meeting-row-link:hover .meeting-name {
 .btn-prompt-secondary:hover {
   border-color: var(--navy);
   background: var(--navy-light);
+}
+
+/* REDUCED MOTION — turns off all non-essential animation/transitions above
+   when the user's OS setting asks for it. Keep this last so nothing here
+   needs !important-fighting from rules defined after it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

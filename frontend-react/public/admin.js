@@ -11,13 +11,16 @@ const API_BASE = (
 
 const TOKEN_KEY = "ee_admin_token";
 
+// localStorage (not sessionStorage): the main chat page checks for this key
+// to decide whether to show its "Admin" link at all, which only works if the
+// key is visible across tabs/sessions rather than scoped to this one tab.
 function getToken() {
-  return sessionStorage.getItem(TOKEN_KEY) || "";
+  return localStorage.getItem(TOKEN_KEY) || "";
 }
 
 function setToken(token) {
-  if (token) sessionStorage.setItem(TOKEN_KEY, token);
-  else sessionStorage.removeItem(TOKEN_KEY);
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
 }
 
 function authHeaders(extra) {

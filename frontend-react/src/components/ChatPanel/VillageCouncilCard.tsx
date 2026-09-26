@@ -2,6 +2,7 @@ import type { NormalizedCard } from "../../types";
 import { statusClass, statusEmoji } from "../../lib/parseAnswer";
 import { openDirections, panToCoords } from "../../lib/mapViewStore";
 import { switchToTab } from "../../lib/uiStore";
+import { recordDomId } from "../../lib/recordScroll";
 
 export default function VillageCouncilCard({ card }: { card: NormalizedCard }) {
   const meta = [card.id, card.location].filter(Boolean).join(" · ");
@@ -16,7 +17,7 @@ export default function VillageCouncilCard({ card }: { card: NormalizedCard }) {
   };
 
   return (
-    <div className="proj-card village-card">
+    <div className="proj-card village-card" id={card.id ? recordDomId(card.id) : undefined}>
       <div className="card-tag card-tag-village">🏘️ Village Council</div>
       <div className="proj-title">{card.title || card.id || "Agenda Item"}</div>
       {meta && <div className="proj-meta">{meta}</div>}

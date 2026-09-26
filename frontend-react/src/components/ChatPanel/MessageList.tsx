@@ -6,9 +6,10 @@ import type { ReportPrefill } from "../ReportDialog/ReportDialog";
 interface MessageListProps {
   messages: ChatMessage[];
   onReport?: (prefill: ReportPrefill) => void;
+  onSend?: (text: string) => void;
 }
 
-export default function MessageList({ messages, onReport }: MessageListProps) {
+export default function MessageList({ messages, onReport, onSend }: MessageListProps) {
   const { ref, onScroll } = useAutoScroll<HTMLDivElement>([messages]);
 
   return (
@@ -23,7 +24,7 @@ export default function MessageList({ messages, onReport }: MessageListProps) {
       aria-label="Conversation"
     >
       {messages.map((m) => (
-        <Message key={m.id} message={m} onReport={onReport} />
+        <Message key={m.id} message={m} onReport={onReport} onSend={onSend} />
       ))}
     </div>
   );

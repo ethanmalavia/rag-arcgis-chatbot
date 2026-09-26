@@ -18,6 +18,25 @@ export interface NormalizedCard {
   lng: number | null;
 }
 
+/** One entry in a bot answer's timeline (backend/models.py TimelineEntry). */
+export interface TimelineEntry {
+  date: string;
+  event: string;
+  status: string;
+  recordId: string;
+}
+
+/** A loosely-related record (same street, different project, etc.) shown
+ * collapsed, one line each — backend/models.py RelatedRecord. */
+export interface RelatedRecord {
+  recordId: string;
+  oneLine: string;
+}
+
+/** "records" = answered from Village/EsteroToday records, "general" = no
+ * relevant records, answered from general knowledge, "mixed" = both. */
+export type AnswerSourceType = "records" | "mixed" | "general";
+
 export interface ChatMessage {
   id: string;
   role: "user" | "bot";
@@ -35,6 +54,11 @@ export interface ChatMessage {
   route?: string;
   feedbackMeta?: Record<string, unknown>;
   feedbackRating?: "up" | "down";
+  timeline?: TimelineEntry[];
+  related?: RelatedRecord[];
+  usedRecordIds?: string[];
+  followUps?: string[];
+  sourceType?: AnswerSourceType;
 }
 
 export interface ChatApiResponse {
@@ -46,6 +70,11 @@ export interface ChatApiResponse {
   sources?: string[];
   route?: string;
   meta?: Record<string, unknown>;
+  timeline?: unknown[];
+  related?: unknown[];
+  used_record_ids?: string[];
+  follow_ups?: string[];
+  source_type?: AnswerSourceType;
 }
 
 export interface StreamDonePayload {
@@ -56,6 +85,11 @@ export interface StreamDonePayload {
   sources?: string[];
   route?: string;
   meta?: Record<string, unknown>;
+  timeline?: unknown[];
+  related?: unknown[];
+  used_record_ids?: string[];
+  follow_ups?: string[];
+  source_type?: AnswerSourceType;
 }
 
 // ─────────────────────────────────────────────

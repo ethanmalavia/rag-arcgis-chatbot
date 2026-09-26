@@ -2,6 +2,7 @@ import type { NormalizedCard } from "../../types";
 import { statusClass, statusEmoji } from "../../lib/parseAnswer";
 import { openDirections, panToCoords } from "../../lib/mapViewStore";
 import { switchToTab } from "../../lib/uiStore";
+import { recordDomId } from "../../lib/recordScroll";
 import type { ReportPrefill } from "../ReportDialog/ReportDialog";
 
 interface ProjectCardProps {
@@ -21,7 +22,7 @@ export default function ProjectCard({ card, onReport }: ProjectCardProps) {
   };
 
   return (
-    <div className="proj-card">
+    <div className="proj-card" id={card.id ? recordDomId(card.id) : undefined}>
       <div className="card-tag card-tag-board">🏛 Board Record</div>
       <div className="proj-title">{card.title || card.id || "Project"}</div>
       {meta && <div className="proj-meta">{meta}</div>}
