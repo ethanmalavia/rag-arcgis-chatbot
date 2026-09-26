@@ -114,6 +114,41 @@ def test_visitfortmyers_detail_and_rss_parsers():
     assert "Fort Myers" in (parsed["venue"] or "")
 
 
+def test_hertz_listing_parser_assigns_year_wrap():
+    from datetime import date
+
+    from events_sources.hertz import _parse_listing_html
+
+    html = """
+    <div class="event-bucket grid-item"><div class="eb-img"></div>
+    <div class="eb-content"><h3>Brad Paisley</h3>
+    <div class="eb-info">Sep 17 <span>|</span> 7:30pm</div>
+    <div class="eb-links">
+      <a href="https://hertzarena.com/events/brad-paisley/" class="eb-d-link">Details</a>
+    </div></div></div>
+    <div class="event-bucket grid-item"><div class="eb-img"></div>
+    <div class="eb-content"><h3>WWE Road to Survivor Series: WarGames</h3>
+    <div class="eb-info">Nov 12 <span>|</span> 7:30pm</div>
+    <div class="eb-links">
+      <a href="https://hertzarena.com/events/wwe/" class="eb-d-link">Details</a>
+    </div></div></div>
+    <div class="event-bucket grid-item"><div class="eb-img"></div>
+    <div class="eb-content"><h3>Barry Manilow</h3>
+    <div class="eb-info">Jan 16 <span>|</span> 7:00pm</div>
+    <div class="eb-links">
+      <a href="https://hertzarena.com/events/barry-manilow/" class="eb-d-link">Details</a>
+    </div></div></div>
+    """
+    events = _parse_listing_html(html, today=date(2026, 9, 9))
+    by_title = {e["title"]: e for e in events}
+    assert by_title["Brad Paisley"]["start"] == "2026-09-17T19:30:00"
+    assert by_title["WWE Road to Survivor Series: WarGames"]["start"] == "2026-11-12T19:30:00"
+    assert by_title["Barry Manilow"]["start"] == "2027-01-16T19:00:00"
+    assert by_title["Brad Paisley"]["venue"] == "Hertz Arena, Estero"
+    assert by_title["Brad Paisley"]["source"] == "venue"
+    assert by_title["Brad Paisley"]["url"].endswith("/events/brad-paisley/")
+    assert by_title["WWE Road to Survivor Series: WarGames"]["category"] == "sports"
+
 def test_dedupe_by_title_date_venue():
     a = make_event(
         id="1",
@@ -345,6 +380,7 @@ def test_aggregate_merges_lee_and_vfm(monkeypatch):
 
     monkeypatch.setattr(aggregate, "fetch_esterotoday_events", lambda: [])
     monkeypatch.setattr(aggregate, "fetch_fgcu_events", lambda: [])
+    monkeypatch.setattr(aggregate, "fetch_hertz_events", lambda: [])
     monkeypatch.setattr(
         aggregate,
         "fetch_lee_county_events",

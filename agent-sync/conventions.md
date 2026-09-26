@@ -23,6 +23,7 @@ Shared rules for Nolan, Ethan, Krish, and Cursor agents. Prefer this over invent
 ## Backend
 
 - Community events: soft-fail per source; geo-filter + dedupe in `normalize.py`.
+- Hertz Arena: `events_sources/hertz.py` from the public upcoming-events listing only.
 - Events chat path must not steal planning/zoning questions (`backend/events_path.py`).
 - Document type: `from langchain_core.documents import Document` (not `langchain.schema`).
 - Tests: `cd backend && pytest -q` (CI uses Python 3.11).

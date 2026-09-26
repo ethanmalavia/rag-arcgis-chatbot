@@ -38,7 +38,7 @@ export function useMeetings(limit = 3): UseMeetingsResult {
     setLoading(true);
     setError(null);
 
-    fetch("/meetings.json")
+    fetch(`${import.meta.env.BASE_URL}meetings.json`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json() as Promise<MeetingsFile>;
