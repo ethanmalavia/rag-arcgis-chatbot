@@ -3,8 +3,17 @@ from __future__ import annotations
 
 import os
 
+from dotenv import load_dotenv
+
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(BACKEND_DIR)
+
+# Load backend/.env before any os.getenv below. app.py imports this module
+# before its own load_dotenv call, so without this the .env values
+# (RERANKER_MODEL, ADMIN_API_KEY, ...) were silently ignored under
+# `uvicorn app:app`. Real environment variables still win (override=False),
+# so Docker / Cloud Run behave as before.
+load_dotenv(os.path.join(BACKEND_DIR, ".env"))
 FRONTEND_DIR = os.path.join(REPO_ROOT, "frontend")
 
 INDEX_DIR = os.path.join(BACKEND_DIR, "faiss_index")
@@ -40,12 +49,22 @@ EXCLUDED_CATEGORY_SLUGS = {
 }
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5")
-# MiniLM cross-encoder is ~5–10× faster on Cloud Run CPU than bge-reranker-base.
-RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
-# Single Claude call extracts matching project facts and writes the citizen
-# summary together (see rag_path.generate_answer).
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
-# Skip LLM when keyword lookup returns a tight hit (app ID or ≤ N rows).
+# NOTE: bge-reranker-base is heavier than the ms-marco-MiniLM cross-encoder
+# this replaced — reranker.py's docstring documents an observed 28s stall on
+# a contended Cloud Run CPU with MiniLM already, so watch latency after this
+# change and set RERANKER_MODEL back to cross-encoder/ms-marco-MiniLM-L-6-v2
+# via env var if bge-reranker-base reproduces that in production.
+RERANKER_MODEL = os.getenv("RERANKER_MODEL", "BAAI/bge-reranker-base")
+# Sole LLM: Claude Haiku via claude_client.py (the official Anthropic SDK).
+# llm_provider.py's ANTHROPIC_MODEL/GROQ_MODEL are legacy — see that module's
+# now-deprecated docstring. LLM_MODEL is the one place the model name lives.
+LLM_MODEL = os.getenv("LLM_MODEL", "claude-haiku-4-5-20251001")
+# Deprecated alias some older code/tests still read — keep pointed at the
+# same value as LLM_MODEL rather than drifting out of sync.
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", LLM_MODEL)
+# Every question now goes through query rewrite -> retrieval -> rerank -> LLM
+# (see orchestrator.py) — this shortcut is retired, kept only so old env
+# files setting it to "false" don't error; it's read nowhere anymore.
 KEYWORD_FAST_MAX_ROWS = int(os.getenv("KEYWORD_FAST_MAX_ROWS", "6"))
 ENABLE_KEYWORD_SHORTCUT = os.getenv("ENABLE_KEYWORD_SHORTCUT", "true").lower() not in {"0", "false", "no"}
 
@@ -53,8 +72,17 @@ DENSE_K = int(os.getenv("DENSE_K", "12"))
 SPARSE_K = int(os.getenv("SPARSE_K", "12"))
 RERANK_K = int(os.getenv("RERANK_K", "8"))
 # How many fused hits to score with the cross-encoder (biggest CPU cost).
-RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "12"))
+RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "20"))
+# Used by rag_path.grade_context (CRAG retrieval-quality grading), a
+# different job than MIN_RERANK_SCORE below — see that constant's comment.
 SCORE_THRESHOLD = float(os.getenv("SCORE_THRESHOLD", "0.25"))
+# Hard floor on the reranker's (sigmoid-normalized, 0-1) score — a candidate
+# below this is dropped from the final result set, full stop, even if that
+# means fewer than RERANK_K results or an empty source-type bucket. Verified
+# empirically for BAAI/bge-reranker-base: a clearly relevant doc scores
+# ~0.98, an unrelated one scores ~0.0 — see retrieval.hybrid_retrieve's
+# comment on why this must be a hard floor, not just a soft preference.
+MIN_RERANK_SCORE = float(os.getenv("MIN_RERANK_SCORE", "0.25"))
 # One retrieve pass by default; set 2 to enable CRAG rewrite retry.
 CRAG_MAX_ITERS = int(os.getenv("CRAG_MAX_ITERS", "1"))
 CHUNK_SUMMARY_MIN = int(os.getenv("CHUNK_SUMMARY_MIN", "200"))
@@ -71,7 +99,16 @@ RECENT_QUERY_BOOST = float(os.getenv("RECENT_QUERY_BOOST", "1.5"))
 RECENT_QUERY_MAX_AGE_YEARS = float(os.getenv("RECENT_QUERY_MAX_AGE_YEARS", "3"))
 # Optional: Claude Haiku rewrites weak CRAG queries (falls back to rules if unset).
 ENABLE_HAIKU_REWRITE = os.getenv("ENABLE_HAIKU_REWRITE", "true").lower() not in {"0", "false", "no"}
-HAIKU_REWRITE_MODEL = os.getenv("HAIKU_REWRITE_MODEL", "claude-haiku-4-5-20251001")
+HAIKU_REWRITE_MODEL = os.getenv("HAIKU_REWRITE_MODEL", LLM_MODEL)
+# Always-on pre-retrieval query rewrite (distinct from the CRAG retry-rewrite
+# above, which only fires when CRAG_MAX_ITERS > 1). Expands short/bare
+# queries like "wawa" into a fuller search query before the first retrieval.
+ENABLE_QUERY_REWRITE = os.getenv("ENABLE_QUERY_REWRITE", "true").lower() not in {"0", "false", "no"}
+QUERY_REWRITE_MODEL = os.getenv("QUERY_REWRITE_MODEL", LLM_MODEL)
+# Rewrite call: temperature 0 (deterministic), tight token budget.
+QUERY_REWRITE_TEMPERATURE = 0.0
+QUERY_REWRITE_MAX_TOKENS = int(os.getenv("QUERY_REWRITE_MAX_TOKENS", "150"))
+ANSWER_MAX_TOKENS = int(os.getenv("ANSWER_MAX_TOKENS", "1024"))
 
 # Project-scoped retrieval: when the top hits converge on one project (via the
 # ProjectId grouping key from the gold corpus), expand to that project's full
@@ -85,6 +122,9 @@ STALE_SOURCE_YEARS = float(os.getenv("STALE_SOURCE_YEARS", "5"))
 # Prompt pack under backend/prompts/<variant>/ (default | concise).
 # concise = shorter resident answers (2–3 bullets, ≤3 project cards).
 PROMPT_VARIANT = os.getenv("PROMPT_VARIANT", "concise").strip() or "concise"
+# Structured-JSON answer step (rag_path.generate_answer) — low temperature
+# for consistent, citation-grounded output rather than creative variation.
+ANSWER_TEMPERATURE = float(os.getenv("ANSWER_TEMPERATURE", "0.2"))
 
 FEEDBACK_DIR = os.path.join(DATA_DIR, "feedback")
 FEEDBACK_FILE = os.path.join(FEEDBACK_DIR, "feedback.jsonl")

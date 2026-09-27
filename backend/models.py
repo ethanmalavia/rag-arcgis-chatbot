@@ -39,10 +39,35 @@ class ProjectOut(BaseModel):
     category: str = ""
 
 
+class TimelineEntry(BaseModel):
+    date: str = ""
+    event: str = ""
+    status: str = "No decision recorded"
+    record_id: str = ""
+
+
+class RelatedRecord(BaseModel):
+    record_id: str = ""
+    one_line: str = ""
+
+
 class ChatResponse(BaseModel):
     summary: str
     projects: list[ProjectOut] = Field(default_factory=list)
     answer: str = ""
+    # Structured answer fields (rag_path.generate_answer's JSON contract) —
+    # empty on non-RAG routes (structured/events), which build their own
+    # ChatResponse without an LLM call.
+    timeline: list[TimelineEntry] = Field(default_factory=list)
+    related: list[RelatedRecord] = Field(default_factory=list)
+    # IDs the LLM actually cited/used — `projects` above is already filtered
+    # to just these (see rag_path.build_cards' used_ids param). Distinct from
+    # the (unlogged-here) full retrieved-candidate set — see meta.
+    used_record_ids: list[str] = Field(default_factory=list)
+    follow_ups: list[str] = Field(default_factory=list)
+    # "records" (answered from Village/EsteroToday records), "general"
+    # (no relevant records — answered from general knowledge), or "mixed".
+    source_type: str = "records"
     route: str = "rag"
     meta: dict[str, Any] = Field(default_factory=dict)
 

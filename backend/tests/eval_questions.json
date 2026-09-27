@@ -1,0 +1,22 @@
+[
+  { "id": "bare-keyword-wawa", "question": "wawa" },
+  { "id": "general-fallback-opening-date", "question": "When is the Wawa expected to open?" },
+  { "id": "bare-keyword-street", "question": "sandy lane" },
+  { "id": "street-year", "question": "corkscrew road 2024" },
+  { "id": "recent-approved", "question": "what got approved last month" },
+  { "id": "term-definition", "question": "what is a special exception" },
+  { "id": "no-results", "question": "what's happening with the old Coconut Point movie theater" },
+  { "id": "specific-project-full", "question": "What happened with the Wawa development on Corkscrew Road?" },
+  { "id": "status-check", "question": "Was the special exception on Sandy Lane approved?" },
+  { "id": "timeline-request", "question": "Give me the full timeline for the Camargo North project" },
+  { "id": "denied-search", "question": "What projects were denied this year?" },
+  { "id": "continued-search", "question": "Which items got continued at the last Planning Zoning Design Board meeting?" },
+  { "id": "application-id", "question": "DCI2021-E004" },
+  { "id": "location-general", "question": "What's being built near Coconut Point?" },
+  { "id": "ambiguous-short", "question": "corkscrew" },
+  { "id": "recent-news", "question": "Any recent news about I-75 expansion in Estero?" },
+  { "id": "vague-development", "question": "new developments" },
+  { "id": "specific-address", "question": "What's happening at 9301 Corkscrew Road?" },
+  { "id": "council-vs-pzdb", "question": "What did the Village Council decide about the rail trail?" },
+  { "id": "no-decision-case", "question": "Is there a decision yet on the church special exception request?" }
+]

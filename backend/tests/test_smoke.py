@@ -220,7 +220,13 @@ def test_answer_rag_keeps_both_board_and_article_cards_even_without_keyword_over
         },
     )
     monkeypatch.setattr(rag_path, "retrieve_with_crag", lambda s, q: ("ctx", {}, [(board_hit, 1.0), (article_hit, 0.9)]))
-    monkeypatch.setattr(rag_path, "generate_answer", lambda q, ctx: "Some prose answer.")
+    monkeypatch.setattr(
+        rag_path,
+        "generate_answer",
+        lambda q, ctx, record_ids=None: rag_path.StructuredAnswer(
+            answer_markdown="Some prose answer.", used_record_ids=["DOS2022-E016", "abc"]
+        ),
+    )
 
     result = rag_path.answer_rag(store, "What happened with the Wawa development project?")
 
@@ -233,45 +239,81 @@ class _FakeLLMResult:
         self.text = text
 
 
-def _ensure_llm_provider_importable(monkeypatch):
-    """llm_provider validates ANTHROPIC_API_KEY at import time — set a fake
-    one so this still works in CI with no real key configured. A no-op if
-    it's already been imported successfully elsewhere in this process."""
+def _ensure_claude_client_importable(monkeypatch):
+    """claude_client validates ANTHROPIC_API_KEY lazily on first use — set a
+    fake one so this still works in CI with no real key configured."""
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-for-unit-tests")
-    import llm_provider
+    import claude_client
 
-    return llm_provider
+    return claude_client
 
 
-def test_generate_answer_returns_prose_via_llm_provider(monkeypatch):
-    llm_provider = _ensure_llm_provider_importable(monkeypatch)
-    prose = "**Wawa** (DOS2022-E016) was approved with staff conditions on August 22, 2023."
-    monkeypatch.setattr(llm_provider, "generate", lambda **kwargs: _FakeLLMResult(prose))
+def test_generate_answer_returns_prose_via_claude_client(monkeypatch):
+    import json
+
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    prose = "**Bottom line:** **Wawa** (DOS2022-E016) was **approved** with staff conditions on August 22, 2023."
+    payload = json.dumps(
+        {
+            "answer_markdown": prose,
+            "timeline": [],
+            "related": [],
+            "used_record_ids": [],
+            "follow_ups": ["q1", "q2"],
+            "source_type": "records",
+        }
+    )
+    monkeypatch.setattr(claude_client, "generate", lambda **kwargs: _FakeLLMResult(payload))
 
     result = rag_path.generate_answer("What happened with the Wawa project?", "some retrieved context")
 
-    assert result == prose
+    assert result.answer_markdown == prose
+    assert result.used_fallback is False
+    assert result.source_type == "records"
 
 
-def test_generate_answer_strips_stray_json_fence(monkeypatch):
-    llm_provider = _ensure_llm_provider_importable(monkeypatch)
+def test_generate_answer_falls_back_on_non_json_text(monkeypatch):
+    """A response that isn't valid JSON at all (e.g. stray prose + a fence
+    block instead of the required bare JSON object) fails validation on both
+    attempts and falls back to plain text with the fence stripped."""
+    claude_client = _ensure_claude_client_importable(monkeypatch)
     monkeypatch.setattr(
-        llm_provider, "generate", lambda **kwargs: _FakeLLMResult('Some prose.\n```json\n{"a":1}\n```')
+        claude_client, "generate", lambda **kwargs: _FakeLLMResult('Some prose.\n```json\n{"a":1}\n```')
     )
 
     result = rag_path.generate_answer("Any question", "some context")
 
-    assert "```" not in result
-    assert result.startswith("Some prose.")
+    assert result.used_fallback is True
+    assert "```" not in result.answer_markdown
+    assert result.answer_markdown.startswith("Some prose.")
+    assert result.source_type == "general"
 
 
 def test_generate_answer_falls_back_when_empty(monkeypatch):
-    llm_provider = _ensure_llm_provider_importable(monkeypatch)
-    monkeypatch.setattr(llm_provider, "generate", lambda **kwargs: _FakeLLMResult("   "))
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    monkeypatch.setattr(claude_client, "generate", lambda **kwargs: _FakeLLMResult("   "))
 
     result = rag_path.generate_answer("Any question", "some context")
 
-    assert result == "I don't have records on that."
+    assert result.answer_markdown == "I don't have records on that."
+    assert result.used_fallback is True
+
+
+def test_generate_answer_returns_friendly_message_on_claude_error(monkeypatch):
+    """A Claude API failure that survives claude_client's own timeout+retry
+    must never surface a raw exception/stack trace to the resident."""
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+
+    def _raise(**kwargs):
+        raise claude_client.ClaudeError("simulated timeout after retry")
+
+    monkeypatch.setattr(claude_client, "generate", _raise)
+
+    result = rag_path.generate_answer("Any question", "some context")
+
+    assert result.used_fallback is True
+    assert result.source_type == "general"
+    assert "trouble reaching" in result.answer_markdown.lower()
 
 
 def test_finalize_prose_trims_trailing_fragment():

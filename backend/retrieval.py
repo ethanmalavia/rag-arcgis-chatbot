@@ -7,12 +7,14 @@ from typing import Any
 
 from langchain_core.documents import Document
 from sentence_transformers import CrossEncoder
+from torch import nn
 
 from config import (
     DENSE_K,
     ENABLE_PROJECT_SCOPE,
     ENABLE_RECENCY_BOOST,
     ENABLE_RERANKER,
+    MIN_RERANK_SCORE,
     PROJECT_SCOPE_CAP,
     PROJECT_SCOPE_MIN_SUPPORT,
     RECENCY_BOOST,
@@ -22,9 +24,9 @@ from config import (
     RERANK_CANDIDATES,
     RERANKER_MODEL,
     RERANK_K,
-    SCORE_THRESHOLD,
     SPARSE_K,
 )
+from schema_aliases import row_value
 from store import DataStore, _tokenize
 
 _reranker: CrossEncoder | None = None
@@ -60,7 +62,11 @@ def get_reranker() -> CrossEncoder:
     global _reranker
     if _reranker is None:
         print(f"Loading reranker {RERANKER_MODEL}…")
-        _reranker = CrossEncoder(RERANKER_MODEL)
+        # Always score on a 0-1 sigmoid scale: MIN_RERANK_SCORE, the recency
+        # boost and CRAG grading all assume it. bge-reranker-base already
+        # does, but ms-marco-MiniLM ships an Identity activation and would
+        # return raw logits (~-10..+10), which silently swamps the recency term.
+        _reranker = CrossEncoder(RERANKER_MODEL, default_activation_function=nn.Sigmoid())
     return _reranker
 
 
@@ -398,11 +404,19 @@ def hybrid_retrieve(
     scores = reranker.predict(pairs)
     # Always coerce to Python float — numpy.float32 is not JSON-serializable.
     ranked = [(d, float(s)) for d, s in sorted(zip(candidates, scores), key=lambda x: -float(x[1]))]
-    filtered = [(d, s) for d, s in ranked if s >= SCORE_THRESHOLD]
-    pool = filtered or ranked
+    filtered = [(d, s) for d, s in ranked if s >= MIN_RERANK_SCORE]
+    # Hard floor — deliberately NOT "filtered or ranked". Falling back to the
+    # unfiltered list when nothing clears the bar is exactly how an unrelated
+    # doc (e.g. a rail-trail article for a "wawa" question) used to slip back
+    # in: _reserve_by_bucket below guarantees a couple of results per
+    # source-type bucket, and if `pool` still contained 0.0-scored docs, that
+    # guarantee would happily promote one of them just to fill the quota.
+    pool = filtered
     if query_wants_recent(intent):
-        # Bypass SCORE_THRESHOLD for the objectively most-recent candidates —
-        # see _reserve_recent.
+        # Recency intent is the one deliberate exception: bypass the floor
+        # for the objectively most-recent candidates per bucket, so a
+        # "what's new" query doesn't miss a genuinely-recent-but-just-under-
+        # threshold item — see _reserve_recent's own docstring.
         pool = _reserve_recent(ranked, pool, _RECENCY_TOPUP)
     boosted = apply_recency_boost(pool, query, intent_query=intent)
     return _reserve_by_bucket(boosted, _MIN_BUCKET_RESULTS, RERANK_K)
@@ -470,6 +484,114 @@ def scope_hits_to_project(
     # items); unlinked keyword hits demoted after and dropped if the cap fills.
     kept.sort(key=lambda t: (0 if _project_id(t[0]) == pid else 1, -t[1]))
     return kept[:PROJECT_SCOPE_CAP]
+
+
+def _record_type(source_type: str) -> str:
+    """Collapse the frontend's finer source_type vocabulary (board_record /
+    website_article / website_page / event / document) down to the 3-way
+    label the answer model's record format uses."""
+    if not source_type:
+        return "board record"
+    if source_type == "website_article":
+        return "article"
+    return "document"
+
+
+def merge_records_for_llm(store: DataStore, hits: list[tuple[Document, float]]) -> list[dict[str, Any]]:
+    """Merge hit chunks belonging to the same record into one entry, so a
+    record isn't sent to the answer model twice (e.g. its 'meta' chunk and
+    its 'summary' chunk both surviving rerank). Mirrors rag_path.build_cards'
+    dedupe key (application_id, else row-{row_index} for board rows;
+    (source_type, record_id-or-url) for supplemental sources) so both stay in
+    sync — but returns the raw id/type/title/date/address/action/outcome
+    fields this formatter needs instead of a UI ProjectOut card, keeping the
+    LLM-context path independent of card-building. Keeps the best (highest)
+    rerank score seen across a record's merged chunks, for eval logging.
+    """
+    board_by_id: dict[str, dict[str, Any]] = {}
+    board_dates: dict[str, str] = {}
+    supplemental_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+
+    for doc, score in hits:
+        md = doc.metadata
+        source_type = md.get("source_type")
+        if source_type:
+            record_id = str(md.get("record_id") or "").strip()
+            url = str(md.get("url") or md.get("document_url") or "").strip()
+            key = (source_type, record_id or url)
+            if key in supplemental_by_key:
+                supplemental_by_key[key]["score"] = max(supplemental_by_key[key]["score"], float(score))
+                continue
+            supplemental_by_key[key] = {
+                "id": record_id or url,
+                "type": _record_type(source_type),
+                "title": str(md.get("title") or "").strip(),
+                "date": str(md.get("publish_date") or md.get("date") or "").strip(),
+                "address": "",
+                "action": "",
+                "outcome": "",
+                "score": float(score),
+            }
+            continue
+
+        row_index = md.get("row_index")
+        if row_index is None:
+            continue
+        try:
+            row = store.dataframe.iloc[int(row_index)].to_dict()
+        except (IndexError, ValueError, TypeError):
+            continue
+        app_id = row_value(row, "application_id").strip()
+        dedupe_key = app_id or f"row-{row_index}"
+        this_date = row_value(row, "meeting_date")
+        # Same dedupe rule as build_cards: keep whichever chunk's row is the
+        # most-recently-dated meeting for this record.
+        if dedupe_key in board_by_id:
+            board_by_id[dedupe_key]["score"] = max(board_by_id[dedupe_key]["score"], float(score))
+            if (board_dates.get(dedupe_key) or "") >= this_date:
+                continue
+        board_dates[dedupe_key] = this_date
+        prior_score = board_by_id.get(dedupe_key, {}).get("score", float(score))
+        board_by_id[dedupe_key] = {
+            "id": app_id or dedupe_key,
+            "type": "board record",
+            "title": row_value(row, "project_name"),
+            "date": this_date,
+            "address": row_value(row, "location"),
+            "action": row_value(row, "action_taken"),
+            "outcome": row_value(row, "outcome"),
+            "score": max(prior_score, float(score)),
+        }
+
+    return list(board_by_id.values()) + list(supplemental_by_key.values())
+
+
+def format_records_for_llm(records: list[dict[str, Any]]) -> str:
+    """Format merged records for the answer model, oldest to newest, one per
+    line: `ID | type | title | date | address | action | outcome`."""
+    if not records:
+        return "No relevant records found in the dataset."
+
+    def _sort_key(r: dict[str, Any]) -> str:
+        # Blank dates sort first under plain ascending order — push them last
+        # instead so a handful of undated supplemental hits don't get read as
+        # "oldest" ahead of genuinely old dated records.
+        return r.get("date") or "9999-99-99"
+
+    ordered = sorted(records, key=_sort_key)
+    lines = []
+    for r in ordered:
+        fields = [
+            r.get("id", ""),
+            r.get("type", ""),
+            r.get("title", ""),
+            r.get("date", ""),
+            r.get("address", ""),
+            r.get("action", ""),
+            r.get("outcome", ""),
+        ]
+        lines.append(" | ".join(str(f).replace("|", "/").strip() for f in fields))
+    return "\n".join(lines)
 
 
 def format_docs(hits: list[tuple[Document, float]]) -> str:
