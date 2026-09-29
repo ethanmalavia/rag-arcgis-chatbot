@@ -1,0 +1,24 @@
+# One container: FastAPI + React UI (same image Cloud Run uses).
+# From this directory: ./up.sh
+# Site: http://<server-ip>/
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    image: rag-arcgis-chatbot:vps
+    ports:
+      - "80:8080"
+    env_file:
+      - .env
+    environment:
+      SERVE_FRONTEND: "true"
+      PORT: "8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/ready')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
