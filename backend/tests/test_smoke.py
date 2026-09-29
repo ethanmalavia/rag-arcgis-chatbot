@@ -220,7 +220,13 @@ def test_answer_rag_keeps_both_board_and_article_cards_even_without_keyword_over
         },
     )
     monkeypatch.setattr(rag_path, "retrieve_with_crag", lambda s, q: ("ctx", {}, [(board_hit, 1.0), (article_hit, 0.9)]))
-    monkeypatch.setattr(rag_path, "generate_answer", lambda q, ctx: "Some prose answer.")
+    monkeypatch.setattr(
+        rag_path,
+        "generate_answer",
+        lambda q, ctx, record_ids=None: rag_path.StructuredAnswer(
+            answer_markdown="Some prose answer.", used_record_ids=["DOS2022-E016", "abc"]
+        ),
+    )
 
     result = rag_path.answer_rag(store, "What happened with the Wawa development project?")
 
@@ -233,45 +239,81 @@ class _FakeLLMResult:
         self.text = text
 
 
-def _ensure_llm_provider_importable(monkeypatch):
-    """llm_provider validates ANTHROPIC_API_KEY at import time — set a fake
-    one so this still works in CI with no real key configured. A no-op if
-    it's already been imported successfully elsewhere in this process."""
+def _ensure_claude_client_importable(monkeypatch):
+    """claude_client validates ANTHROPIC_API_KEY lazily on first use — set a
+    fake one so this still works in CI with no real key configured."""
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-for-unit-tests")
-    import llm_provider
+    import claude_client
 
-    return llm_provider
+    return claude_client
 
 
-def test_generate_answer_returns_prose_via_llm_provider(monkeypatch):
-    llm_provider = _ensure_llm_provider_importable(monkeypatch)
-    prose = "**Wawa** (DOS2022-E016) was approved with staff conditions on August 22, 2023."
-    monkeypatch.setattr(llm_provider, "generate", lambda **kwargs: _FakeLLMResult(prose))
+def test_generate_answer_returns_prose_via_claude_client(monkeypatch):
+    import json
+
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    prose = "**Bottom line:** **Wawa** (DOS2022-E016) was **approved** with staff conditions on August 22, 2023."
+    payload = json.dumps(
+        {
+            "answer_markdown": prose,
+            "timeline": [],
+            "related": [],
+            "used_record_ids": [],
+            "follow_ups": ["q1", "q2"],
+            "source_type": "records",
+        }
+    )
+    monkeypatch.setattr(claude_client, "generate", lambda **kwargs: _FakeLLMResult(payload))
 
     result = rag_path.generate_answer("What happened with the Wawa project?", "some retrieved context")
 
-    assert result == prose
+    assert result.answer_markdown == prose
+    assert result.used_fallback is False
+    assert result.source_type == "records"
 
 
-def test_generate_answer_strips_stray_json_fence(monkeypatch):
-    llm_provider = _ensure_llm_provider_importable(monkeypatch)
+def test_generate_answer_falls_back_on_non_json_text(monkeypatch):
+    """A response that isn't valid JSON at all (e.g. stray prose + a fence
+    block instead of the required bare JSON object) fails validation on both
+    attempts and falls back to plain text with the fence stripped."""
+    claude_client = _ensure_claude_client_importable(monkeypatch)
     monkeypatch.setattr(
-        llm_provider, "generate", lambda **kwargs: _FakeLLMResult('Some prose.\n```json\n{"a":1}\n```')
+        claude_client, "generate", lambda **kwargs: _FakeLLMResult('Some prose.\n```json\n{"a":1}\n```')
     )
 
     result = rag_path.generate_answer("Any question", "some context")
 
-    assert "```" not in result
-    assert result.startswith("Some prose.")
+    assert result.used_fallback is True
+    assert "```" not in result.answer_markdown
+    assert result.answer_markdown.startswith("Some prose.")
+    assert result.source_type == "general"
 
 
 def test_generate_answer_falls_back_when_empty(monkeypatch):
-    llm_provider = _ensure_llm_provider_importable(monkeypatch)
-    monkeypatch.setattr(llm_provider, "generate", lambda **kwargs: _FakeLLMResult("   "))
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    monkeypatch.setattr(claude_client, "generate", lambda **kwargs: _FakeLLMResult("   "))
 
     result = rag_path.generate_answer("Any question", "some context")
 
-    assert result == "I don't have records on that."
+    assert result.answer_markdown == "I don't have records on that."
+    assert result.used_fallback is True
+
+
+def test_generate_answer_returns_friendly_message_on_claude_error(monkeypatch):
+    """A Claude API failure that survives claude_client's own timeout+retry
+    must never surface a raw exception/stack trace to the resident."""
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+
+    def _raise(**kwargs):
+        raise claude_client.ClaudeError("simulated timeout after retry")
+
+    monkeypatch.setattr(claude_client, "generate", _raise)
+
+    result = rag_path.generate_answer("Any question", "some context")
+
+    assert result.used_fallback is True
+    assert result.source_type == "general"
+    assert "trouble reaching" in result.answer_markdown.lower()
 
 
 def test_finalize_prose_trims_trailing_fragment():
@@ -790,3 +832,205 @@ def test_development_approval_intent_and_curated_docs():
     assert [d.metadata["row_index"] for d in _development_approval_docs(store, year=2025)] == [4]
     # Not asking about approvals: newest development items of any status (row 3 is "No Action").
     assert [d.metadata["row_index"] for d in _development_approval_docs(store, approved_only=False)] == [3, 0, 4]
+
+
+# ── Structured answer x main's retrieval: citations, cards, context ─────────
+
+
+def _fake_store_board_and_council_rows() -> DataStore:
+    import pandas as pd
+
+    df = pd.DataFrame(
+        [
+            {
+                "ApplicationID": "DOS2022-E016",
+                "ProjectName": "Wawa Convenience Food & Beverage Store",
+                "Location": "10081 Estero Town Commons Place",
+                "Outcome": "Approved with staff conditions",
+                "MeetingDate": "2023-08-22",
+                "Summary": "Board approved a 5,000 sq ft Wawa with fuel pumps and 12 conditions.",
+                "Document_Link": "https://example.com/doc.pdf",
+            },
+            {
+                # Village Council agenda item: no ApplicationID -> keyed row-1.
+                "ApplicationID": "",
+                "ProjectName": "Rail Trail Feasibility Study",
+                "Location": "",
+                "Outcome": "Approved",
+                "MeetingDate": "2025-02-05",
+                "Summary": "Council accepted the rail trail feasibility study.",
+                "Document_Link": "https://example.com/council.pdf",
+            },
+        ]
+    )
+    return DataStore(dataframe=df)
+
+
+def _board_doc(row_index: int, app_id: str = ""):
+    from langchain_core.documents import Document
+
+    return Document(
+        page_content="SEARCH: header\n\nsummary chunk",
+        metadata={"application_id": app_id, "row_index": row_index, "chunk_type": "meta"},
+    )
+
+
+def _article_doc(record_id: str = "post-7", text: str = "Six-laning of Corkscrew Road starts in 2027."):
+    from langchain_core.documents import Document
+
+    return Document(
+        page_content=f"DATE: 2026-03-01\nSOURCE_TYPE: website_article\nTITLE: Corkscrew widening\n{text}",
+        metadata={
+            "source_type": "website_article",
+            "record_id": record_id,
+            "title": "Corkscrew widening",
+            "url": f"https://esterotoday.com/{record_id}/",
+            "publish_date": "2026-03-01",
+        },
+    )
+
+
+def test_llm_context_carries_record_text_not_just_titles():
+    """The answer model must see each record's summary / article text —
+    title+date alone can't ground a fact like a lane count or a condition."""
+    from retrieval import format_records_for_llm, merge_records_for_llm
+
+    store = _fake_store_board_and_council_rows()
+    article_a = _article_doc(text="Six-laning of Corkscrew Road starts in 2027.")
+    article_b = _article_doc(text="The project costs $48 million.")
+    records = merge_records_for_llm(
+        store, [(_board_doc(0, "DOS2022-E016"), 0.9), (article_a, 0.8), (article_b, 0.7)]
+    )
+    context = format_records_for_llm(records)
+
+    assert "[DOS2022-E016] board record" in context
+    assert "12 conditions" in context  # board Summary column
+    assert "[post-7] article" in context
+    assert "Six-laning" in context and "$48 million" in context  # both chunks merged
+    assert "SOURCE_TYPE:" not in context and "TITLE:" not in context
+    assert context.index("[post-7]") < context.index("[DOS2022-E016]")  # newest first
+    assert sorted(r["id"] for r in records) == ["DOS2022-E016", "post-7"]
+
+
+def test_cited_ids_match_card_ids_and_follow_citation_order():
+    store = _fake_store_board_and_council_rows()
+    hits = [(_board_doc(0, "DOS2022-E016"), 0.9), (_board_doc(1), 0.8), (_article_doc(), 0.7)]
+    structured = rag_path.StructuredAnswer(
+        answer_markdown="**Bottom line:** Corkscrew is widening [post-7]; Wawa was approved [DOS2022-E016].",
+        used_record_ids=["post-7", "DOS2022-E016"],
+    )
+
+    cards = rag_path.cards_for_answer(store, "corkscrew", hits, structured)
+
+    # Uncited council row dropped; cards in the order the answer cites them.
+    assert [c.id for c in cards] == ["post-7", "DOS2022-E016"]
+
+
+def test_internal_row_ids_are_carded_but_never_shown():
+    store = _fake_store_board_and_council_rows()
+    hits = [(_board_doc(1), 0.9)]
+    structured = rag_path.StructuredAnswer(
+        answer_markdown="**Bottom line:** Council accepted the study [row-1].",
+        timeline=[{"date": "2025-02-05", "event": "Accepted", "status": "Approved", "record_id": "row-1"}],
+        used_record_ids=["row-1"],
+    )
+
+    result = rag_path.build_rag_response(store, "rail trail", hits, structured, {})
+
+    assert [c.title for c in result.projects] == ["Rail Trail Feasibility Study"]
+    assert "row-1" not in result.answer
+    assert result.answer.endswith("accepted the study.")
+    assert result.timeline[0].record_id == ""
+
+
+def test_plain_text_fallback_with_records_keeps_cards_and_records_badge(monkeypatch):
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    monkeypatch.setattr(claude_client, "generate", lambda **kwargs: _FakeLLMResult("Wawa was approved in 2023."))
+
+    structured = rag_path.generate_answer("wawa", "ctx", ["DOS2022-E016"])
+    store = _fake_store_board_and_council_rows()
+    cards = rag_path.cards_for_answer(store, "wawa", [(_board_doc(0, "DOS2022-E016"), 0.9)], structured)
+
+    assert structured.used_fallback and structured.source_type == "records"
+    assert [c.id for c in cards] == ["DOS2022-E016"]
+
+
+def test_llm_outage_shows_no_cards(monkeypatch):
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+
+    def _raise(**kwargs):
+        raise claude_client.ClaudeError("down")
+
+    monkeypatch.setattr(claude_client, "generate", _raise)
+    structured = rag_path.generate_answer("wawa", "ctx", ["DOS2022-E016"])
+    store = _fake_store_board_and_council_rows()
+
+    assert structured.llm_error
+    assert rag_path.cards_for_answer(store, "wawa", [(_board_doc(0, "DOS2022-E016"), 0.9)], structured) == []
+
+
+def test_query_rewrite_only_for_bare_queries_and_never_invents_a_year(monkeypatch):
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    calls = []
+
+    def _fake(**kwargs):
+        calls.append(kwargs["user"])
+        return _FakeLLMResult("Wawa development approvals and construction status in Estero 2024")
+
+    monkeypatch.setattr(claude_client, "generate", _fake)
+
+    assert rag_path.rewrite_search_query("What happened with the Wawa development on Corkscrew Road?") is None
+    assert calls == []  # full questions skip the extra LLM round-trip
+    assert rag_path.rewrite_search_query("wawa") == "Wawa development approvals and construction status in Estero"
+    assert rag_path.rewrite_search_query("corkscrew road 2024").endswith("2024")
+
+
+def test_hidden_citations_are_stripped_cleanly():
+    text = (
+        "Updates came in **2023** and **2024** [row-1525], [row-1907]. "
+        "Final config by May [https://esterotoday.com/x/]; Wawa [DOS2022-E016], [row-3] approved."
+    )
+    out = rag_path._strip_hidden_citations(text)
+    assert out == "Updates came in **2023** and **2024**. Final config by May; Wawa [DOS2022-E016] approved."
+
+
+def test_truncated_json_answer_salvages_prose(monkeypatch):
+    """A reply cut off at max_tokens mid-timeline must show its prose, not a
+    raw ```json dump."""
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    cut = '```json\n{\n  "answer_markdown": "**Bottom line:** Corkscrew is being widened.\\n\\n- Phase II is underway.",\n  "timeline": [\n    { "date": "2024-05'
+    monkeypatch.setattr(claude_client, "generate", lambda **kwargs: _FakeLLMResult(cut))
+
+    result = rag_path.generate_answer("corkscrew", "ctx", ["post-1"])
+
+    assert result.used_fallback
+    assert result.answer_markdown == "**Bottom line:** Corkscrew is being widened.\n\n- Phase II is underway."
+
+
+def test_rerank_floor_is_relative_for_low_scoring_rerankers():
+    from retrieval import rerank_floor
+
+    assert rerank_floor(0.98) == pytest.approx(0.25)  # bge: fixed floor
+    assert rerank_floor(0.004) == pytest.approx(0.001)  # MiniLM long question: keep best match
+    assert rerank_floor(0.031) == pytest.approx(0.0062)
+    assert rerank_floor(0.0) == pytest.approx(0.001)  # pure noise still dropped
+
+
+def test_retrieval_searches_literal_query_alongside_rewrite(monkeypatch):
+    """A paraphrase must never replace the literal query — application IDs and
+    street names only match reliably as typed."""
+    seen = {}
+
+    def _fake_multi(store, queries, *, intent_query=None):
+        seen["queries"], seen["intent"] = list(queries), intent_query
+        return []
+
+    monkeypatch.setattr(rag_path, "rewrite_search_query", lambda q: "DCI2021-E004 development order status Estero")
+    monkeypatch.setattr(rag_path, "hybrid_retrieve_multi", _fake_multi)
+
+    _ctx, meta, _hits = rag_path.retrieve_with_crag(_fake_store_board_and_council_rows(), "DCI2021-E004")
+
+    assert seen["queries"][0] == "DCI2021-E004"
+    assert "DCI2021-E004 development order status Estero" in seen["queries"]
+    assert seen["intent"] == "DCI2021-E004"  # recency/events intent reads the question
+    assert meta["search_query"].startswith("DCI2021-E004")

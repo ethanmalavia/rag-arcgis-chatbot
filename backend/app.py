@@ -70,8 +70,9 @@ def _warm_models() -> dict[str, bool]:
         hybrid_retrieve(store, "Estero planning zoning")
         retrieve_ok = True
         try:
-            import llm_provider  # noqa: F401 — import validates the client/key
+            import claude_client
 
+            claude_client._get_client()  # validates ANTHROPIC_API_KEY is set
             llm_ok = True
         except Exception as e:
             logger.warning("LLM provider warmup skipped: %s", e)

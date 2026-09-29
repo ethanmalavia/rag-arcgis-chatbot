@@ -1,12 +1,12 @@
-"""Provider-agnostic LLM generation layer — optional Anthropic/Groq helpers.
+"""DEPRECATED — disabled from the live chat pipeline. Provider-agnostic
+(Anthropic/Groq) LLM generation layer, superseded by claude_client.py, which
+is now the sole LLM call path (Claude Haiku only, one config value:
+config.LLM_MODEL). Nothing in app.py/orchestrator.py/rag_path.py imports
+this module anymore.
 
-Primary RAG answers use Gemini (extract) + Groq (summary) via rag_path.py.
-Claude Haiku is reserved for the optional CRAG query-rewrite job
-(``rag_path._haiku_rewrite_query``) when ANTHROPIC_API_KEY is set — a cheaper
-task than full answer generation.
-
-This module remains available for scripts/diagnostics that call generate()
-directly. Call sites that need answer generation should prefer rag_path.
+Left in place, not deleted, only because it's still importable for any
+standalone script/diagnostic that calls generate() directly — new code
+should use claude_client.generate() instead.
 """
 from __future__ import annotations
 
@@ -179,32 +179,36 @@ def _log_usage(result: LLMResult, query_preview: str) -> None:
 # ─────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────
-def generate(system: str, user: str, max_tokens: int = 1024) -> LLMResult:
+def generate(system: str, user: str, max_tokens: int = 1024, temperature: float | None = None) -> LLMResult:
     """Generate one completion via the configured provider.
 
     `user[:60]` is what gets logged as the usage CSV's query preview, so
     call sites should put the actual question near the start of `user` if
-    they want a useful preview there.
+    they want a useful preview there. `temperature` is left as the
+    provider's own default (None) unless a call site opts in.
     """
     if LLM_PROVIDER == "anthropic":
-        result = _generate_anthropic(system, user, max_tokens)
+        result = _generate_anthropic(system, user, max_tokens, temperature)
     else:
-        result = _generate_groq(system, user, max_tokens)
+        result = _generate_groq(system, user, max_tokens, temperature)
 
     _log_usage(result, query_preview=user)
     return result
 
 
-def _generate_anthropic(system: str, user: str, max_tokens: int) -> LLMResult:
+def _generate_anthropic(system: str, user: str, max_tokens: int, temperature: float | None = None) -> LLMResult:
     assert _anthropic_client is not None  # constructed at import time
 
     def _call():
-        return _anthropic_client.messages.create(
+        kwargs: dict[str, Any] = dict(
             model=ANTHROPIC_MODEL,
             max_tokens=max_tokens,
             system=system,
             messages=[{"role": "user", "content": user}],
         )
+        if temperature is not None:
+            kwargs["temperature"] = temperature
+        return _anthropic_client.messages.create(**kwargs)
 
     start = time.perf_counter()
     response = _call_with_retry(_call, provider="anthropic")
@@ -221,11 +225,11 @@ def _generate_anthropic(system: str, user: str, max_tokens: int) -> LLMResult:
     )
 
 
-def _generate_groq(system: str, user: str, max_tokens: int) -> LLMResult:
+def _generate_groq(system: str, user: str, max_tokens: int, temperature: float | None = None) -> LLMResult:
     assert _groq_client is not None  # constructed at import time
 
     def _call():
-        return _groq_client.chat.completions.create(
+        kwargs: dict[str, Any] = dict(
             model=GROQ_MODEL,
             max_tokens=max_tokens,
             messages=[
@@ -233,6 +237,9 @@ def _generate_groq(system: str, user: str, max_tokens: int) -> LLMResult:
                 {"role": "user", "content": user},
             ],
         )
+        if temperature is not None:
+            kwargs["temperature"] = temperature
+        return _groq_client.chat.completions.create(**kwargs)
 
     start = time.perf_counter()
     response = _call_with_retry(_call, provider="groq")

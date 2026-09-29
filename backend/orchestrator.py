@@ -9,14 +9,11 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from config import PROMPT_VARIANT
 from events_path import answer_upcoming_events, is_events_question
-from keyword_path import answer_keyword, is_strong_keyword_hit
 from models import ChatResponse, RouteKind
 from rag_path import (
     answer_rag,
-    build_cards,
-    filter_projects_for_recency,
+    build_rag_response,
     generate_answer,
     retrieve_with_crag,
 )
@@ -41,16 +38,6 @@ def _dedupe_projects(projects: list) -> list:
     return out
 
 
-def _try_keyword_shortcut(store, question: str) -> ChatResponse | None:
-    """Skip LLM when keyword/lookup match is tight enough."""
-    kw = answer_keyword(store.dataframe, question)
-    if is_strong_keyword_hit(kw, question):
-        kw.meta["llm_skipped"] = True
-        kw.meta["paths"] = ["keyword"]
-        return kw
-    return None
-
-
 def answer_question(question: str) -> ChatResponse:
     store = get_store()
     if store is None or not store.is_ready():
@@ -72,17 +59,19 @@ def answer_question(question: str) -> ChatResponse:
     route = route_question(question)
     with trace_span("answer_question", {"route": route.value, "question": question[:120]}):
         if route == RouteKind.STRUCTURED:
+            # Aggregate counts ("how many X") stay a deterministic pandas
+            # count, not an LLM call — an LLM synthesizing a count from a
+            # handful of retrieved chunks would risk fabricating a number
+            # (the one thing the answer prompt explicitly forbids). Every
+            # other route — including what used to be a keyword-shortcut
+            # bypass for short/tight queries — now always goes through
+            # answer_rag's full query-rewrite -> retrieve -> rerank -> LLM
+            # pipeline below, per "every question must go through the LLM".
             result = answer_structured(store.dataframe, question)
         else:
-            # Only skip the LLM for tight hits (app IDs / few rows). Broad
-            # street/topic matches go through RAG so the summary makes sense.
-            shortcut = _try_keyword_shortcut(store, question)
-            if shortcut is not None:
-                if route == RouteKind.MIXED:
-                    shortcut.route = RouteKind.MIXED.value
-                result = shortcut
-            else:
-                result = answer_rag(store, question)
+            result = answer_rag(store, question)
+            if route == RouteKind.MIXED:
+                result.route = RouteKind.MIXED.value
         total_ms = round((time.perf_counter() - t0) * 1000)
         result.meta["latency_ms"] = total_ms
         attach_coords(result.projects, store.dataframe)
@@ -118,21 +107,16 @@ def stream_answer(question: str) -> Iterator[str]:
     yield _sse({"type": "meta", "route": route.value})
 
     if route == RouteKind.STRUCTURED:
+        # Deterministic aggregate count — see the matching comment in
+        # answer_question for why this one route stays off the LLM.
         result = answer_structured(store.dataframe, question)
         result.meta["latency_ms"] = round((time.perf_counter() - t0) * 1000)
         attach_stale_source_notice(result)
         yield _sse({"type": "done", **result.model_dump()})
         return
 
-    shortcut = _try_keyword_shortcut(store, question)
-    if shortcut is not None:
-        if route == RouteKind.MIXED:
-            shortcut.route = RouteKind.MIXED.value
-        shortcut.meta["latency_ms"] = round((time.perf_counter() - t0) * 1000)
-        attach_stale_source_notice(shortcut)
-        yield _sse({"type": "done", **shortcut.model_dump()})
-        return
-
+    # Every other route — no more keyword-shortcut bypass — goes through the
+    # full query-rewrite -> retrieve -> rerank -> LLM pipeline below.
     t_retrieve = time.perf_counter()
     context, crag_meta, hits = retrieve_with_crag(store, question)
     retrieve_ms = round((time.perf_counter() - t_retrieve) * 1000)
@@ -148,24 +132,18 @@ def stream_answer(question: str) -> Iterator[str]:
     t_gen = time.perf_counter()
     first_token_ms: int | None = None
 
-    # Single Claude call: writes free-form prose grounded in the retrieved
-    # context, then streams it as one token. Cards are never LLM-authored —
-    # built deterministically from the same hits' metadata (build_cards).
-    prose = generate_answer(question, context)
-    # Sort/recency-cutoff only — see rag_path.answer_rag for why the
-    # entity-overlap filter is skipped for deterministic cards.
-    cards = filter_projects_for_recency(question, build_cards(store, hits))
-    if prose:
+    # Single Claude call: writes a structured JSON answer grounded in the
+    # retrieved context, then streams its answer_markdown field as one
+    # token. Cards are never LLM-authored — built deterministically from the
+    # same hits' metadata, filtered to used_record_ids (build_rag_response,
+    # shared with the non-streaming answer_rag).
+    structured = generate_answer(question, context, crag_meta.get("retrieved_record_ids"))
+    result = build_rag_response(store, question, hits, structured, crag_meta)
+    if route == RouteKind.MIXED:
+        result.route = RouteKind.MIXED.value
+    if result.answer:
         first_token_ms = round((time.perf_counter() - t0) * 1000)
-        yield _sse({"type": "token", "text": prose})
-    crag_meta.update({"llm_provider": "anthropic", "prompt_variant": PROMPT_VARIANT})
-    result = ChatResponse(
-        summary=prose,
-        projects=cards,
-        answer=prose,
-        route=RouteKind.RAG.value,
-        meta=crag_meta,
-    )
+        yield _sse({"type": "token", "text": result.answer})
     result.meta["generate_ms"] = round((time.perf_counter() - t_gen) * 1000)
     result.meta["ttft_ms"] = first_token_ms
     result.meta["latency_ms"] = round((time.perf_counter() - t0) * 1000)

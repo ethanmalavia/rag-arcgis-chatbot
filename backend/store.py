@@ -141,7 +141,7 @@ def get_embeddings() -> HuggingFaceEmbeddings:
     emb = HuggingFaceEmbeddings(
         model_name=EMBEDDING_MODEL,
         model_kwargs={"device": "cpu"},
-        encode_kwargs={"batch_size": 32, "normalize_embeddings": True},
+        encode_kwargs={"batch_size": 64, "normalize_embeddings": True},
     )
     if _store is not None:
         _store.embeddings = emb
