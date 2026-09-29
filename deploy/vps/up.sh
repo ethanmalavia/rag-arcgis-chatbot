@@ -10,7 +10,7 @@ fi
 
 if [ ! -f .env ]; then
   cp .env.example .env
-  echo "Created .env — set ANTHROPIC_API_KEY (and ADMIN_API_KEY), then run ./up.sh again."
+  echo "Created .env — set ADMIN_API_KEY and optionally ANTHROPIC_API_KEY, then run ./up.sh again."
   exit 1
 fi
 
