@@ -1,5 +1,5 @@
 #!/bin/sh
-# Build and start Ask Engage Estero on this VPS (port 80).
+# Build and start Ask Engage Estero on this VPS (host port 8080).
 set -eu
 cd "$(dirname "$0")"
 
@@ -15,5 +15,5 @@ if [ ! -f .env ]; then
 fi
 
 docker compose up -d --build
-echo "Up. Open http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '<this-server>')/"
+echo "Up. Open http://$(hostname -I 2>/dev/null | awk '{print $1}' || echo '<this-server>'):8080/"
 echo "First build can take 15–25 minutes (models + index)."

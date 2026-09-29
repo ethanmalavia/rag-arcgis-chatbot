@@ -69,7 +69,7 @@ else
 fi
 
 if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "^Status: active"; then
-  ufw allow 80/tcp
+  ufw allow 8080/tcp
 fi
 
 chmod +x "$DEPLOY_DIR/up.sh" "$DEPLOY_DIR/update.sh"
@@ -82,7 +82,7 @@ docker compose up -d --build
 echo "Waiting for the application..."
 READY=false
 for _ in $(seq 1 36); do
-  if curl -fsS http://127.0.0.1/ready >/dev/null 2>&1; then
+  if curl -fsS http://127.0.0.1:8080/ready >/dev/null 2>&1; then
     READY=true
     break
   fi
@@ -92,7 +92,7 @@ done
 IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 echo
 if [ "$READY" = "true" ]; then
-  echo "Ask Engage Estero is ready: http://${IP:-<server-ip>}/"
+  echo "Ask Engage Estero is ready: http://${IP:-<server-ip>}:8080/"
 else
   echo "The container is still warming. Check: cd $DEPLOY_DIR && docker compose logs -f"
 fi
