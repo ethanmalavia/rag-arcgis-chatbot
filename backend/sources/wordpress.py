@@ -23,7 +23,7 @@ EVENTS_API = f"{SITE}/wp-json/tribe/events/v1/events"
 
 USER_AGENT = (
     "EngageEsteroBot/1.0 "
-    "(+https://github.com/krocks9903/rag-arcgis-chatbot; "
+    "(+https://github.com/noleysc/rag-arcgis-chatbot; "
     "weekly data sync for the Engage Estero chatbot)"
 )
 REQUEST_TIMEOUT = 45

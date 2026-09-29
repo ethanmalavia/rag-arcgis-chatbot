@@ -58,7 +58,7 @@ MONTHS = {
 
 USER_AGENT = (
     "Mozilla/5.0 (compatible; EagleGIS-Minutes-Indexer/1.0; "
-    "+https://github.com/krocks9903/rag-arcgis-chatbot)"
+    "+https://github.com/noleysc/rag-arcgis-chatbot)"
 )
 
 # estero-fl.gov presents a cert chain some runners can't verify; the verifier

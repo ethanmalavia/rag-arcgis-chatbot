@@ -2,7 +2,7 @@
 # One-time Ubuntu/Debian VPS installer for Ask Engage Estero.
 set -eu
 
-REPO_URL="https://github.com/krocks9903/rag-arcgis-chatbot.git"
+REPO_URL="https://github.com/noleysc/rag-arcgis-chatbot.git"
 INSTALL_DIR="/opt/engage-estero"
 
 if [ "$(id -u)" -ne 0 ]; then

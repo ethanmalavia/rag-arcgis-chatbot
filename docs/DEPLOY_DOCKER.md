@@ -196,7 +196,7 @@ Host `frontend/` on GitHub Pages, Netlify, or any static host.
 ## Part 3 — Automatic deploy from GitHub (optional)
 
 After manual deploy works, enable CI/CD in
-https://github.com/krocks9903/rag-arcgis-chatbot.
+https://github.com/noleysc/rag-arcgis-chatbot.
 
 ### A. Service account for deploy
 
@@ -229,14 +229,14 @@ https://github.com/google-github-actions/auth/blob/main/docs/TAKE_ACTIONS.md
 Summary:
 
 1. Create a **Workload Identity Pool** + **Provider** for `github.com`
-2. Restrict to repo `krocks9903/rag-arcgis-chatbot`
+2. Restrict to repo `noleysc/rag-arcgis-chatbot`
 3. Allow the service account to impersonate from that provider
 
 ```powershell
 # Example — adjust pool/provider names to match Google's guide
 gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL `
   --role="roles/iam.workloadIdentityUser" `
-  --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/attribute.repository/krocks9903/rag-arcgis-chatbot"
+  --member="principalSet://iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/attribute.repository/noleysc/rag-arcgis-chatbot"
 ```
 
 Copy the **provider resource name** for GitHub secret `GCP_WORKLOAD_IDENTITY_PROVIDER`.
