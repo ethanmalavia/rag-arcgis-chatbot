@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -113,6 +114,9 @@ class DataStore:
     chunk_count: int = 0
     embeddings: HuggingFaceEmbeddings | None = None
     _doc_by_id: dict[str, Document] | None = field(default=None, repr=False)
+    # rag_path.retrieve_with_crag results for repeated questions. Lives on the
+    # instance so a rebuilt index (a new DataStore) never serves stale hits.
+    retrieval_cache: OrderedDict = field(default_factory=OrderedDict, repr=False)
 
     def is_ready(self) -> bool:
         return self.vectorstore is not None and self.bm25 is not None and not self.dataframe.empty

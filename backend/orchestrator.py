@@ -12,9 +12,10 @@ from fastapi import HTTPException
 from events_path import answer_upcoming_events, is_events_question
 from models import ChatResponse, RouteKind
 from rag_path import (
+    StructuredAnswer,
     answer_rag,
     build_rag_response,
-    generate_answer,
+    generate_answer_stream,
     retrieve_with_crag,
 )
 from router import route_question
@@ -87,7 +88,7 @@ def answer_question(question: str) -> ChatResponse:
 
 
 def stream_answer(question: str) -> Iterator[str]:
-    """SSE: meta → generate (single Claude call, streamed as one token) → done."""
+    """SSE: meta → generate (single Claude call, answer text streamed as written) → done."""
     store = get_store()
     if store is None or not store.is_ready():
         yield _sse({"type": "error", "detail": "No dataset loaded"})
@@ -132,16 +133,27 @@ def stream_answer(question: str) -> Iterator[str]:
     t_gen = time.perf_counter()
     first_token_ms: int | None = None
 
-    # Single Claude call: writes a structured JSON answer grounded in the
-    # retrieved context, then streams its answer_markdown field as one
-    # token. Cards are never LLM-authored — built deterministically from the
-    # same hits' metadata, filtered to used_record_ids (build_rag_response,
-    # shared with the non-streaming answer_rag).
-    structured = generate_answer(question, context, crag_meta.get("retrieved_record_ids"))
+    # Single Claude call writing a structured JSON answer grounded in the
+    # retrieved context. Its answer_markdown field is streamed as tokens
+    # while the rest of the JSON (timeline, related, follow-ups) is still
+    # being written; "done" then carries the validated final answer. Cards
+    # are never LLM-authored — built deterministically from the same hits'
+    # metadata, filtered to used_record_ids (build_rag_response, shared with
+    # the non-streaming answer_rag).
+    structured: StructuredAnswer | None = None
+    for item in generate_answer_stream(question, context, crag_meta.get("retrieved_record_ids")):
+        if isinstance(item, StructuredAnswer):
+            structured = item
+            continue
+        if first_token_ms is None:
+            first_token_ms = round((time.perf_counter() - t0) * 1000)
+        yield _sse({"type": "token", "text": item})
+    assert structured is not None  # generate_answer_stream always ends with one
     result = build_rag_response(store, question, hits, structured, crag_meta)
     if route == RouteKind.MIXED:
         result.route = RouteKind.MIXED.value
-    if result.answer:
+    if first_token_ms is None and result.answer:
+        # Nothing streamed (fallback / error path) — send the final text once.
         first_token_ms = round((time.perf_counter() - t0) * 1000)
         yield _sse({"type": "token", "text": result.answer})
     result.meta["generate_ms"] = round((time.perf_counter() - t_gen) * 1000)

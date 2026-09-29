@@ -10,6 +10,8 @@ venv/
 # Vector store index (rebuilt on startup)
 faiss_index/
 backend/faiss_index/
+# ONNX export of the reranker (rebuilt on first use / in the Docker build)
+backend/onnx_reranker/
 
 # Per-call LLM usage log (backend/llm_provider.py) — runtime data, grows
 # forever, never something to commit.

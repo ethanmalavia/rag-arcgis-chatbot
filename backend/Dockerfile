@@ -44,6 +44,7 @@ COPY tools/engage-estero-mcp /app/tools/engage-estero-mcp
 COPY --from=frontend-build /web/dist /app/frontend
 
 # Pre-download models and bake FAISS + BM25 index for fast Cloud Run cold starts.
+# get_reranker() also bakes the validated ONNX export (backend/onnx_reranker/).
 RUN mkdir -p /app/backend/.cache/huggingface /app/backend/.cache/sentence-transformers \
     && python -c "from store import build_store; from config import DEFAULT_CSV_PATH; build_store(DEFAULT_CSV_PATH); from retrieval import get_reranker; get_reranker()"
 

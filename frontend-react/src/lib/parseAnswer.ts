@@ -171,6 +171,8 @@ export function statusEmoji(s: string): string {
   if (v.includes("denied")) return "❌";
   if (v.includes("continued")) return "⏳";
   if (v.includes("recommended")) return "🔁";
+  // Backend timeline status for news milestones / scheduled dates.
+  if (v === "update") return "📰";
   return "⚪";
 }
 

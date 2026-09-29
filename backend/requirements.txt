@@ -13,6 +13,10 @@ mcp>=1.9,<2
 # Embeddings + reranking (local, no API key)
 sentence-transformers==3.0.0
 rank-bm25==0.2.2
+# Reranker runtime (backend/onnx_reranker.py): same scores as PyTorch, ~25%
+# faster on CPU. onnx is only needed for the one-time export.
+onnxruntime==1.30.0
+onnx==1.23.0
 
 # Vector store
 faiss-cpu==1.14.3

@@ -272,6 +272,71 @@ def test_generate_answer_returns_prose_via_claude_client(monkeypatch):
     assert result.source_type == "records"
 
 
+def _chunks(text: str, size: int) -> list[str]:
+    return [text[i : i + size] for i in range(0, len(text), size)]
+
+
+@pytest.mark.parametrize("size", [1, 3, 7, 64])
+def test_answer_preview_streams_answer_markdown_exactly(size):
+    """However the JSON is split into stream chunks, the preview deltas join
+    to exactly answer_markdown — escapes (\\n, \\", \\u2019) decoded, nothing
+    from the later keys leaking in."""
+    import json
+
+    prose = 'Bottom line: **Wawa** was "approved" [DOS2022-E016].\n\n- It’s open — see [post-12].'
+    raw = json.dumps({"answer_markdown": prose, "timeline": [], "follow_ups": ["x"]})
+    preview = rag_path._AnswerPreview()
+    streamed = "".join(preview.feed(c) for c in _chunks(raw, size))
+    assert streamed == prose
+
+
+@pytest.mark.parametrize("size", [1, 5, 64])
+def test_answer_preview_never_shows_internal_ids(size):
+    import json
+
+    prose = "The board **approved** it [row-812], per the minutes [DOS2022-E016] and news [https://esterotoday.com/x/]."
+    raw = json.dumps({"answer_markdown": prose, "timeline": []})
+    preview = rag_path._AnswerPreview()
+    seen = ""
+    for c in _chunks(raw, size):
+        seen += preview.feed(c)
+        assert "row-" not in seen and "esterotoday.com" not in seen
+    assert "[DOS2022-E016]" in seen
+
+
+def test_generate_answer_stream_yields_deltas_then_final_answer(monkeypatch):
+    import json
+
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    prose = "**Bottom line:** Wawa was **approved** [DOS2022-E016]."
+    raw = json.dumps(
+        {"answer_markdown": prose, "timeline": [], "related": [], "used_record_ids": ["DOS2022-E016"],
+         "follow_ups": [], "source_type": "records"}
+    )
+    monkeypatch.setattr(claude_client, "stream_generate", lambda **kwargs: iter(_chunks(raw, 4)))
+
+    items = list(rag_path.generate_answer_stream("wawa", "ctx", ["DOS2022-E016"]))
+
+    final = items[-1]
+    assert isinstance(final, rag_path.StructuredAnswer)
+    assert "".join(items[:-1]) == prose
+    assert final.used_record_ids == ["DOS2022-E016"] and not final.used_fallback
+
+
+def test_generate_answer_stream_friendly_error_on_claude_failure(monkeypatch):
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+
+    def _raise(**kwargs):
+        raise claude_client.ClaudeError("down")
+        yield  # pragma: no cover — makes this a generator like the real one
+
+    monkeypatch.setattr(claude_client, "stream_generate", _raise)
+
+    items = list(rag_path.generate_answer_stream("wawa", "ctx", ["DOS2022-E016"]))
+
+    assert len(items) == 1 and items[0].llm_error
+
+
 def test_generate_answer_falls_back_on_non_json_text(monkeypatch):
     """A response that isn't valid JSON at all (e.g. stray prose + a fence
     block instead of the required bare JSON object) fails validation on both
@@ -1016,21 +1081,47 @@ def test_rerank_floor_is_relative_for_low_scoring_rerankers():
     assert rerank_floor(0.0) == pytest.approx(0.001)  # pure noise still dropped
 
 
+def test_repeated_question_reuses_retrieval_until_index_rebuilt(monkeypatch):
+    from store import DataStore
+
+    calls = []
+
+    def _fake_retrieve(store, question):
+        calls.append(question)
+        return "ctx", {"queries": [question]}, [("hit", 1.0)]
+
+    monkeypatch.setattr(rag_path, "_retrieve_with_crag", _fake_retrieve)
+    store = DataStore()
+
+    ctx, meta, hits = rag_path.retrieve_with_crag(store, "What is the latest on  Coconut Point?")
+    meta["queries"].append("mutated by caller")  # must not leak into the cache
+    ctx2, meta2, hits2 = rag_path.retrieve_with_crag(store, "What is the latest on Coconut Point?")
+
+    assert calls == ["What is the latest on  Coconut Point?"]
+    assert (ctx2, hits2) == (ctx, hits)
+    assert meta2["queries"] == ["What is the latest on  Coconut Point?"] and meta2["retrieval_cached"]
+
+    rag_path.retrieve_with_crag(DataStore(), "What is the latest on Coconut Point?")  # rebuilt index
+    assert len(calls) == 2
+
+
 def test_retrieval_searches_literal_query_alongside_rewrite(monkeypatch):
     """A paraphrase must never replace the literal query — application IDs and
     street names only match reliably as typed."""
-    seen = {}
+    seen = {"queries": [], "intents": set()}
 
-    def _fake_multi(store, queries, *, intent_query=None):
-        seen["queries"], seen["intent"] = list(queries), intent_query
+    def _fake_retrieve(store, query, *, intent_query=None):
+        seen["queries"].append(query)
+        seen["intents"].add(intent_query)
         return []
 
     monkeypatch.setattr(rag_path, "rewrite_search_query", lambda q: "DCI2021-E004 development order status Estero")
-    monkeypatch.setattr(rag_path, "hybrid_retrieve_multi", _fake_multi)
+    monkeypatch.setattr(rag_path, "hybrid_retrieve", _fake_retrieve)
 
     _ctx, meta, _hits = rag_path.retrieve_with_crag(_fake_store_board_and_council_rows(), "DCI2021-E004")
 
-    assert seen["queries"][0] == "DCI2021-E004"
+    assert "DCI2021-E004" in seen["queries"]
     assert "DCI2021-E004 development order status Estero" in seen["queries"]
-    assert seen["intent"] == "DCI2021-E004"  # recency/events intent reads the question
+    assert seen["intents"] == {"DCI2021-E004"}  # recency/events intent reads the question
+    assert meta["queries"][0] == "DCI2021-E004"
     assert meta["search_query"].startswith("DCI2021-E004")

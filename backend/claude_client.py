@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import os
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -65,7 +66,10 @@ def _get_client() -> anthropic.Anthropic:
         api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
         if not api_key:
             raise ClaudeError("ANTHROPIC_API_KEY is not set.")
-        _client = anthropic.Anthropic(api_key=api_key, timeout=_REQUEST_TIMEOUT_SECONDS)
+        # max_retries=0: generate()/stream_generate() own the single retry.
+        # The SDK's default 2 retries would stack under it (up to 6 attempts
+        # x the timeout) before the resident sees the friendly error.
+        _client = anthropic.Anthropic(api_key=api_key, timeout=_REQUEST_TIMEOUT_SECONDS, max_retries=0)
     return _client
 
 
@@ -103,5 +107,44 @@ def generate(system: str, user: str, *, max_tokens: int = 1024, temperature: flo
             output_tokens=response.usage.output_tokens,
             latency_ms=latency_ms,
         )
+
+    raise ClaudeError(f"Claude request failed after {_MAX_ATTEMPTS} attempt(s): {last_exc}") from last_exc
+
+
+def stream_generate(
+    system: str, user: str, *, max_tokens: int = 1024, temperature: float = 0.2
+) -> Iterator[str]:
+    """Same call as generate(), but yields text deltas as Claude writes them.
+
+    Retries once on a transient error only if nothing has been yielded yet —
+    after the first delta the caller has already shown text, so a mid-stream
+    failure raises ClaudeError instead of silently restarting the answer.
+    """
+    client = _get_client()
+    last_exc: Exception | None = None
+
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        yielded = False
+        try:
+            with client.messages.stream(
+                model=LLM_MODEL,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                system=system,
+                messages=[{"role": "user", "content": user}],
+            ) as stream:
+                for text in stream.text_stream:
+                    yielded = True
+                    yield text
+            return
+        except _RETRYABLE_EXC as exc:
+            if yielded:
+                raise ClaudeError(f"Claude stream interrupted: {exc}") from exc
+            last_exc = exc
+            print(f"[claude_client] stream attempt {attempt}/{_MAX_ATTEMPTS} failed ({exc!r}); "
+                  f"{'retrying' if attempt < _MAX_ATTEMPTS else 'giving up'}")
+            continue
+        except anthropic.APIStatusError as exc:
+            raise ClaudeError(f"Claude request failed (status {exc.status_code}): {exc}") from exc
 
     raise ClaudeError(f"Claude request failed after {_MAX_ATTEMPTS} attempt(s): {last_exc}") from last_exc
