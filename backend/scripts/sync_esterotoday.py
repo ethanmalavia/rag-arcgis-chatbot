@@ -40,7 +40,7 @@ CSV_PATH = Path(__file__).resolve().parent.parent / "data" / "esterotoday_conten
 CSV_FIELDS = ["source_type", "title", "category", "publish_date", "url", "content"]
 USER_AGENT = (
     "EngageEsteroBot/1.0 "
-    "(+https://github.com/krocks9903/rag-arcgis-chatbot; "
+    "(+https://github.com/noleysc/rag-arcgis-chatbot; "
     "weekly data sync for the Engage Estero chatbot)"
 )
 REQUEST_DELAY_SECONDS = 0.75
