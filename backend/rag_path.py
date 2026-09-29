@@ -736,16 +736,14 @@ def _finish_answer(
         )
     except claude_client.ClaudeError as exc:
         logger.error("Claude answer retry failed for %r: %s", question[:80], exc)
-        return StructuredAnswer(
-            answer_markdown=_FRIENDLY_LLM_ERROR, source_type="general", used_fallback=True, llm_error=True
-        )
+        return _llm_error_answer()
 
     parsed = _parse_structured_json(result2.text, valid_ids)
     if parsed is not None:
         return parsed
 
     logger.warning("Structured answer JSON invalid on retry for %r — falling back to plain text", question[:80])
-    raw = result2.text or result.text
+    raw = result2.text or raw
     fallback_text = _salvage_answer_markdown(raw) or finalize_prose(_STRAY_FENCE_RE.sub("", raw).strip())
     return StructuredAnswer(
         answer_markdown=fallback_text or "I don't have records on that.",

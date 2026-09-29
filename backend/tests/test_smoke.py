@@ -364,6 +364,19 @@ def test_generate_answer_falls_back_when_empty(monkeypatch):
     assert result.used_fallback is True
 
 
+def test_generate_answer_falls_back_to_first_reply_when_retry_is_empty(monkeypatch):
+    """Retry returns nothing at all — the first (non-JSON) reply is still the
+    best text we have, and must not crash the request."""
+    claude_client = _ensure_claude_client_importable(monkeypatch)
+    replies = iter([_FakeLLMResult("Wawa was approved in 2023."), _FakeLLMResult("")])
+    monkeypatch.setattr(claude_client, "generate", lambda **kwargs: next(replies))
+
+    result = rag_path.generate_answer("wawa", "ctx", ["DOS2022-E016"])
+
+    assert result.used_fallback is True
+    assert "Wawa was approved in 2023." in result.answer_markdown
+
+
 def test_generate_answer_returns_friendly_message_on_claude_error(monkeypatch):
     """A Claude API failure that survives claude_client's own timeout+retry
     must never surface a raw exception/stack trace to the resident."""
