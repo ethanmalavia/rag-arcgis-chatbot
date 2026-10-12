@@ -2,6 +2,9 @@ fastapi==0.111.0
 uvicorn[standard]==0.30.1
 python-multipart>=0.0.9
 python-dotenv==1.0.1
+# Pydantic 2.14 removed eval_type_backport. mcp 1.12.x — the newest release
+# that still allows uvicorn 0.30.1 — imports that private helper at startup.
+pydantic>=2.11,<2.14
 
 # LangChain core
 langchain==0.2.5
