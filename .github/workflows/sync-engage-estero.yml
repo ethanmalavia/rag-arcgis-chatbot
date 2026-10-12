@@ -34,7 +34,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install sync dependencies
-        run: pip install requests==2.34.2 pymupdf>=1.28.2
+        run: pip install requests==2.34.2 pymupdf>=1.28.2 python-dotenv==1.0.1
 
       - name: Sync Engage Estero content
         run: |
