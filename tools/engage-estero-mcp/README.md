@@ -11,13 +11,13 @@ Coordination MCP for Nolan / Ethan / Krish Cursor agents.
 
 Cursor loads `.cursor/mcp.json` → **engage-estero-sync**.
 
-## Cloud Run (Streamable HTTP)
+## VPS (Streamable HTTP)
 
 Deployed with the main API container (`ENABLE_MCP_HTTP=true`):
 
 | | |
 | --- | --- |
-| URL | `https://<Cloud Run service>.run.app/mcp` |
+| URL | `https://tracker.esterotoday.com/mcp` |
 | Auth | `Authorization: Bearer <MCP_API_KEY>` (defaults to `ADMIN_API_KEY`) |
 | Transport | Streamable HTTP, `stateless_http=True` |
 
@@ -25,7 +25,7 @@ Cursor remote entry — copy [`.cursor/mcp.cloud.example.json`](../../.cursor/mc
 into `.cursor/mcp.json`, then:
 
 ```bash
-export ENGAGE_MCP_URL="https://YOUR-SERVICE.run.app/mcp"
+export ENGAGE_MCP_URL="https://tracker.esterotoday.com/mcp"
 export ENGAGE_MCP_TOKEN="your-admin-or-mcp-key"
 ```
 
@@ -42,4 +42,4 @@ export ENGAGE_MCP_TOKEN="your-admin-or-mcp-key"
 | `write_handoff` | Leave a note for the next agent |
 | `claim_area` / `release_area` | Soft locks |
 
-State: `agent-sync/` in git (seed). On Cloud Run, copied to `/tmp/agent-sync` for writes (ephemeral per instance — commit seed updates for durable sync).
+State: `agent-sync/` in git (seed). On the VPS, copied to `/tmp/agent-sync` for writes (ephemeral per container — commit seed updates for durable sync).

@@ -1,5 +1,5 @@
 {
-  "_comment": "Merge into .cursor/mcp.json (or paste under mcpServers) after deploy. Set ENGAGE_MCP_URL + ENGAGE_MCP_TOKEN in your shell/Cursor env.",
+  "_comment": "Merge into .cursor/mcp.json after VPS deploy. ENGAGE_MCP_URL=https://tracker.esterotoday.com/mcp and ENGAGE_MCP_TOKEN=MCP_API_KEY.",
   "mcpServers": {
     "engage-estero-sync-cloud": {
       "url": "${env:ENGAGE_MCP_URL}",

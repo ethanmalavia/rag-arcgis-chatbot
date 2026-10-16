@@ -7,7 +7,6 @@ Router-first Q&A for Estero planning & zoning records: structured filters, keywo
 - Python 3.11 **or** Docker Desktop
 - Anthropic API key (`ANTHROPIC_API_KEY`) — sole LLM provider
 - Optional: `ADMIN_API_KEY` for `/admin` and CSV `/load`
-- Optional: GCP account for Cloud Run deploy
 - Pipeline rebuild: Tesseract OCR (`apt install tesseract-ocr` on Linux)
 - React UI: Node 18+ (`frontend-react/`)
 
@@ -27,7 +26,7 @@ The Docker image and compose `web` service serve **`frontend-react`** (Pulse das
 hero refresh, Instant App map). The legacy vanilla files under `frontend/` remain for
 admin pages and as a reference.
 
-Full local + Google Cloud instructions: **[docs/DEPLOY_DOCKER.md](docs/DEPLOY_DOCKER.md)**
+Full local Docker + VPS instructions: **[docs/DEPLOY_DOCKER.md](docs/DEPLOY_DOCKER.md)** · hardening: **[deploy/vps/SECURITY.md](deploy/vps/SECURITY.md)**
 
 ## Quick start (Python only)
 
@@ -102,7 +101,7 @@ python scripts/eval_quality.py --variant concise --limit 10
 
 Reports land in `backend/data/eval_reports/` (gitignored).
 
-**Release QA checklist:** **[docs/QA_RELEASE_CHECKLIST.md](docs/QA_RELEASE_CHECKLIST.md)** — run before/after Cloud Run deploys.
+**Release QA checklist:** **[docs/QA_RELEASE_CHECKLIST.md](docs/QA_RELEASE_CHECKLIST.md)** — run before/after VPS deploys.
 
 **Retrieval sweep:**
 
@@ -122,7 +121,8 @@ python scripts/summarize_feedback.py
 
 ```text
 rag-arcgis-chatbot/
-├── .github/workflows/          # lint, pytest, pipeline CI/refresh, deploy
+├── .github/workflows/          # lint, pytest, pipeline CI/refresh, VPS deploy, health watch
+├── deploy/vps/                 # production installer + localhost-bound compose
 ├── backend/
 │   ├── app.py                  # FastAPI + admin/reports + optional static UI
 │   ├── admin_auth.py / reports.py
@@ -185,10 +185,11 @@ duplicated). Adding a source means one `SourceSpec` plus one fetch function — 
 - **pipeline-refresh.yml** — weekly data refresh from source PDFs
 - **sync-engage-estero.yml** — weekly sync of site posts/pages/events/documents
 - **deploy-vps.yml** — rebuilds the VPS when app code changes, on the `engage-estero` runner
+- **health-watch.yml** — every 30 minutes, token-free `/health` + `/ready` on tracker
 
 ## Production
 
-The public site is https://tracker.esterotoday.com/, served from the VPS in `deploy/vps/`. GitHub Actions updates it through `deploy-vps.yml`.
+The public site is https://tracker.esterotoday.com/, served from the VPS in `deploy/vps/`. GitHub Actions updates it through `deploy-vps.yml`. Cloud Run and GitHub Pages are retired for this product.
 
 ## Notes
 

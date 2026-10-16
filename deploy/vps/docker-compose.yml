@@ -1,4 +1,4 @@
-# One container: FastAPI + React UI (same image Cloud Run uses).
+# One container: FastAPI + React UI.
 # From this directory: ./up.sh
 # Plesk proxies the public site to 127.0.0.1:8080. Do not publish 8080 on the internet.
 

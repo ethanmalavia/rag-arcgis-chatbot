@@ -42,4 +42,4 @@ Shared rules for Nolan, Ethan, Krish, and Cursor agents. Prefer this over invent
 
 Use `get_handoff` / `list_handoffs` for older notes; `get_conventions` only when process rules are unclear.
 
-stdio MCP is per machine — **git is the sync bus** for durable state. Cloud Run serves the same tools at `/mcp` (Bearer auth); runtime writes are ephemeral under `/tmp/agent-sync` until you commit `agent-sync/`.
+stdio MCP is per machine — **git is the sync bus** for durable state. The VPS can serve the same tools at `/mcp` (Bearer auth); runtime writes are ephemeral under `/tmp/agent-sync` until you commit `agent-sync/`.

@@ -91,7 +91,7 @@ backend/data/engage_estero/
 └── documents.csv      # source_type=document
 ```
 
-Committed to git like the existing gold CSVs, so Cloud Run builds are
+Committed to git like the existing gold CSVs, so VPS image builds are
 reproducible and the index bakes into the image at Docker build time. The legacy
 `backend/data/esterotoday_content.csv` is still read as a fallback for `posts`
 when `posts.csv` is absent, so nothing breaks mid-migration.
@@ -131,7 +131,7 @@ metadata dict, falling back to the old regex path for pre-existing caches.
 
 `.github/workflows/sync-engage-estero.yml` runs Fridays at 19:30 UTC — after the
 minutes pipeline (18:00) and the legacy article sync (19:00) — and commits any
-changed CSVs, which triggers the Cloud Run deploy that rebakes the index.
+changed CSVs, which triggers the VPS deploy that rebakes the index.
 
 Syncs are incremental and append-only by `record_id`; existing rows are never
 rewritten, so a WordPress edit does not churn the corpus.
@@ -146,7 +146,7 @@ expensive part (download + parse + embed). The connector splits this:
 - **Opt-in (`--fetch-pdf-text`):** download and extract body text with PyMuPDF,
   capped by `--max-pdf-mb`. Run selectively for high-value document sets.
 
-This keeps the default sync fast and the Cloud Run image small while leaving a
+This keeps the default sync fast and the production image small while leaving a
 one-flag path to deep document search.
 
 ## Phase 2 (not yet built)

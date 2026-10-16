@@ -1,7 +1,7 @@
 {
   "project": "rag-arcgis-chatbot",
   "product": "Ask Engage Estero",
-  "updated_at": "2026-08-31T17:39:26Z",
+  "updated_at": "2026-10-16T18:04:00Z",
   "updated_by": "nolan",
   "team": {
     "nolan": {
@@ -17,12 +17,12 @@
       "role": "frontend Pulse / React UI"
     }
   },
-  "active_focus": "Events sources + test green + agent sync MCP",
+  "active_focus": "VPS health + security; hold map churn while ArcGIS storyboards develop",
   "priorities": [
-    "Ship Lee County Parks + Visit Fort Myers events (committed locally as 8782ccb; push pending)",
-    "Land test/content fixes (langchain imports, meetings + community-events seeds) \u2014 uncommitted",
-    "tracker.esterotoday.com DNS (IONOS/GoDaddy nameserver ownership) \u2014 blocked on Kim/access",
-    "Hertz Arena live via upcoming-events listing; skip Amerant until a stable public feed exists"
+    "Production is https://tracker.esterotoday.com/ only (Cloud Run rag-arcgis-chatbot deleted; Pages unused)",
+    "Keep health-watch.yml green; follow deploy/vps/SECURITY.md on the box",
+    "Coordinate Instant App / StoryMap embed with GIS storyboard owners before MapPanel changes",
+    "Mac SSH key + password-disable only after a second working session"
   ],
   "owners": {
     "backend/events_sources": "nolan",
@@ -30,20 +30,17 @@
     "backend/retrieval": "ethan",
     "backend/rag_path": "ethan",
     "frontend-react": "krish",
-    "pipeline": "shared"
+    "pipeline": "shared",
+    "deploy/vps": "nolan"
   },
   "claims": [],
-  "blockers": [
-    {
-      "id": "dns-tracker",
-      "summary": "Domain mapping blocked until correct GoDaddy/IONOS DNS account access",
-      "owner": "kim"
-    }
-  ],
+  "blockers": [],
   "do_not": [
     "Let events chat route hijack planning/zoning questions (PLANNING_SIGNAL_RE)",
     "Commit docs/Ask_Engage_Estero_Stakeholder_Briefing.pptx unless asked",
     "Force-push main",
-    "Invent venue scrapers that fail hard — soft-fail per source; Hertz uses upcoming-events listing only; skip Amerant until a stable public feed exists"
+    "Invent venue scrapers that fail hard — soft-fail per source; Hertz uses upcoming-events listing only; skip Amerant until a stable public feed exists",
+    "Re-enable Cloud Run or GitHub Pages for this product",
+    "Publish host port 8080; keep 127.0.0.1 bind + Plesk TLS"
   ]
 }

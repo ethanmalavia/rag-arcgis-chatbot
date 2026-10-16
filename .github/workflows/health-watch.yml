@@ -1,0 +1,40 @@
+name: Production health watch
+
+# Token-free liveness check against the public VPS. Fails loudly if tracker
+# stops answering so we notice before users do.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    name: tracker.esterotoday.com
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check /health and /ready
+        env:
+          BASE: https://tracker.esterotoday.com
+        run: |
+          set -euo pipefail
+          for path in /health /ready; do
+            echo "GET ${BASE}${path}"
+            code="$(curl -fsS -o "/tmp${path}.json" -w '%{http_code}' --max-time 30 "${BASE}${path}")"
+            echo "status=${code}"
+            cat "/tmp${path}.json"
+            echo
+            test "$code" = "200"
+          done
+          python3 - <<'PY'
+          import json
+          health = json.load(open("/tmp/health.json"))
+          ready = json.load(open("/tmp/ready.json"))
+          if health.get("status") != "ok" or health.get("chain_ready") is not True:
+              raise SystemExit(f"unexpected health: {health}")
+          if ready.get("status") != "ready" or not isinstance(ready.get("record_count"), int) or ready["record_count"] < 1:
+              raise SystemExit(f"unexpected ready: {ready}")
+          print("ok", {"health": health, "ready": ready})
+          PY

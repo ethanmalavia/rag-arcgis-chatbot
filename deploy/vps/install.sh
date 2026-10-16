@@ -68,9 +68,8 @@ else
   echo "Keeping existing $ENV_FILE"
 fi
 
-if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "^Status: active"; then
-  ufw allow 8080/tcp
-fi
+# App listens on 127.0.0.1:8080 only. Do not open 8080 in the firewall —
+# terminate TLS on Plesk/nginx and proxy to localhost (tracker.esterotoday.com).
 
 chmod +x "$DEPLOY_DIR/up.sh" "$DEPLOY_DIR/update.sh"
 ln -sf "$DEPLOY_DIR/update.sh" /usr/local/bin/update-engage-estero
@@ -89,11 +88,12 @@ for _ in $(seq 1 36); do
   sleep 10
 done
 
-IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 echo
 if [ "$READY" = "true" ]; then
-  echo "Ask Engage Estero is ready: http://${IP:-<server-ip>}:8080/"
+  echo "Ask Engage Estero is ready on http://127.0.0.1:8080/"
+  echo "Public URL (after Plesk proxy): https://tracker.esterotoday.com/"
 else
   echo "The container is still warming. Check: cd $DEPLOY_DIR && docker compose logs -f"
 fi
+echo "Security checklist: $DEPLOY_DIR/SECURITY.md"
 echo "Future updates: sudo update-engage-estero"

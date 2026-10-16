@@ -16,7 +16,7 @@
 
 ## Coordination
 
-Use the **`engage-estero-sync`** MCP (`.cursor/mcp.json` → local stdio or Cloud Run `/mcp`).
+Use the **`engage-estero-sync`** MCP (`.cursor/mcp.json` → local stdio or VPS `/mcp`).
 
 **Session start:** `get_session_brief` once. **Session end:** `write_handoff`, `release_area`, `update_shared_context` as needed.
 

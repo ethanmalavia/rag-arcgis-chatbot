@@ -1,29 +1,31 @@
 # Ask Engage Estero — Release QA Checklist
 
-Use this before promoting a Cloud Run deploy (or after `deploy.yml` finishes).
+Use this before/after a VPS deploy (`deploy-vps.yml` or `sudo update-engage-estero`).
 Mark each item pass/fail. File thumbs-down feedback and any fail with steps to reproduce.
 
 ## 0. Preconditions
 
-- [ ] Deploy finished green (`Deploy to Cloud Run` workflow)
-- [ ] Secrets present: `GROQ_API_KEY`, `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `ADMIN_API_KEY`
-- [ ] Service URL known (or custom domain if mapped)
+- [ ] Deploy finished green (`Deploy to VPS` workflow) or manual `update-engage-estero` completed
+- [ ] `deploy/vps/.env` on the server has `ANTHROPIC_API_KEY`, `ADMIN_API_KEY`, `MCP_API_KEY` (mode 600)
+- [ ] Public URL: https://tracker.esterotoday.com/
+- [ ] Optional: `health-watch.yml` last run green
 
-## 1. Liveness
+## 1. Liveness (no LLM tokens)
 
-- [ ] `GET /health` → 200
+- [ ] `GET /health` → 200, `chain_ready: true`
 - [ ] `GET /ready` → 200 with `record_count` > 0
-- [ ] `GET /warmup` → 200 (or acceptable warmup lag on cold start)
+- [ ] `GET /warmup` → 200 (local retrieve + reranker; does not call Claude)
+- [ ] `GET /api/events` and `GET /recent-decisions` → 200
 
 ## 2. Chat paths
 
 | Case | Example | Expect |
 |------|---------|--------|
 | Keyword / app ID | `DOS2023-E005` | Project card + summary, not empty |
-| Structured count | `How many records were approved in 2023?` | Count / list, route structured |
+| Structured count | `How many records were approved in 2023?` | Count / list, route structured (no LLM) |
 | Narrative RAG | `What happened with Goodwill?` | Concise bullets (≤3), cited project(s) |
 | Recency | `Any new developments on Corkscrew?` | Prefers recent records; no ancient-only dump |
-| Events weekend | `What's happening this weekend?` | Events bullets with dates/venues |
+| Events weekend | `What's happening this weekend?` | Events bullets with dates/venues (no LLM) |
 | Events vs planning | `What is happening on Corkscrew Road?` | **RAG/planning**, not calendar dump |
 | Streaming | send via UI | Tokens or full answer; no blank bubble |
 

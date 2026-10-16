@@ -29,7 +29,7 @@ cp .env.example .env.local
 
 ```
 VITE_API_BASE=http://localhost:8000       # local dev (default)
-VITE_API_BASE=https://your-service.run.app  # Cloud Run / prod
+VITE_API_BASE=   # empty = same-origin (VPS / Docker production)
 ```
 
 ## Scripts
