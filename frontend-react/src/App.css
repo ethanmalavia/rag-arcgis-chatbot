@@ -1171,6 +1171,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 12px 16px;
   background: var(--navy);
   border-bottom: 2px solid var(--gold);
@@ -1222,6 +1224,22 @@
 .map-btn:hover {
   background: rgba(255, 255, 255, 0.22);
 }
+.map-view-switch {
+  display: flex;
+}
+.map-view-switch .map-btn:first-child {
+  border-radius: 8px 0 0 8px;
+}
+.map-view-switch .map-btn:last-child {
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+}
+.map-view-switch .map-btn.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--navy);
+  font-weight: 700;
+}
 #map-label {
   padding: 6px 16px;
   background: #f0f4f8;
@@ -1245,7 +1263,8 @@
   text-decoration: underline;
   font-weight: 600;
 }
-#viewDiv {
+#viewDiv,
+.map-story-frame {
   flex: 1;
 }
 #map-footer {

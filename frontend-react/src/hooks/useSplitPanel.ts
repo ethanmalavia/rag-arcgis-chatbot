@@ -53,6 +53,10 @@ export function useSplitPanel() {
   const [fraction, setFraction] = useState(persisted?.fraction ?? DEFAULT_FRACTION);
   const [collapsed, setCollapsed] = useState(persisted?.collapsed ?? false);
   const [dragging, setDragging] = useState(false);
+  // Split to go back to after a temporary widenRightTo() (the Map tab's
+  // StoryMap view). Not persisted. Any manual resize clears it, since the
+  // current split is then the user's own choice and shouldn't be undone.
+  const fractionBeforeWiden = useRef<number | null>(null);
 
   const clampFraction = useCallback((f: number) => {
     const total = containerRef.current?.getBoundingClientRect().width || 1000;
@@ -100,6 +104,7 @@ export function useSplitPanel() {
       const snapped = SNAP_FRACTIONS.find((s) => Math.abs(clamped - s) < SNAP_THRESHOLD);
       const finalFraction = snapped ?? clamped;
       setFraction(finalFraction);
+      fractionBeforeWiden.current = null;
       savePersisted({ fraction: finalFraction, collapsed: false });
       nudgeResize(220); // after the ease-into-snap transition finishes
     };
@@ -115,6 +120,7 @@ export function useSplitPanel() {
 
   const onDoubleClick = useCallback(() => {
     setFraction(0.5);
+    fractionBeforeWiden.current = null;
     setCollapsed(false);
     savePersisted({ fraction: 0.5, collapsed: false });
     nudgeResize(220);
@@ -125,6 +131,7 @@ export function useSplitPanel() {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
       e.preventDefault();
       const delta = e.key === "ArrowLeft" ? -KEYBOARD_STEP : KEYBOARD_STEP;
+      fractionBeforeWiden.current = null;
       setFraction((f) => {
         const next = clampFraction(f + delta);
         savePersisted({ fraction: next, collapsed: false });
@@ -144,6 +151,33 @@ export function useSplitPanel() {
     });
   }, [fraction]);
 
+  const widenRightTo = useCallback(
+    (minPx: number) => {
+      // On phones (App.css's 768px breakpoint) the right panel is a full-width
+      // overlay, not a split, so there's nothing to widen.
+      if (window.matchMedia("(max-width: 768px)").matches) return;
+      const total = containerRef.current?.getBoundingClientRect().width;
+      if (!total) return;
+      // clampFraction keeps chat at CHAT_MIN_PX, so on small screens the
+      // right side gets as close to minPx as it can rather than all of it.
+      const target = clampFraction(1 - (minPx + 6) / total); // 6px divider
+      setCollapsed(false);
+      if (target >= fraction) return; // already wide enough
+      if (fractionBeforeWiden.current === null) fractionBeforeWiden.current = fraction;
+      setFraction(target);
+      nudgeResize(220);
+    },
+    [clampFraction, fraction],
+  );
+
+  const restoreRightWidth = useCallback(() => {
+    const previous = fractionBeforeWiden.current;
+    if (previous === null) return;
+    fractionBeforeWiden.current = null;
+    setFraction(clampFraction(previous));
+    nudgeResize(220);
+  }, [clampFraction]);
+
   return {
     containerRef,
     fraction,
@@ -153,5 +187,7 @@ export function useSplitPanel() {
     onDoubleClick,
     onKeyDown,
     toggleCollapsed,
+    widenRightTo,
+    restoreRightWidth,
   };
 }

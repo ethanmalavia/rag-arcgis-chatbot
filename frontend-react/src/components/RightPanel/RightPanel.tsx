@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import MapPanel from "../MapPanel/MapPanel";
+import MapPanel, { type MapPanelView } from "../MapPanel/MapPanel";
 import Dashboard from "../Dashboard/Dashboard";
 import { useMeetings } from "../../hooks/useMeetings";
 import { registerTabSwitcher } from "../../lib/uiStore";
@@ -11,13 +11,21 @@ interface RightPanelProps {
   onToggleExpand: () => void;
   mobileVisible: boolean;
   onRecordCount: (count: number | null) => void;
+  onMapViewChange: (view: MapPanelView) => void;
   onSend: (text: string) => void;
 }
 
 /** Map | Pulse tabs. MapPanel stays mounted at all times (display:none when
  * hidden, never unmounted) — re-initializing the ArcGIS MapView is expensive
  * and would lose pan/zoom state, per the design brief. */
-export default function RightPanel({ expanded, onToggleExpand, mobileVisible, onRecordCount, onSend }: RightPanelProps) {
+export default function RightPanel({
+  expanded,
+  onToggleExpand,
+  mobileVisible,
+  onRecordCount,
+  onMapViewChange,
+  onSend,
+}: RightPanelProps) {
   const [activeTab, setActiveTab] = useState<RightTab>("map");
   const { meetings, loading: meetingsLoading, error: meetingsError, hasUpcomingWithinWeek } = useMeetings(3);
 
@@ -74,7 +82,12 @@ export default function RightPanel({ expanded, onToggleExpand, mobileVisible, on
           so the two panes can crossfade instead of hard-swapping. */}
       <div className="right-tab-panes">
         <div className={`right-tab-content right-tab-pane ${activeTab === "map" ? "active" : ""}`}>
-          <MapPanel expanded={expanded} onToggleExpand={onToggleExpand} onRecordCount={onRecordCount} />
+          <MapPanel
+            expanded={expanded}
+            onToggleExpand={onToggleExpand}
+            onRecordCount={onRecordCount}
+            onViewChange={onMapViewChange}
+          />
         </div>
         <div
           className={`right-tab-content right-tab-content-scroll right-tab-pane ${activeTab === "pulse" ? "active" : ""}`}

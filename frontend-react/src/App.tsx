@@ -7,7 +7,10 @@ import ReportDialog, { type ReportPrefill } from "./components/ReportDialog/Repo
 import DisclaimerModal from "./components/DisclaimerModal/DisclaimerModal";
 import { useChat } from "./hooks/useChat";
 import { useSplitPanel } from "./hooks/useSplitPanel";
+import type { MapPanelView } from "./components/MapPanel/MapPanel";
 import "./App.css";
+
+const STORY_MIN_WIDTH_PX = 1100;
 
 export default function App() {
   const { messages, send, newChat } = useChat();
@@ -21,6 +24,19 @@ export default function App() {
   const handleRecordCount = useCallback((count: number | null) => setRecordCount(count), []);
   const toggleExpand = useCallback(() => setMapExpanded((v) => !v), []);
   const toggleMobileMap = useCallback(() => setMobileMapVisible((v) => !v), []);
+
+  // The StoryMap swaps its inline dashboards for link cards when its iframe is
+  // too narrow, so widen the right panel while it's shown and put the user's
+  // split back when they switch to the map. 1100px is a width verified to show
+  // the dashboards inline; the exact cutoff is Esri's and undocumented.
+  const { widenRightTo, restoreRightWidth } = split;
+  const handleMapViewChange = useCallback(
+    (view: MapPanelView) => {
+      if (view === "story") widenRightTo(STORY_MIN_WIDTH_PX);
+      else restoreRightWidth();
+    },
+    [widenRightTo, restoreRightWidth],
+  );
 
   const openReport = useCallback((prefill?: ReportPrefill) => {
     setReportPrefill(prefill || null);
@@ -70,6 +86,7 @@ export default function App() {
           onToggleExpand={toggleExpand}
           mobileVisible={mobileMapVisible}
           onRecordCount={handleRecordCount}
+          onMapViewChange={handleMapViewChange}
           onSend={send}
         />
       </div>
