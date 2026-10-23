@@ -647,7 +647,7 @@ item_id,meeting_id,action_type,vote_detected,project_matches,review_reason,item_
 832,115,Vote,True,,No location name/address matched,Approved the final plat
 833,115,Budget,False,Budget / Capital Improvement,No location name/address matched,"No formal action recorded. 2021/2022 Budget and Capital Improvement Program (CIP) Preliminary Discussion Staff Presentation/Comments: Steve Sarkozy, Village Manager David Willems. Public Works Director Council Questions or Comments: Councilmembers Ward, Boesch, Fiesel, Ribble, Wilson, Vice Mayor McLain, and Mayor Errington.  Public Comments: Gordon Brown, Pelican Sound"
 834,116,Vote,True,,No location name/address matched,"Mr. Ribble moved approval as amended, seconded by Mr. Wilson, called and carried"
-835,116,Vote,True,,No location name/address matched,"Mr. Wilson moved the item to second hearing as amended, seconded by Mr. Brown, called. and carried unanimously"
+835,116,Vote,True,,No location name/address matched,"Mr. Wilson moved the item to second hearing as amended, seconded by Mr. Brown, called and carried"
 836,116,Vote,True,,No location name/address matched,"Mr. Ribble moved the item to second hearing, seconded by Ms. Errington, called and carried"
 837,116,Resolution,False,,No location name/address matched,No formal action recorded. RESOLUTION - Resolution of Intent to Participate in the National Flood Insurance Program ITEMS
 838,116,Resolution,False,,No location name/address matched,1. Resolution requiring the recognition and evaluation of flood or flood-related hazards in all official actions relating to land use and development
