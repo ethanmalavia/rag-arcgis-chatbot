@@ -484,7 +484,7 @@ location_id,item_id,address_raw,address_normalized,latitude,longitude,parcel_id,
 483,1768,"Sandy Lane and Broadway East bicycle/pedestrian improvements, Estero, FL","Sandy Lane and Broadway East bicycle/pedestrian improvements, Estero, FL",26.438402,-81.80693,,0.95,,"Sandy Lane and Broadway East bicycle/pedestrian improvements, Estero, FL",Broadway Avenue Utility Extension,,,1,true
 484,1769,8009 Sweetwater Ranch Blvd,8009 SWEETWATER RANCH BLVD,26.41181500803066,-81.80949049712162,044725E3301D30000,0.98,,8009 SWEETWATER RANCH BLVD,,PARCEL_ADDRESS,parcel STRAP=044725E3301D30000,1,true
 485,1774,20280 Grand Oaks Shoppes Boulevard,"20280 Grand Oaks Shoppes Boulevard, Estero, FL",,,,0.25,,20280 Grand Oaks Shoppes Boulevard,,,,1,false
-486,1775,County Road and Highlands Avenue,COUNTY RD & HIGHLANDS AV,26.4369968537222,-81.8089779384038,,0.93,,COUNTY RD & HIGHLANDS AV,,INTERSECTION,endpoint of segment with FROMSTREET=HIGHLANDS AV,1,true
+486,1775,20810 Highlands Avenue,20810 HIGHLANDS AVE,26.437683181750124,-81.8094524939285,284625E3050330010,0.98,,20810 HIGHLANDS AVE,,PARCEL_ADDRESS,parcel STRAP=284625E3050330010,1,true
 487,1776,"20897 Three Oaks Parkway, Estero, FL","20897 Three Oaks Parkway, Estero, FL",26.436576930078,-81.784532881242,,1.0,,"20897 Three Oaks Parkway, Estero, FL",,,,1,true
 488,1778,23106 Fashion Drive,23106 FASHION DR,26.404355403292666,-81.80731508067035,094725E2360SC0010,0.98,,23106 FASHION DR,,PARCEL_ADDRESS,parcel STRAP=094725E2360SC0010,1,true
 489,1783,"Williams Road & Atlantic Gulf Boulevard, Estero, FL","Williams Road & Atlantic Gulf Boulevard, Estero, FL",26.420304009887,-81.812656010414,,1.0,,"Williams Road & Atlantic Gulf Boulevard, Estero, FL",,,,1,true
